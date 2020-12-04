@@ -13,7 +13,7 @@ int main(){
 	printf("TODOS CON PAYAN!!!!!")
 	
 	scanf("%s", text);
-	printf("%s\n", text);
+	printf("Hola: %s\n", text);
 	
 	return 0;
 	

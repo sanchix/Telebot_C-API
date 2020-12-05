@@ -8,10 +8,12 @@
 char token[50] = NULL;
 HTTP_INFO hi = NULL;
 
-void telebot_init(char tok[50]){
+int telebot_init(char tok[50]){
 	
 	token = strcpy(token,tok);
 	http_init(&hi, TRUE);
+	
+	return 0;
 	
 }
 

@@ -1,12 +1,11 @@
 #Makefile para compilar telebot_Capi.o
-#src/Makefile
+#lib/telebot_Capi/Makefile
 
-ROOT = ../
-LIB = $(ROOT)lib/
-HTTP = https_lib/
+LIB = ../
+HTTP_include = https_lib/
 
 telebot_Capi.o: telebot_Capi.c telebot_Capi.h
-	gcc -W -Wall -I../ -c telebot_Capi.c
+	gcc -W -Wall -I$(LIB) -I$(LIB)https_lib/mbedtls/include -c telebot_Capi.c
 
 borra: 
 	rm telebot_Capi.o

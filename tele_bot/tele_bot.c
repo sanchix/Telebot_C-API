@@ -5,19 +5,18 @@
 
 int main(int argc, char* argv[]){
 	
-	char *info = NULL;
+	char info[4096] = {};
 	
 	if(argc != 2){
-		printf("Error...");
+		printf("Error...\n");
 	}
 	else if(telebot_init(argv[1]) != 0){
-		printf("Error al iniciar https");
+		printf("Error al iniciar https\n");
 		
 	}else{
 	
-		info = telebot_getMe();
-		
-		printf("Info: %s", info);
+		telebot_getMe(info, sizeof(info));
+		printf("Info: %s\n", info);
 
 	}
 	

@@ -2,4 +2,4 @@
 /tests
 
 # Ignore shell scripts
-.sh
+*.sh

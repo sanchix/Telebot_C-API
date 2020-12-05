@@ -18,5 +18,6 @@ tele_bot.o: tele_bot.c
 	gcc -W -Wall $(INCLUDES) -c tele_bot.c
 
 borra: 
-	make -C $(LIB) borra
 	rm tele_bot.o
+	make -C $(LIB) borra
+	

@@ -1,14 +1,16 @@
 #Makefile para compilar tele_bot
+#tele_bot/Makefile
 
-SRC = ../src/
+LIB = ../lib/
+INCLUDES = -I../lib/
 
 tele_bot: tele_bot.o 
-	make $(SRC)Makefile 
-	gcc -W -Wall -o tele_bot $(SRC)telebot_Capi.o tele_bot.o
+	make -C $(LIB)
+	gcc -W -Wall -o tele_bot $(LIB)telebot_Capi.o tele_bot.o
 	
 tele_bot.o: tele_bot.c
-	gcc -W -Wall -c tele_bot.c
+	gcc -W -Wall $(INCLUDES) -c tele_bot.c
 
 borra: 
-	make $(SRC)Makefile borra
+	make -C $(LIB) borra
 	rm tele_bot.o

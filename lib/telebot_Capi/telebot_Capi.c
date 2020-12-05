@@ -1,6 +1,6 @@
 
 #include <string.h>
-#include "lib/https.h"
+#include "https_lib/https.h"
 #include "telebot_Capi.h"
 
 #define API_URL "https://api.telegram.org/bot"

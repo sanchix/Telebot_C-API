@@ -6,11 +6,11 @@
 #define HTTPS_CLIENT_HTTPS_H
 
 /*---------------------------------------------------------------------*/
-#include "mbedtls/net.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/error.h"
-#include "mbedtls/certs.h"
+#include "https_lib/mbedtls/net.h"
+#include "https_lib/mbedtls/entropy.h"
+#include "https_lib/mbedtls/ctr_drbg.h"
+#include "https_lib/mbedtls/error.h"
+#include "https_lib/mbedtls/certs.h"
 
 /*---------------------------------------------------------------------*/
 #define H_FIELD_SIZE     512

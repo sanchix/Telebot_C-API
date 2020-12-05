@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include "../src/telebot_Capi.h"
+#include "telebot_Capi/telebot_Capi.h"
 
 
 int main(int argc, char* argv[]){

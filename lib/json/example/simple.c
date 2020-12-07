@@ -39,6 +39,10 @@ int analize_object(jsmntok_t *t){
     else if(t[offset+1].type == JSMN_ARRAY){
       offset = offset + 1 + analize_list(&t[offset+1]);
     }
+    else if(t[offset+1].type == JSMN_PRIMITIVE){
+       printf("%.*s\n", t[offset+1].end - t[offset+1].start,JSON_STRING + t[offset+1].start);
+      offset = offset + 2;
+    }
   }
 	
   printf("}\n");
@@ -68,6 +72,10 @@ int analize_list(jsmntok_t *t){
     }
     else if(t[offset].type == JSMN_ARRAY){
       offset = offset + analize_list(&t[offset]);
+    }
+    else if(t[offset].type == JSMN_PRIMITIVE){
+       printf("%.*s\n", t[offset].end - t[offset].start,JSON_STRING + t[offset].start);
+      offset = offset + 1;
     }
   }
   

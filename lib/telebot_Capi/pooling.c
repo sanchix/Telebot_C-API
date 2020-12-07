@@ -12,19 +12,46 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/msg.h>
+#include <sys/ipc.h>
 #include "https_lib/https.h"
 #include "telebot_Capi.h"
 
+#include <errno.h>
+
 #define MAX_RESP_TAM 4096
+#define MAX_OFFSET_TAM 20
+#define OFFSET_MSG_TYPE 1
 
 
+struct msgbuf{
+	long mtype;
+	char mtext[MAX_OFFSET_TAM];
+};
+
+
+// ADD a method 
 void *parser(void *resp){
 	
 	char response[MAX_RESP_TAM];
+	key_t clave;
+	int msgqueue_id;
+	struct msgbuf msq_buffer;
 	
-	strcpy(response, (char *)resp);
-	
-	printf("Updates: %s\n", response);
+	clave = ftok(".", 'p');  //Equivalent to 1882193940
+	msq_buffer.mtype = OFFSET_MSG_TYPE;
+	if((msgqueue_id = msgget(clave, 0660)) == -1){
+		printf("> Parser thread: error al acceder a la cola de mensajes: %s\n", strerror(errno));
+	}
+	else{
+		
+		strcpy(response, (char *)resp);
+		printf("Updates: %s\n", response);
+		
+		sleep(1);
+		strcpy(msq_buffer.mtext, "-1");
+		msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
+		
+	}
 	
 	pthread_exit(NULL);
 	
@@ -42,30 +69,43 @@ void *parser(void *resp){
 void *pool(void *info){
 	
 	int status;
+	int error = 0;
 	char url[250];
+	char fullurl[250];
+	char *offset = "0";
 	char response[MAX_RESP_TAM];
 	useconds_t interval = 1000000;
 	pthread_attr_t attr;
 	pthread_t thread;
-	//key_t clave;
+	key_t clave;
+	int msgqueue_id;
+	struct msgbuf msq_buffer;
 	
 	// Prepare URL to get updates
 	bot_info_t *bot_info = (bot_info_t *)info;
 	strcpy(url, bot_info->url); 
-	strcat(url, "/getUpdates");
+	strcat(url, "/getUpdates?offset=");
 	
 	// Prepare variables to create parser threads
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	
 	// Prepare message queue to communicate with parser threads
-	//clave = ftok(" //////ME HE QUEDADO AQUI//////
-	//msgget();
+	clave = ftok(".",'p');
+	if((msgqueue_id = msgget(clave,IPC_CREAT|IPC_EXCL|0660)) == -1){
+		printf("> Pooling thread: error al iniciar la cola de mensajes: %s\n", strerror(errno));
+		error = 1;
+	}
 	
-	while(1){
+	while(!error){
 		
+		// TODO: Cambiar por esperar x segundos entre iteración, no siempre x segundos en esta linea
+		// TODO: Variar la frecuencia de pooling dinámicamente
 		usleep(interval);
-		status = http_get(&(bot_info->hi), url, response, MAX_RESP_TAM);
+		strcpy(fullurl, url);
+		strcat(fullurl, offset);
+		printf("URL: %s\n", fullurl);
+		status = http_get(&(bot_info->hi), fullurl, response, MAX_RESP_TAM);
 		
 		if(status != 200){
 			printf("Failed to update data\n");
@@ -73,12 +113,19 @@ void *pool(void *info){
 		else{
 			if(pthread_create(&thread, &attr, parser, response) != 0){
 				printf("Failed to create parse thread\n");
+				error = 1;
 				break;
 			}
-			//wait_to_msg(&offset)
+			
+			// Esperamos a que el parser nos indique el offset del último mensaje.
+			msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSG_TYPE, 0);
+			offset = msq_buffer.mtext;
+			
 		}
 		
 	}
+	
+	//TODO: Añadir que mande una señal al proceso principal para que se entere del fallo.
 	
 	pthread_exit(NULL);
 	

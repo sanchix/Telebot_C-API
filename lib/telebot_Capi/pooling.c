@@ -9,9 +9,12 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <string.h>
 #include <stdio.h>
 #include "https_lib/https.h"
 #include "telebot_Capi.h"
+
+#define MAX_RESP_TAM 4096
 
 
 /*
@@ -25,15 +28,21 @@
 void *pool(void *info){
 	
 	int status;
+	char url[250];
+	char response[MAX_RESP_TAM];
 	useconds_t interval = 1000000;
 	
 	bot_info_t *bot_info = (bot_info_t *)info;
+	strcpy(url, bot_info->url); 
+	strcat(url, "/getUpdates");
 	
 	while(1){
 		
+		//printf("Soy pool: %s\n", bot_info->url);
 		usleep(interval);
-		printf("Soy pool: %s\n", bot_info->url);
-		//status = http_get(&hi, url, response, size);
+		status = http_get(&(bot_info->hi), url, response, MAX_RESP_TAM);
+		printf("URL: %s\n", url);
+		printf("Updates: %s\n", response);
 		
 	}
 	

@@ -11,10 +11,24 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/msg.h>
 #include "https_lib/https.h"
 #include "telebot_Capi.h"
 
 #define MAX_RESP_TAM 4096
+
+
+void *parser(void *resp){
+	
+	char response[MAX_RESP_TAM];
+	
+	strcpy(response, (char *)resp);
+	
+	printf("Updates: %s\n", response);
+	
+	pthread_exit(NULL);
+	
+}
 
 
 /*
@@ -31,20 +45,42 @@ void *pool(void *info){
 	char url[250];
 	char response[MAX_RESP_TAM];
 	useconds_t interval = 1000000;
+	pthread_attr_t attr;
+	pthread_t thread;
+	//key_t clave;
 	
+	// Prepare URL to get updates
 	bot_info_t *bot_info = (bot_info_t *)info;
 	strcpy(url, bot_info->url); 
 	strcat(url, "/getUpdates");
 	
+	// Prepare variables to create parser threads
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	
+	// Prepare message queue to communicate with parser threads
+	//clave = ftok(" //////ME HE QUEDADO AQUI//////
+	//msgget();
+	
 	while(1){
 		
-		//printf("Soy pool: %s\n", bot_info->url);
 		usleep(interval);
 		status = http_get(&(bot_info->hi), url, response, MAX_RESP_TAM);
-		printf("URL: %s\n", url);
-		printf("Updates: %s\n", response);
+		
+		if(status != 200){
+			printf("Failed to update data\n");
+		}
+		else{
+			if(pthread_create(&thread, &attr, parser, response) != 0){
+				printf("Failed to create parse thread\n");
+				break;
+			}
+			//wait_to_msg(&offset)
+		}
 		
 	}
+	
+	pthread_exit(NULL);
 	
 }
 

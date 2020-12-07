@@ -26,7 +26,6 @@ int telebot_getMe(char *response, int size){
 	
 	strcat(url, token);
 	strcat(url, method);
-	printf("%s\n",url);
 	status = http_get(&hi, url, response, size);
 	if(status == 200){
 		ret = 0;

@@ -1,5 +1,11 @@
-# Ignore tests folder
-/tests
+# Ignore all tests folder
+**/tests
 
 # Ignore shell scripts
 *.sh
+
+# Ignore compiled objects
+*.o
+
+# json lib
+/lib/json_lib

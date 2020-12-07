@@ -2,7 +2,7 @@
 #tele_bot/Makefile
 
 LIB = ../lib/
-INCLUDES = -I../lib/
+INCLUDES = -I../lib/ -I../lib/https_lib/mbedtls/include
 
 LIB_HTTPS = "../lib/https_lib/"
 LIB_TELEBOT = "../lib/telebot_Capi/"
@@ -12,7 +12,7 @@ todo:
 	make tele_bot
 
 tele_bot: tele_bot.o 
-	gcc -W -Wall -o tele_bot tele_bot.o $(LIB_TELEBOT)telebot_Capi.o $(LIB_HTTPS)https.o $(LIB_HTTPS)mbedtls/library/libmbedx509.a $(LIB_HTTPS)mbedtls/library/libmbedtls.a $(LIB_HTTPS)mbedtls/library/libmbedcrypto.a
+	gcc -W -Wall -o tele_bot tele_bot.o $(LIB_TELEBOT)telebot_Capi.o $(LIB_TELEBOT)pooling.o $(LIB_HTTPS)https.o $(LIB_HTTPS)mbedtls/library/libmbedx509.a $(LIB_HTTPS)mbedtls/library/libmbedtls.a $(LIB_HTTPS)mbedtls/library/libmbedcrypto.a -pthread
 #	gcc -W -Wall -o tele_bot $(LIB)telebot_Capi/telebot_Capi.o tele_bot.o ../lib/https_lib/https.o
 	
 tele_bot.o: tele_bot.c

@@ -1,10 +1,10 @@
 #
-#     Fichero:  tele_bot/Makefile
+#     Fichero:  testbot/Makefile
 #       Group:  Grupo 8
 #      Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
 #       Fecha:  07/dec/2020
 #
-# Descripcion:  Makefile para compilar tele_bot
+# Descripcion:  Makefile para compilar testbot
 
 LIB = ../lib/
 LIB_TELEBOT = $(LIB)telebot_Capi/
@@ -18,17 +18,17 @@ LIB_HTTPS_FILES = $(LIB_HTTPS)https.o $(LIB_MBEDTLS)libmbedx509.a $(LIB_MBEDTLS)
 
 todo:
 	make -C $(LIB)
-	make tele_bot
+	make testbot
 
-tele_bot: tele_bot.o 
-	gcc -W -Wall -o tele_bot tele_bot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) -lpthread
+testbot: testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES)
+	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) -lpthread
 	
-tele_bot.o: tele_bot.c
-	gcc -W -Wall $(INCLUDES) -c tele_bot.c
+testbot.o: testbot.c
+	gcc -W -Wall $(INCLUDES) -c testbot.c
 
 borra:
-	rm -f tele_bot.o
-	rm -f tele_bot
-	echo > Done cleaning tele_bot
+	rm -f testbot.o
+	rm -f testbot
+	echo > Done cleaning testbot
 	make -C $(LIB) borra
 	

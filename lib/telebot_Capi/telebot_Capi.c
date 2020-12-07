@@ -11,13 +11,11 @@
 #include "https_lib/https.h"
 #include "telebot_Capi.h"
 
-#define API_URL "https://api.telegram.org/bot"
-
 
 /*
 **   Parámetros:  char *tok: Token del BOT.
 **				  bot_https_t *bot_info: Puntero a un tipo bot_https_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
-**                ...
+**                
 **     Devuelve:  int: 0 si la inicializción se ha completado con éxito, -1 en caso de error.
 **
 **  Descripción:  Inicializa las funciones de la librería.

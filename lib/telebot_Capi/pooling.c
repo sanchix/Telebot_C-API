@@ -14,6 +14,14 @@
 #include "telebot_Capi.h"
 
 
+/*
+**   Parámetros:  char *tok: Token del BOT.
+**				  bot_https_t *bot_info: Puntero a un tipo bot_https_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
+**                
+**     Devuelve:  int: 0 si la inicializción se ha completado con éxito, -1 en caso de error.
+**
+**  Descripción:  Inicializa las funciones de la librería.
+*/
 void *pool(void *info){
 	
 	int status;
@@ -31,27 +39,27 @@ void *pool(void *info){
 	
 }
 
+
+/*
+**   Parámetros:  bot_info_t *bot_info: Puntero a una variable bot_info_t con información HTTPS del bot.
+**                
+**     Devuelve:  int: 0 si se completa con éxito, -1 en caso
+**
+**  Descripción:  Inicializa la función de pooling.
+*/
 int tbc_pooling_init(bot_https_t *bot_info){
 	
-	int error = 0;
+	int ret = 0;	// Valor de retorno
 	pthread_attr_t attr;
 	pthread_t thread;
 	
-	printf("Initializating pooling\n");
-	
+	// Se crea un hilo que se encargara del pooling (void *pool())
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	
-	printf("Creating thread...\n");
-	
 	if(pthread_create(&thread, &attr, pool, bot_info) != 0)
 		error = -1;
 	
-	printf("Thread created\n");
-	
 	pthread_attr_destroy(&attr);
-	
-	printf("Attribute destroyed\n");
 	
 	return error;
 	

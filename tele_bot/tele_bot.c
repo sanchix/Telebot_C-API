@@ -1,3 +1,12 @@
+/*
+**     Fichero:  tele_bot/tele_bot.c
+**       Autor:  Grupo 8
+**       Fecha:  <fecha de última edición>
+**
+** Descripcion:  <Descripción sucinta del contenido del fichero>
+*/
+
+
 
 #include <stdio.h>
 #include <unistd.h>

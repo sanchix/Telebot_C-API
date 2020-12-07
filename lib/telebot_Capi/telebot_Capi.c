@@ -1,3 +1,11 @@
+/*
+**     Fichero:  telebot_Capi/telebot_Capi.c
+**       Group:  Grupo 8
+**		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
+**       Fecha:  07/dec/2020
+**
+** Descripcion:  Código principal de la librería "telebot_Capi". Contiene las definiciones de las funciones que podrá utilizar el usuario de la librería.
+*/
 
 #include <string.h>
 #include "https_lib/https.h"
@@ -6,21 +14,46 @@
 #define API_URL "https://api.telegram.org/bot"
 
 
+/*
+**   Parámetros:  char *tok: Token del BOT.
+**				  bot_https_t *bot_info: Puntero a un tipo bot_https_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
+**                ...
+**     Devuelve:  int: 0 si la inicializción se ha completado con éxito, -1 en caso de error.
+**
+**  Descripción:  Inicializa las funciones de la librería.
+*/
 int telebot_init(char *tok, bot_https_t *bot_info){
 	
+	int ret = 0;
 	printf("Initializing telebot_Capi\n");
+	
+	// Inicializamos la librería https_lib
+	http_init(&(bot_info->hi), TRUE);
+	
+	// Formamos la URL de acceso al BOT y la almacenamos en bot_info.
 	strcpy(bot_info->url,API_URL);
 	strcat(bot_info->url,tok);
-	http_init(&(bot_info->hi), TRUE);
-	if(tbc_pooling_init(bot_info) != 0)
-		printf("Error initializing pooling thread\n");
 	
-	printf("End initializing\n");
+	// Inicializamos la funcion de pooling.
+	if(tbc_pooling_init(bot_info) != 0){
+		printf("telebot_Capi: Error initializing pooling thread\n");
+		ret = -1;
+	}
 	
-	return 0;
+	return ret;
 	
 }
 
+
+/*
+**   Parámetros:  char *response: Valor devuelto
+**                <tipo2> <parm2> <Descripción>
+**                ...
+**     Devuelve:  <tipo> <Descripción>
+**
+**  Descripción:  <Descripción>
+*/
+//  #TODO: Cambiar char *response a la estructura de respuesta.
 int telebot_getMe(char *response, int size, bot_https_t *bot_info){
 	
 	int ret = -1;

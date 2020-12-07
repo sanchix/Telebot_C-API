@@ -1,17 +1,24 @@
-#Makefile para compilar telebot_Capi.o
-#lib/telebot_Capi/Makefile
+#
+#     Fichero:  lib/telebot_Capi/Makefile
+#       Group:  Grupo 8
+#      Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
+#       Fecha:  07/dec/2020
+#
+# Descripcion:  Makefile para compilar la librería telebot_Capi
 
 LIB = ../
-HTTP_include = https_lib/
+LIB_HTTPS = $(LIB)https_lib/
+
+INCLUDES = -I$(LIB) -I$(LIB_HTTPS)mbedtls/include/
 
 todo: telebot_Capi.o pooling.o
-	echo "> Telebot C-API compiled"
 
 telebot_Capi.o: telebot_Capi.c telebot_Capi.h
-	gcc -W -Wall -I$(LIB) -I$(LIB)https_lib/mbedtls/include -c telebot_Capi.c
+	gcc -W -Wall $(INCLUDES) -c telebot_Capi.c
 	
-pooling.o: pooling.o telebot_Capi.h
-	gcc -W -Wall -I$(LIB) -I$(LIB)https_lib/mbedtls/include -c pooling.c
+pooling.o: pooling.c telebot_Capi.h
+	gcc -W -Wall $(INCLUDES) -c pooling.c
 
 borra: 
-	rm telebot_Capi.o
+	rm -f telebot_Capi.o
+	rm -f pooling.o

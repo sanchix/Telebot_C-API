@@ -1,16 +1,16 @@
 /*
 **     Fichero:  tele_bot/tele_bot.c
-**       Autor:  Grupo 8
-**       Fecha:  <fecha de última edición>
+**       Group:  Grupo 8
+**		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
+**       Fecha:  07/dec/2020
 **
-** Descripcion:  <Descripción sucinta del contenido del fichero>
+** Descripcion:  Implementación de un BOT para la aplicación Telegram(R) utilizando la librería "telebot_Capi" con el objetivo de probar la funcionalidad de esta última.
 */
-
-
 
 #include <stdio.h>
 #include <unistd.h>
 #include "telebot_Capi/telebot_Capi.h"
+
 
 
 int main(int argc, char* argv[]){
@@ -36,6 +36,6 @@ int main(int argc, char* argv[]){
 
 	}
 	
-	return 0;
+	return 0; 
 	
 }

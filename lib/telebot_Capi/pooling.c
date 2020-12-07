@@ -1,9 +1,18 @@
+/*
+**     Fichero:  telebot_Capi/pooling.c
+**       Group:  Grupo 8
+**		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
+**       Fecha:  07/dec/2020
+**
+** Descripcion:  Parte de la libreria telebot_Capi encargada de obtener actualizaciones mediante el método de "long pooling".
+*/
 
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
 #include "https_lib/https.h"
 #include "telebot_Capi.h"
+
 
 void *pool(void *info){
 	

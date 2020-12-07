@@ -1,15 +1,21 @@
-#lib/compile_libs
+#
+#     Fichero:  lib/Makefile
+#       Group:  Grupo 8
+#      Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
+#       Fecha:  07/dec/2020
+#
+# Descripcion:  Makefile para compilar todas las librerías:
 
 #Libs:
 #	https_lib
 #	telebot_Capi
 
+LIB_TELEBOT = telebot_Capi/
+LIB_HTTPS = https_lib/
+
 todo:	
-	make -C https_lib/
-	make -C telebot_Capi/
+	make -C $(LIB_HTTPS)
+	make -C $(LIB_TELEBOT)
 	
 borra:
-	make -C telebot_Capi/ borra
-	#Mirar el makefile antes de ejecutar las siguientes instrucciones antes de descomentar
-	#make -C https_lib/ clean
-	#make -C https_lib/ mbedtls_clean
+	make -C $(LIB_TELEBOT) borra

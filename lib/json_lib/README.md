@@ -1,276 +1,182 @@
-\mainpage
+JSMN
+====
 
-`json-c`
-========
+[![Build Status](https://travis-ci.org/zserge/jsmn.svg?branch=master)](https://travis-ci.org/zserge/jsmn)
 
-1. [Overview and Build Status](#overview)
-2. [Building on Unix](#buildunix)
-    * [Prerequisites](#installprereq)
-    * [Build commands](#buildcmds)
-3. [CMake options](#CMake)
-4. [Testing](#testing)
-5. [Building with `vcpkg`](#buildvcpkg)
-6. [Linking to libjson-c](#linking)
-7. [Using json-c](#using)
+jsmn (pronounced like 'jasmine') is a minimalistic JSON parser in C.  It can be
+easily integrated into resource-limited or embedded projects.
 
-JSON-C - A JSON implementation in C <a name="overview"></a>
------------------------------------
+You can find more information about JSON format at [json.org][1]
 
-Build Status
-* [AppVeyor Build](https://ci.appveyor.com/project/hawicz/json-c) ![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/json-c/json-c?branch=master&svg=true)
-* [Travis Build](https://travis-ci.org/json-c/json-c) ![Travis Build Status](https://travis-ci.org/json-c/json-c.svg?branch=master)
+Library sources are available at https://github.com/zserge/jsmn
 
-Test Status
-* [Coveralls](https://coveralls.io/github/json-c/json-c?branch=master) [![Coverage Status](https://coveralls.io/repos/github/json-c/json-c/badge.svg?branch=master)](https://coveralls.io/github/json-c/json-c?branch=master)
+The web page with some information about jsmn can be found at
+[http://zserge.com/jsmn.html][2]
 
-JSON-C implements a reference counting object model that allows you to easily
-construct JSON objects in C, output them as JSON formatted strings and parse
-JSON formatted strings back into the C representation of JSON objects.
-It aims to conform to [RFC 7159](https://tools.ietf.org/html/rfc7159).
-
-Building on Unix with `git`, `gcc` and `cmake` <a name="buildunix"></a>
---------------------------------------------------
-
-Home page for json-c: https://github.com/json-c/json-c/wiki
-
-### Prerequisites: <a name="installprereq"></a>
-
- - `gcc`, `clang`, or another C compiler
-
- - `cmake>=2.8`, `>=3.16` recommended
-
-To generate docs you'll also need:
- - `doxygen>=1.8.13`
-
-If you are on a relatively modern system, you'll likely be able to install
-the prerequisites using your OS's packaging system.
-
-### Install using apt (e.g. Ubuntu 16.04.2 LTS)
-```sh
-sudo apt install git
-sudo apt install cmake
-sudo apt install doxygen  # optional
-sudo apt install valgrind # optional
-```
-
-### Build instructions:  <a name="buildcmds"></a>
-
-`json-c` GitHub repo: https://github.com/json-c/json-c
-
-```sh
-$ git clone https://github.com/json-c/json-c.git
-$ mkdir json-c-build
-$ cd json-c-build
-$ cmake ../json-c   # See CMake section below for custom arguments
-```
-
-Note: it's also possible to put your build directory inside the json-c
-source directory, or even not use a separate build directory at all, but
-certain things might not work quite right (notably, `make distcheck`)
-
-Then:
-
-```sh
-$ make
-$ make test
-$ make USE_VALGRIND=0 test   # optionally skip using valgrind
-$ make install
-```
-
-
-### Generating documentation with Doxygen:
-
-The library documentation can be generated directly from the source code using Doxygen tool:
-
-```sh
-# in build directory
-make doc
-google-chrome doc/html/index.html
-```
-
-
-CMake Options <a name="CMake"></a>
---------------------
-
-The json-c library is built with [CMake](https://cmake.org/cmake-tutorial/),
-which can take a few options.
-
-Variable                     | Type   | Description
------------------------------|--------|--------------
-CMAKE_INSTALL_PREFIX         | String | The install location.
-CMAKE_BUILD_TYPE             | String | Defaults to "debug".
-BUILD_SHARED_LIBS            | Bool   | The default build generates a dynamic (dll/so) library.  Set this to OFF to create a static library only.
-BUILD_STATIC_LIBS            | Bool   | The default build generates a static (lib/a) library.  Set this to OFF to create a shared library only.
-DISABLE_STATIC_FPIC          | Bool   | The default builds position independent code.  Set this to OFF to create a shared library only.
-DISABLE_BSYMBOLIC            | Bool   | Disable use of -Bsymbolic-functions.
-DISABLE_THREAD_LOCAL_STORAGE | Bool   | Disable use of Thread-Local Storage (HAVE___THREAD).
-DISABLE_WERROR               | Bool   | Disable use of -Werror.
-ENABLE_RDRAND                | Bool   | Enable RDRAND Hardware RNG Hash Seed.
-ENABLE_THREADING             | Bool   | Enable partial threading support.
-OVERRIDE_GET_RANDOM_SEED     | String | A block of code to use instead of the default implementation of json_c_get_random_seed(), e.g. on embedded platforms where not even the fallback to time() works.  Must be a single line.
-
-Pass these options as `-D` on CMake's command-line.
-
-```sh
-# build a static library only
-cmake -DBUILD_SHARED_LIBS=OFF ..
-```
-
-### Building with partial threading support
-
-Although json-c does not support fully multi-threaded access to
-object trees, it has some code to help make its use in threaded programs
-a bit safer.  Currently, this is limited to using atomic operations for
-json_object_get() and json_object_put().
-
-Since this may have a performance impact, of at least 3x slower
-according to https://stackoverflow.com/a/11609063, it is disabled by
-default.  You may turn it on by adjusting your cmake command with:
-   -DENABLE_THREADING=ON
-
-Separately, the default hash function used for object field keys,
-lh_char_hash, uses a compare-and-swap operation to ensure the random
-seed is only generated once.  Because this is a one-time operation, it
-is always compiled in when the compare-and-swap operation is available.
-
-
-### cmake-configure wrapper script
-
-For those familiar with the old autoconf/autogen.sh/configure method,
-there is a `cmake-configure` wrapper script to ease the transition to cmake.
-
-```sh
-mkdir build
-cd build
-../cmake-configure --prefix=/some/install/path
-make
-```
-
-cmake-configure can take a few options.
-
-| options | Description|
-| ---- | ---- |
-| prefix=PREFIX |  install architecture-independent files in PREFIX |
-| enable-threading |  Enable code to support partly multi-threaded use |
-| enable-rdrand | Enable RDRAND Hardware RNG Hash Seed generation on supported x86/x64 platforms. |
-| enable-shared  |  build shared libraries [default=yes] |
-| enable-static  |  build static libraries [default=yes] |
-| disable-Bsymbolic |  Avoid linking with -Bsymbolic-function |
-| disable-werror |  Avoid treating compiler warnings as fatal errors |
-
-
-Testing:  <a name="testing"></a>
+Philosophy
 ----------
 
-By default, if valgrind is available running tests uses it.
-That can slow the tests down considerably, so to disable it use:
-```sh
-export USE_VALGRIND=0
+Most JSON parsers offer you a bunch of functions to load JSON data, parse it
+and extract any value by its name. jsmn proves that checking the correctness of
+every JSON packet or allocating temporary objects to store parsed JSON fields
+often is an overkill. 
+
+JSON format itself is extremely simple, so why should we complicate it?
+
+jsmn is designed to be	**robust** (it should work fine even with erroneous
+data), **fast** (it should parse data on the fly), **portable** (no superfluous
+dependencies or non-standard C extensions). And of course, **simplicity** is a
+key feature - simple code style, simple algorithm, simple integration into
+other projects.
+
+Features
+--------
+
+* compatible with C89
+* no dependencies (even libc!)
+* highly portable (tested on x86/amd64, ARM, AVR)
+* about 200 lines of code
+* extremely small code footprint
+* API contains only 2 functions
+* no dynamic memory allocation
+* incremental single-pass parsing
+* library code is covered with unit-tests
+
+Design
+------
+
+The rudimentary jsmn object is a **token**. Let's consider a JSON string:
+
+	'{ "name" : "Jack", "age" : 27 }'
+
+It holds the following tokens:
+
+* Object: `{ "name" : "Jack", "age" : 27}` (the whole object)
+* Strings: `"name"`, `"Jack"`, `"age"` (keys and some values)
+* Number: `27`
+
+In jsmn, tokens do not hold any data, but point to token boundaries in JSON
+string instead. In the example above jsmn will create tokens like: Object
+[0..31], String [3..7], String [12..16], String [20..23], Number [27..29].
+
+Every jsmn token has a type, which indicates the type of corresponding JSON
+token. jsmn supports the following token types:
+
+* Object - a container of key-value pairs, e.g.:
+	`{ "foo":"bar", "x":0.3 }`
+* Array - a sequence of values, e.g.:
+	`[ 1, 2, 3 ]`
+* String - a quoted sequence of chars, e.g.: `"foo"`
+* Primitive - a number, a boolean (`true`, `false`) or `null`
+
+Besides start/end positions, jsmn tokens for complex types (like arrays
+or objects) also contain a number of child items, so you can easily follow
+object hierarchy.
+
+This approach provides enough information for parsing any JSON data and makes
+it possible to use zero-copy techniques.
+
+Usage
+-----
+
+Download `jsmn.h`, include it, done.
+
+```
+#include "jsmn.h"
+
+...
+jsmn_parser p;
+jsmntok_t t[128]; /* We expect no more than 128 JSON tokens */
+
+jsmn_init(&p);
+r = jsmn_parse(&p, s, strlen(s), t, 128);
 ```
 
-To run tests a separate build directory is recommended:
-```sh
-mkdir build-test
-cd build-test
-# VALGRIND=1 causes -DVALGRIND=1 to be passed when compiling code
-# which uses slightly slower, but valgrind-safe code.
-VALGRIND=1 cmake ..
-make
+Since jsmn is a single-header, header-only library, for more complex use cases
+you might need to define additional macros. `#define JSMN_STATIC` hides all
+jsmn API symbols by making them static. Also, if you want to include `jsmn.h`
+from multiple C files, to avoid duplication of symbols you may define  `JSMN_HEADER` macro.
 
-make test
-# By default, if valgrind is available running tests uses it.
-make USE_VALGRIND=0 test   # optionally skip using valgrind
+```
+/* In every .c file that uses jsmn include only declarations: */
+#define JSMN_HEADER
+#include "jsmn.h"
+
+/* Additionally, create one jsmn.c file for jsmn implementation: */
+#include "jsmn.h"
 ```
 
-If a test fails, check `Testing/Temporary/LastTest.log`,
-`tests/testSubDir/${testname}/${testname}.vg.out`, and other similar files.
-If there is insufficient output try:
-```sh
-VERBOSE=1 make test
-```
-or
-```sh
-JSONC_TEST_TRACE=1 make test
-```
-and check the log files again.
+API
+---
 
+Token types are described by `jsmntype_t`:
 
-Building on Unix and Windows with `vcpkg` <a name="buildvcpkg"></a>
---------------------------------------------------
+	typedef enum {
+		JSMN_UNDEFINED = 0,
+		JSMN_OBJECT = 1,
+		JSMN_ARRAY = 2,
+		JSMN_STRING = 3,
+		JSMN_PRIMITIVE = 4
+	} jsmntype_t;
 
-You can download and install JSON-C using the [vcpkg](https://github.com/Microsoft/vcpkg/) dependency manager:
+**Note:** Unlike JSON data types, primitive tokens are not divided into
+numbers, booleans and null, because one can easily tell the type using the
+first character:
 
-    git clone https://github.com/Microsoft/vcpkg.git
-    cd vcpkg
-    ./bootstrap-vcpkg.sh
-    ./vcpkg integrate install
-    vcpkg install json-c
+* <code>'t', 'f'</code> - boolean 
+* <code>'n'</code> - null
+* <code>'-', '0'..'9'</code> - number
 
-The JSON-C port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+Token is an object of `jsmntok_t` type:
 
+	typedef struct {
+		jsmntype_t type; // Token type
+		int start;       // Token start position
+		int end;         // Token end position
+		int size;        // Number of child (nested) tokens
+	} jsmntok_t;
 
-Linking to `libjson-c` <a name="linking">
-----------------------
+**Note:** string tokens point to the first character after
+the opening quote and the previous symbol before final quote. This was made 
+to simplify string extraction from JSON data.
 
-If your system has `pkgconfig`,
-then you can just add this to your `makefile`:
+All job is done by `jsmn_parser` object. You can initialize a new parser using:
 
-```make
-CFLAGS += $(shell pkg-config --cflags json-c)
-LDFLAGS += $(shell pkg-config --libs json-c)
-```
+	jsmn_parser parser;
+	jsmntok_t tokens[10];
 
-Without `pkgconfig`, you would do something like this:
+	jsmn_init(&parser);
 
-```make
-JSON_C_DIR=/path/to/json_c/install
-CFLAGS += -I$(JSON_C_DIR)/include/json-c
-LDFLAGS+= -L$(JSON_C_DIR)/lib -ljson-c
-```
+	// js - pointer to JSON string
+	// tokens - an array of tokens available
+	// 10 - number of tokens available
+	jsmn_parse(&parser, js, strlen(js), tokens, 10);
 
+This will create a parser, and then it tries to parse up to 10 JSON tokens from
+the `js` string.
 
-Using json-c <a name="using">
-------------
+A non-negative return value of `jsmn_parse` is the number of tokens actually
+used by the parser.
+Passing NULL instead of the tokens array would not store parsing results, but
+instead the function will return the number of tokens needed to parse the given
+string. This can be useful if you don't know yet how many tokens to allocate.
 
-To use json-c you can either include json.h, or preferrably, one of the
-following more specific header files:
+If something goes wrong, you will get an error. Error will be one of these:
 
-* json_object.h  - Core types and methods.
-* json_tokener.h - Methods for parsing and serializing json-c object trees.
-* json_pointer.h - JSON Pointer (RFC 6901) implementation for retrieving
-                   objects from a json-c object tree.
-* json_object_iterator.h - Methods for iterating over single json_object instances.  (See also `json_object_object_foreach()` in json_object.h)
-* json_visit.h   - Methods for walking a tree of json-c objects.
-* json_util.h    - Miscellaneous utility functions.
+* `JSMN_ERROR_INVAL` - bad token, JSON string is corrupted
+* `JSMN_ERROR_NOMEM` - not enough tokens, JSON string is too large
+* `JSMN_ERROR_PART` - JSON string is too short, expecting more JSON data
 
-For a full list of headers see [files.html](http://json-c.github.io/json-c/json-c-current-release/doc/html/files.html)
+If you get `JSMN_ERROR_NOMEM`, you can re-allocate more tokens and call
+`jsmn_parse` once more.  If you read json data from the stream, you can
+periodically call `jsmn_parse` and check if return value is `JSMN_ERROR_PART`.
+You will get this error until you reach the end of JSON data.
 
-The primary type in json-c is json_object.  It describes a reference counted
-tree of json objects which are created by either parsing text with a
-json_tokener (i.e. `json_tokener_parse_ex()`), or by creating
-(with `json_object_new_object()`, `json_object_new_int()`, etc...) and adding
-(with `json_object_object_add()`, `json_object_array_add()`, etc...) them 
-individually.
-Typically, every object in the tree will have one reference, from its parent.
-When you are done with the tree of objects, you call json_object_put() on just
-the root object to free it, which recurses down through any child objects
-calling json_object_put() on each one of those in turn.
+Other info
+----------
 
-You can get a reference to a single child 
-(`json_object_object_get()` or `json_object_array_get_idx()`)
-and use that object as long as its parent is valid.  
-If you need a child object to live longer than its parent, you can
-increment the child's refcount (`json_object_get()`) to allow it to survive
-the parent being freed or it being removed from its parent
-(`json_object_object_del()` or `json_object_array_del_idx()`)
+This software is distributed under [MIT license](http://www.opensource.org/licenses/mit-license.php),
+ so feel free to integrate it in your commercial products.
 
-When parsing text, the json_tokener object is independent from the json_object
-that it returns.  It can be allocated (`json_tokener_new()`)
-used one or multiple times (`json_tokener_parse_ex()`, and
-freed (`json_tokener_free()`) while the json_object objects live on.
-
-A json_object tree can be serialized back into a string with 
-`json_object_to_json_string_ext()`.  The string that is returned 
-is only valid until the next "to_json_string" call on that same object.
-Also, it is freed when the json_object is freed.
-
+[1]: http://www.json.org/
+[2]: http://zserge.com/jsmn.html

@@ -7,8 +7,8 @@
 ** Descripcion:  Declaraciones de las funciones, tipos y constantes que podrá utilizar el usuario de la librería.
 */
 
-#ifndef <FICHERO>_H
-#define <FICHERO>_H
+#ifndef TELEBOT_CAPI_H
+#define TELEBOT_CAPI_H
 
 
 /* -------- Includes de la aplicacion -------- */
@@ -38,7 +38,7 @@ typedef struct{
 **
 **  Descripción:  Inicializa las funciones de la librería telebot_Capi.
 */
-int telebot_init(char tok[50], bot_https_t *bot_info);
+int telebot_init(char tok[50], bot_info_t *bot_info);
 
 
 /*
@@ -48,11 +48,11 @@ int telebot_init(char tok[50], bot_https_t *bot_info);
 **
 **  Descripción:  Inicializa la función de pooling.
 */
-int tbc_pooling_init(bot_https_t *bot_info);
+int tbc_pooling_init(bot_info_t *bot_info);
 
 
 #endif
 
 
-int telebot_getMe(char *response, int size, bot_https_t *bot_info);
+int telebot_getMe(char *response, int size, bot_info_t *bot_info);
 

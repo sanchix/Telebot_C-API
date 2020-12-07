@@ -14,13 +14,13 @@
 
 /*
 **   Parámetros:  char *tok: Token del BOT.
-**				  bot_https_t *bot_info: Puntero a un tipo bot_https_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
+**				  bot_info_t *bot_info: Puntero a un tipo bot_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
 **                
 **     Devuelve:  int: 0 si la inicializción se ha completado con éxito, -1 en caso de error.
 **
 **  Descripción:  Inicializa las funciones de la librería.
 */
-int telebot_init(char *tok, bot_https_t *bot_info){
+int telebot_init(char *tok, bot_info_t *bot_info){
 	
 	int ret = 0;
 	printf("Initializing telebot_Capi\n");
@@ -52,7 +52,7 @@ int telebot_init(char *tok, bot_https_t *bot_info){
 **  Descripción:  <Descripción>
 */
 //  #TODO: Cambiar char *response a la estructura de respuesta.
-int telebot_getMe(char *response, int size, bot_https_t *bot_info){
+int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 	
 	int ret = -1;
 	int status = 0;

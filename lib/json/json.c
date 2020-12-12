@@ -86,6 +86,7 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
     return valor;
 }
 
+
 /*
 **   Parámetro:  json_parsed_t obj: para recibir el token.
 **				  
@@ -94,12 +95,12 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
 **
 **  Descripción:  Devuelve el tamaño de una lista json.
 */
-
 int json_list_size (json_parsed_t obj){
   int size;
   size = obj.tokens[0].size;
   return size;
 }
+
 
 /*
 **   Parámetros:  char *clave: clave del elemento.

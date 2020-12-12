@@ -53,7 +53,7 @@ void *parser(void *resp){
 		json_parse(response, &parsed);
 		analizar_objeto(jsmn_init;jsmn_parse) -> struct_parsed
 		
-		//primeFromObj(V), listFromObj, list_size, objFromList, smsgFromObj
+		//primeFromObj(V), listFromObj, list_size(V), objFromList, smsgFromObj
 		
 		//Buscamos el valor de ok y result)
 		valido = json_primeFromObj(key="ok",objeto=tokens)

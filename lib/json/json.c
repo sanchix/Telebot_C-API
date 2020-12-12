@@ -53,13 +53,15 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
   int valor; 
   char aux[20];
   int size_valor=-1;
+  int offset=1;
   //Si size_valor se queda a -1 es que no existe la clave o ha habido un error.
 
-  for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++)
+  for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++){
     if (jsoneq(obj.json_string,&obj.tokens[i],clave) == 0){
       
-      size_valor = obj.tokens[i+1].end - obj.tokens[i+1].start;
-      sprintf(aux,"%.*s",size_valor,obj.json_string+obj.tokens[i+1].start);
+      size_valor = obj.tokens[offset+1].end - obj.tokens[offset+1].start;
+      sprintf(aux,"%.*s",size_valor,obj.json_string+obj.tokens[offset+1].start);
+      
       if (strcmp(aux,"true")==0 || strcmp(aux,"false")==0){
 	if (strcmp(aux,"true")==0)
 	  valor = 1;
@@ -70,7 +72,9 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
 	valor = atoi (aux);
       }
     }
-
+    
+    offset += analize_element(&obj.tokens[offset+1],obj.json_string);
+  }
   if (size_valor == -1)
     return size_valor;
   else
@@ -124,6 +128,7 @@ int analize_list(jsmntok_t *t,char *json){
 
 
 	tokensize = offset;
+	printf("\nTamaño en tokens de la lista: %d\n\n",tokensize);
 	return tokensize;
 }
 
@@ -156,6 +161,7 @@ int analize_object(jsmntok_t *t, char * json){
   printf("}\n");
 	
   tokensize = offset;
+  printf("\nTamaño en tokens del objeto: %d\n\n",tokensize);
   return tokensize;
 	
 }
@@ -217,3 +223,4 @@ void analize_all(char *json){
     }
   
 }
+

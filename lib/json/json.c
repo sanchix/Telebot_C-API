@@ -8,39 +8,60 @@ int analize_object(jsmntok_t *t,char *json);
 int jsoneq(const char *json, jsmntok_t *tok, const char *s);
 void analize_all(char *json);
 
+
+/*
+**   Parámetros:  char *clave: clave del elemento.
+**				  obj_token *bot_info: Puntero a un tipo bot_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
+**                
+**     Devuelve:  int: valor del tipo primitivo
+**
+**  Descripción:  Inicializa las funciones de la librería.
+*/
+int jsmn_primeFromObj(char *clave, struct json_struct obj){
+	
+	//tokens[0] = referido a "{"
+	
+	obj.tokens
+	obj.cadena
+	
+	
+	
+}
+
+
 int analize_list(jsmntok_t *t,char *json){
-  int tokensize = 0;
-  int offset = 1;
+	int tokensize = 0;
+	int offset = 1;
 
-  printf("[\n");
+	printf("[\n");
   
 
   
-  for(int i = 0 ; i < t[0].size ; i++){
+	for(int i = 0 ; i < t[0].size ; i++){
    
-    if(t[offset].type == JSMN_STRING){
+		if(t[offset].type == JSMN_STRING){
      
-      printf("%.*s\n", t[offset].end - t[offset].start,json + t[offset].start);
-      offset = offset + 1;
+			printf("%.*s\n", t[offset].end - t[offset].start,json + t[offset].start);
+			offset = offset + 1;
       
-    }
-    else if(t[offset].type == JSMN_OBJECT){
-      offset = offset + analize_object(&t[offset],json);
-    }
-    else if(t[offset].type == JSMN_ARRAY){
-      offset = offset + analize_list(&t[offset],json);
-    }
-    else if(t[offset].type == JSMN_PRIMITIVE){
-       printf("%.*s\n", t[offset].end - t[offset].start,json + t[offset].start);
-      offset = offset + 1;
-    }
-  }
+		}
+		else if(t[offset].type == JSMN_OBJECT){
+			offset = offset + analize_object(&t[offset],json);
+		}
+		else if(t[offset].type == JSMN_ARRAY){
+			offset = offset + analize_list(&t[offset],json);
+		}
+		else if(t[offset].type == JSMN_PRIMITIVE){
+			printf("%.*s\n", t[offset].end - t[offset].start,json + t[offset].start);
+			offset = offset + 1;
+		}
+	}
   
-  printf("]\n");
+	printf("]\n");
 
 
-  tokensize = offset;
-  return tokensize;
+	tokensize = offset;
+	return tokensize;
 }
 
 int analize_object(jsmntok_t *t, char * json){

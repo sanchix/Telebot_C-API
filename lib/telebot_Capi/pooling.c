@@ -52,13 +52,16 @@ void *parser(void *resp){
 		//Function content in json.h
 		analizar_objeto(jsmn_init;jsmn_parse) -> tokens
 		
+		//primeFromObj, listFromObj, list_size, objFromList, smsgFromObj
+		
 		//Buscamos el valor de ok y result)
 		valido = json_primeFromObj(key="ok",objeto=tokens)
+		if (!valido) error()
 		lista_updates = json_listFromObj(key="result",objeto=tokens)
 		
 		//Fast last_update_id search
 		
-		for(i = 0; i < list_size(lista_updates); i++){
+		for(i = 0; i < list_size(list_updates); i++){
 			update = json_objFromList(index=i,lista=lista_updates)
 			
 			update_id = json_primeFromObj(key="update_id",object=update)

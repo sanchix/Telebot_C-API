@@ -8,7 +8,7 @@ int main (){
   json_parsed_t parsed;
 
   if (json_parse(json,&parsed)==0){
-    int valor=jsmn_primeFromObj("ok",parsed);
+    int valor=json_primeFromObj("ok",parsed);
     if (valor!=-1){
       printf("ok:%d\n",valor);
     }

@@ -47,13 +47,14 @@ int json_parse(char *cad, json_parsed_t *parsed){
 **
 **  Descripción:  Inicializa las funciones de la librería.
 */
-int jsmn_primeFromObj(char *clave, json_parsed_t obj){
+int json_primeFromObj(char *clave, json_parsed_t obj){
   
   //tokens[0] = referido a "{"
   int valor; 
   char aux[20];
   int size_valor=-1;
   //Si size_valor se queda a -1 es que no existe la clave o ha habido un error.
+
   for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++)
     if (jsoneq(obj.json_string,&obj.tokens[i],clave) == 0){
       
@@ -76,6 +77,20 @@ int jsmn_primeFromObj(char *clave, json_parsed_t obj){
     return valor;
 }
 
+/*
+**   Parámetro:  json_parsed_t obj: para recibir el token.
+**				  
+**                
+**     Devuelve:  int: tamaño de la lista
+**
+**  Descripción:  Devuelve el tamaño de una lista json.
+*/
+
+int json_list_size (json_parsed_t obj){
+  int size;
+  size = obj.tokens[0].size;
+  return size;
+}
 
 /*
 **   Parámetros:  char *clave: clave del elemento.

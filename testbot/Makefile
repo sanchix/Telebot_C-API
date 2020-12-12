@@ -10,18 +10,20 @@ LIB = ../lib/
 LIB_TELEBOT = $(LIB)telebot_Capi/
 LIB_HTTPS = $(LIB)https_lib/
 LIB_MBEDTLS = $(LIB_HTTPS)mbedtls/library/
+LIB_JSON = $(LIB)json/
 
 INCLUDES = -I$(LIB) -I$(LIB_HTTPS)mbedtls/include/
 
 LIB_TELEBOT_FILES = $(LIB_TELEBOT)telebot_Capi.o $(LIB_TELEBOT)pooling.o
 LIB_HTTPS_FILES = $(LIB_HTTPS)https.o $(LIB_MBEDTLS)libmbedx509.a $(LIB_MBEDTLS)libmbedtls.a $(LIB_MBEDTLS)libmbedcrypto.a
+LIB_JSON_FILES = $(LIB_JSON)json-c.o
 
 todo:
 	make -C $(LIB)
 	make testbot
 
-testbot: testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES)
-	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) -lpthread
+testbot: testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) $(LIB_JSON_FILES)
+	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) $(LIB_JSON_FILES) -lpthread
 	
 testbot.o: testbot.c
 	gcc -W -Wall $(INCLUDES) -c testbot.c

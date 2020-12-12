@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+//#define DEBUG 1
+
 int analize_list(jsmntok_t *t, char *json);
 int analize_object(jsmntok_t *t,char *json);
 int jsoneq(const char *json, jsmntok_t *tok, const char *s);
@@ -88,12 +90,12 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
 **   Parámetro:  json_parsed_t obj: para recibir el token.
 **				  
 **                
-**     Devuelve:  int: tamaño de la lista
+**     Devuelve:  int: tamaño de la lista/objeto/elemento
 **
 **  Descripción:  Devuelve el tamaño de una lista json.
 */
 
-int json_list_size (json_parsed_t obj){
+int json_element_size (json_parsed_t obj){
   int size;
   size = obj.tokens[0].size;
   return size;
@@ -140,16 +142,17 @@ int analize_element(jsmntok_t *t, char *json){
 int analize_list(jsmntok_t *t,char *json){
 	int tokensize = 0;
 	int offset = 1;
-
+	#ifdef DEBUG
 	printf("[\n");
-  
+	#endif
 
   
 	for(int i = 0 ; i < t[0].size ; i++){
    
 		if(t[offset].type == JSMN_STRING){
-     
+		  #ifdef DEBUG
 			printf("%.*s\n", t[offset].end - t[offset].start,json + t[offset].start);
+		  #endif
 			offset = offset + 1;
       
 		}
@@ -160,16 +163,20 @@ int analize_list(jsmntok_t *t,char *json){
 			offset = offset + analize_list(&t[offset],json);
 		}
 		else if(t[offset].type == JSMN_PRIMITIVE){
+                #ifdef DEBUG
 			printf("%.*s\n", t[offset].end - t[offset].start,json + t[offset].start);
+                #endif
 			offset = offset + 1;
 		}
 	}
-  
+	#ifdef DEBUG
 	printf("]\n");
-
+        #endif
 
 	tokensize = offset;
+	#ifdef DEBUG
 	printf("\nTamaño en tokens de la lista: %d\n\n",tokensize);
+	#endif
 	return tokensize;
 }
 
@@ -177,14 +184,17 @@ int analize_object(jsmntok_t *t, char * json){
 	
   int tokensize = 0;
   int offset = 1;
-	
+#ifdef DEBUG	
   printf("{\n");
-	
+ #endif	
   for(int i = 0 ; i < t[0].size ; i++){
+    #ifdef DEBUG
     printf("%.*s:\n", t[offset].end - t[offset].start,json + t[offset].start);
-    
+     #endif
     if(t[offset+1].type == JSMN_STRING){
+    #ifdef DEBUG
       printf("%.*s\n", t[offset + 1].end - t[offset + 1].start,json + t[offset + 1].start);
+       #endif
       offset = offset + 2; 
     }
     else if(t[offset+1].type == JSMN_OBJECT){
@@ -194,15 +204,19 @@ int analize_object(jsmntok_t *t, char * json){
       offset = offset + 1 + analize_list(&t[offset+1],json);
     }
     else if(t[offset+1].type == JSMN_PRIMITIVE){
+      #ifdef DEBUG
        printf("%.*s\n", t[offset+1].end - t[offset+1].start,json + t[offset+1].start);
+        #endif
       offset = offset + 2;
     }
   }
-	
+#ifdef DEBUG	
   printf("}\n");
-	
+#endif	
   tokensize = offset;
+#ifdef DEBUG
   printf("\nTamaño en tokens del objeto: %d\n\n",tokensize);
+  #endif
   return tokensize;
 	
 }

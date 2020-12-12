@@ -36,7 +36,7 @@ void *parser(void *resp){
 	key_t clave;
 	int msgqueue_id;
 	struct msgbuf msq_buffer;
-	//json_parsed_t parsed;
+	json_parsed_t parsed;
 	
 	clave = ftok(".", 'p');  //Equivalent to 1882193940
 	msq_buffer.mtype = OFFSET_MSG_TYPE;
@@ -49,7 +49,7 @@ void *parser(void *resp){
 		printf("Updates: %s\n", response);
 		
 		/*	--------  CODE  --------  */
-		/*
+		
 		json_parse(response, &parsed);
 		analizar_objeto(jsmn_init;jsmn_parse) -> struct_parsed
 		
@@ -72,14 +72,14 @@ void *parser(void *resp){
 			sent2client(struct message)
 			
 		}
-		*/
+		
 		/*	--------  CODE  --------  */
 		
-		
+		/*
 		sleep(1);
 		strcpy(msq_buffer.mtext, "-1");
 		msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
-		
+		*/
 		
 	}
 	

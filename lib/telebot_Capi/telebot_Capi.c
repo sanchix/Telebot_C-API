@@ -69,3 +69,25 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 	return ret;
 	
 }
+
+
+int telebot_sendMessage(char *response, int size, bot_info_t *bot_info){
+	
+	int ret = -1;
+	int status = 0;
+	char url[200];
+	char method[15] = "/sendMessage";
+	char data[100] = "{\"chat_id\":150848014,\"text\":\"Hola\"}";
+	
+	strcpy(url, bot_info->url);
+	strcat(url, method);
+	status = http_post(&(bot_info->hi), url, data, response, size);
+	//printf("status: %d \n",status);
+	printf("%s \n",response);
+	if(status == 200){
+		ret = 0;
+	}
+	
+	return ret;
+	
+}

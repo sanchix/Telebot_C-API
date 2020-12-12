@@ -72,9 +72,14 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
 	valor = atoi (aux);
       }
     }
+<<<<<<< HEAD
     
     offset += analize_element(&obj.tokens[offset+1],obj.json_string);
   }
+=======
+  }
+
+>>>>>>> ed8aeb626f392700d53431b85f6cfef046ab29d4
   if (size_valor == -1)
     return size_valor;
   else
@@ -95,6 +100,44 @@ int json_list_size (json_parsed_t obj){
   size = obj.tokens[0].size;
   return size;
 }
+
+/*
+**   Parámetros:  char *clave: clave del elemento.
+**				  json_parsed_t *obj: Puntero al token referido al objeto
+**                
+**     Devuelve:  Una variable json_parsed_t que apunta al primer token de la lista
+**
+**  Descripción:  Devuelve una estructura json_parsed_t apuntando a la lista contenida en el objeto "obj" con clave "clave".
+*/
+int json_listFromObj(char *clave, json_parsed_t obj){
+	
+	int offset = 0;
+	int ret = -1;
+	
+	for(int i = 0; i < obj.tokens[0].size && ret == -1; i++){
+		
+		
+		
+	}
+	
+}
+
+
+int analize_element(jsmntok_t *t, char *json){
+	
+	int token_size = 1;
+	
+	if(t->type == JSMN_OBJECT){
+		token_size = analize_object(t, json);
+	}
+	else if(t->type == JSMN_ARRAY){
+		token_size = analize_list(t,json);
+	}
+	
+	return token_size;
+	
+}
+
 
 int analize_list(jsmntok_t *t,char *json){
 	int tokensize = 0;

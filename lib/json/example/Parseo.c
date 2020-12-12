@@ -8,9 +8,9 @@
  * tokens is predictable.
  */
 
-static const char *JSON_STRING =
-    "{\"user\": \"johndoe\", \"admin\": false, \"uid\": 1000,\n  "
-    "\"groups\": [\"users\", \"wheel\", \"audio\", \"video\"]}";
+static const char *JSON_STRING = "{\"ok\":true,\"result\":[{\"update_id\":596179679,
+\"message\":{\"message_id\":16,\"from\":{\"id\":150848014,\"is_bot\":false,\"first_name\":\"Javi\",\"last_name\":\"Sanchi\",\"language_code\":\"en\"},\"chat\":{\"id\":150848014,\"first_name\":\"Javi\",\"last_name\":\"Sanchi\",\"type\":\"private\"},\"date\":1607340555,\"text\":\"Parada claro\"}},{\"update_id\":596179680,
+\"message\":{\"message_id\":17,\"from\":{\"id\":150848014,\"is_bot\":false,\"first_name\":\"Javi\",\"last_name\":\"Sanchi\",\"language_code\":\"en\"},\"chat\":{\"id\":150848014,\"first_name\":\"Javi\",\"last_name\":\"Sanchi\",\"type\":\"private\"},\"date\":1607340661,\"text\":\"Ho\"}}]}";
 
 static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
   if (tok->type == JSMN_STRING && (int)strlen(s) == tok->end - tok->start &&
@@ -42,24 +42,14 @@ int main() {
 
   /* Loop over all keys of the root object */
   for (i = 1; i < r; i++) {
-    if (jsoneq(JSON_STRING, &t[i], "user") == 0) {
+    if (jsoneq(JSON_STRING, &t[i], "ok") == 0) {
       /* We may use strndup() to fetch string value */
-      printf("- User: %.*s\n", t[i + 1].end - t[i + 1].start,
+      printf("- ok: %.*s\n", t[i + 1].end - t[i + 1].start,
              JSON_STRING + t[i + 1].start);
       i++;
-    } else if (jsoneq(JSON_STRING, &t[i], "admin") == 0) {
-      /* We may additionally check if the value is either "true" or "false" */
-      printf("- Admin: %.*s\n", t[i + 1].end - t[i + 1].start,
-             JSON_STRING + t[i + 1].start);
-      i++;
-    } else if (jsoneq(JSON_STRING, &t[i], "uid") == 0) {
-      /* We may want to do strtol() here to get numeric value */
-      printf("- UID: %.*s\n", t[i + 1].end - t[i + 1].start,
-             JSON_STRING + t[i + 1].start);
-      i++;
-    } else if (jsoneq(JSON_STRING, &t[i], "groups") == 0) {
+    } else if (jsoneq(JSON_STRING, &t[i], "result") == 0) {
       int j;
-      printf("- Groups:\n");
+      printf("- result:\n");
       if (t[i + 1].type != JSMN_ARRAY) {
         continue; /* We expect groups to be an array of strings */
       }

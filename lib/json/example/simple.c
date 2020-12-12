@@ -24,7 +24,7 @@ int analize_object(jsmntok_t *t){
   int tokensize = 0;
   int offset = 1;
 	
-  printf("{\n");
+  printf("{, size:%i\n",t[0].end-t[0].start);
 	
   for(int i = 0 ; i < t[0].size ; i++){
     printf("%.*s:\n", t[offset].end - t[offset].start,JSON_STRING + t[offset].start);
@@ -99,6 +99,7 @@ int main() {
   int i;
   int r;
   jsmn_parser p;
+  //TODO: Elegir bien
   jsmntok_t t[128]; /* We expect no more than 128 tokens */
   char buffer[100];
 

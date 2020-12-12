@@ -47,9 +47,35 @@ void *parser(void *resp){
 		strcpy(response, (char *)resp);
 		printf("Updates: %s\n", response);
 		
+		/*	--------  CODE  --------  */
+		
+		//Function content in json.h
+		analizar_objeto(jsmn_init;jsmn_parse) -> tokens
+		
+		//Buscamos el valor de ok y result)
+		valido = json_primeFromObj(key="ok",objeto=tokens)
+		lista_updates = json_listFromObj(key="result",objeto=tokens)
+		
+		//Fast last_update_id search
+		
+		for(i = 0; i < list_size(lista_updates); i++){
+			update = json_objFromList(index=i,lista=lista_updates)
+			
+			update_id = json_primeFromObj(key="update_id",object=update)
+			send2pool(update_id)
+			
+			struct message = json_smsgFromObj(key="message",objet=update)
+			sent2client(struct message)
+			
+		}
+		
+		/*	--------  CODE  --------  */
+		
+		/*
 		sleep(1);
 		strcpy(msq_buffer.mtext, "-1");
 		msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
+		*/
 		
 	}
 	

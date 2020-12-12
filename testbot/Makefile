@@ -16,7 +16,7 @@ INCLUDES = -I$(LIB) -I$(LIB_HTTPS)mbedtls/include/
 
 LIB_TELEBOT_FILES = $(LIB_TELEBOT)telebot_Capi.o $(LIB_TELEBOT)pooling.o
 LIB_HTTPS_FILES = $(LIB_HTTPS)https.o $(LIB_MBEDTLS)libmbedx509.a $(LIB_MBEDTLS)libmbedtls.a $(LIB_MBEDTLS)libmbedcrypto.a
-LIB_JSON_FILES = $(LIB_JSON)json-c.o
+LIB_JSON_FILES = $(LIB_JSON)jsonc.o
 
 todo:
 	make -C $(LIB)

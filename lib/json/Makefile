@@ -1,7 +1,7 @@
 # You can put your build options here
 -include config.mk
 
-json-c.o: json-c.c jsmn.h
+jsonc.o: jsonc.c jsmn.h
 	$(CC) $(LDFLAGS) $< -o $@
 
 test: test_default test_strict test_links test_strict_links

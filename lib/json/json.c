@@ -10,6 +10,36 @@ void analize_all(char *json);
 
 
 /*
+**   Parámetros:  char *cad: cadena de caracteres a parsear
+**				  json_parsed_t *parsed: Puntero a un tipo json_parsed_t, que almacenará información del resultado de parsear la cadena "cad";
+**                
+**     Devuelve:  int: 0 si termina satisfactoriamente, 1 en caso de error
+**
+**  Descripción:  Realiza el parseo de una cadena json.
+*/
+int json_parse(char *cad, json_parsed_t *parsed){
+	
+	error = 0;
+	parsed->json_string = cad;
+	jsmn_parser p;
+	jsmn_init(&p);
+	parsed->r = jsmn_parse(&p, parsed->json_string, strlen(parsed->json_string), parsed->tokens, sizeof(parsed->tokens) / sizeof((parsed->tokens)[0]));
+	
+	if(parsed->r < 0){
+		printf("json.c: Failed to parse JSON: %d\n", r);
+		error = 1;
+	}
+	else if(parsed->r < 1 || (parsed->tokens)[0].type != JSMN_OBJECT){
+		printf("json.c: Object expected\n");
+		error = 1;
+	}
+	
+	return error;
+	
+}
+
+
+/*
 **   Parámetros:  char *clave: clave del elemento.
 **				  obj_token *bot_info: Puntero a un tipo bot_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
 **                

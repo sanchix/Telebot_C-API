@@ -36,19 +36,6 @@ extern "C" {
 #define JSMN_API extern
 #endif
 
-/* HECHO POR EL GRUPO DE SISTEMA OPERATIVOS */
-
-#define MAX_TOKENS 128
-
-typedef struct json_parsed{
-	jsmntok_t tokens[MAX_TOKENS];
-	char *json_string;
-	int r;
-}json_parsed_t
-
-int json_parse(char *cad, json_parsed_t *parsed);
-
-/* HECHO POR EL GRUPO DE SISTEMA OPERATIVOS */
 
 /**
  * JSON type identifier. Basic types are:
@@ -475,6 +462,20 @@ JSMN_API void jsmn_init(jsmn_parser *parser) {
   parser->toknext = 0;
   parser->toksuper = -1;
 }
+
+/* HECHO POR EL GRUPO DE SISTEMA OPERATIVOS */
+
+#define MAX_TOKENS 128
+
+typedef struct json_parsed{
+	jsmntok_t tokens[MAX_TOKENS];
+	char *json_string;
+	int r;
+}json_parsed_t;
+
+int json_parse(char *cad, json_parsed_t *parsed);
+
+/* HECHO POR EL GRUPO DE SISTEMA OPERATIVOS */
 
 #endif /* JSMN_HEADER */
 

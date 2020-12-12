@@ -2,7 +2,7 @@
 -include config.mk
 
 json.o: json.c jsmn.h
-	$(CC) $(LDFLAGS) $< -o $@
+	$(CC) -c $(LDFLAGS) $<
 
 test: test_default test_strict test_links test_strict_links
 test_default: test/tests.c jsmn.h

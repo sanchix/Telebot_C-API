@@ -19,14 +19,14 @@ void analize_all(char *json);
 */
 int json_parse(char *cad, json_parsed_t *parsed){
 	
-	error = 0;
+	int error = 0;
 	parsed->json_string = cad;
 	jsmn_parser p;
 	jsmn_init(&p);
 	parsed->r = jsmn_parse(&p, parsed->json_string, strlen(parsed->json_string), parsed->tokens, sizeof(parsed->tokens) / sizeof((parsed->tokens)[0]));
 	
 	if(parsed->r < 0){
-		printf("json.c: Failed to parse JSON: %d\n", r);
+		printf("json.c: Failed to parse JSON: %d\n", parsed->r);
 		error = 1;
 	}
 	else if(parsed->r < 1 || (parsed->tokens)[0].type != JSMN_OBJECT){
@@ -47,20 +47,18 @@ int json_parse(char *cad, json_parsed_t *parsed){
 **
 **  Descripción:  Inicializa las funciones de la librería.
 */
-int jsmn_primeFromObj(char *clave, struct json_struct obj){
+int jsmn_primeFromObj(char *clave, json_parsed_t obj){
   
   //tokens[0] = referido a "{"
   int valor; 
   char aux[20];
   int size_valor=-1;
   //Si size_valor se queda a -1 es que no existe la clave o ha habido un error.
-  // obj.tokens;
-  //obj.cadena;
   for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++)
-    if (jsoneq(obj.cadena,&obj.tokens[i],clave) == 0){
+    if (jsoneq(obj.json_string,&obj.tokens[i],clave) == 0){
       
       size_valor = obj.tokens[i+1].end - obj.tokens[i+1].start;
-      sprintf(aux,"%.*s",size_valor,obj.cadena+obj.tokens[i+1].start);
+      sprintf(aux,"%.*s",size_valor,obj.json_string+obj.tokens[i+1].start);
       valor = atoi (aux);
       
     }

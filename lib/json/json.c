@@ -59,8 +59,15 @@ int jsmn_primeFromObj(char *clave, json_parsed_t obj){
       
       size_valor = obj.tokens[i+1].end - obj.tokens[i+1].start;
       sprintf(aux,"%.*s",size_valor,obj.json_string+obj.tokens[i+1].start);
-      valor = atoi (aux);
-      
+      if (strcmp(aux,"true")==0 || strcmp(aux,"false")==0){
+	if (strcmp(aux,"true")==0)
+	  valor = 1;
+	else
+	  valor = 0;
+      }
+      else{
+	valor = atoi (aux);
+      }
     }
 
   if (size_valor == -1)

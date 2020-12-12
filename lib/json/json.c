@@ -103,23 +103,28 @@ int json_element_size (json_parsed_t obj){
 
 /*
 **   Parámetros:  char *clave: clave del elemento.
-**				  json_parsed_t *obj: Puntero al token referido al objeto
+**                jsmntok_t **list: Puntero a puntero al token referido a la lista
+**		  json_parsed_t obj: Puntero al token referido al objeto
 **                
 **     Devuelve:  Una variable json_parsed_t que apunta al primer token de la lista
 **
 **  Descripción:  Devuelve una estructura json_parsed_t apuntando a la lista contenida en el objeto "obj" con clave "clave".
 */
-int json_listFromObj(char *clave, json_parsed_t obj){
+int json_listFromObj(char *clave, jsmntok_t ** list, json_parsed_t  obj){
 	
-	int offset = 0;
+	int offset = 1;
 	int ret = -1;
 	
-	for(int i = 0; i < obj.tokens[0].size && ret == -1; i++){
-		
-		
-		
-	}
 	
+	for(int i = 0; i < obj.tokens[0].size && ret == -1; i++){
+	   if (jsoneq(obj.json_string,&obj.tokens[offset],clave) == 0){
+	     ret = 0;
+	     *list = (&(obj.tokens[offset+1]));
+	   }
+	   
+	   offset += analize_element(&obj.tokens[offset+1],obj.json_string) + 1;
+	}
+	return ret;
 }
 
 

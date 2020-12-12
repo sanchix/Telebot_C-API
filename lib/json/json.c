@@ -18,14 +18,27 @@ void analize_all(char *json);
 **  Descripción:  Inicializa las funciones de la librería.
 */
 int jsmn_primeFromObj(char *clave, struct json_struct obj){
-	
-	//tokens[0] = referido a "{"
-	
-	obj.tokens
-	obj.cadena
-	
-	
-	
+  
+  //tokens[0] = referido a "{"
+  int valor; 
+  char aux[20];
+  int size_valor=-1;
+  //Si size_valor se queda a -1 es que no existe la clave o ha habido un error.
+  // obj.tokens;
+  //obj.cadena;
+  for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++)
+    if (jsoneq(obj.cadena,&obj.tokens[i],clave) == 0){
+      
+      size_valor = obj.tokens[i+1].end - obj.tokens[i+1].start;
+      sprintf(aux,"%.*s",size_valor,obj.cadena+obj.tokens[i+1].start);
+      valor = atoi (aux);
+      
+    }
+
+  if (size_valor == -1)
+    return size_valor;
+  else
+    return valor;
 }
 
 

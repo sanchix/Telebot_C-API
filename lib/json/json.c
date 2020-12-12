@@ -54,6 +54,7 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
   char aux[20];
   int size_valor=-1;
   //Si size_valor se queda a -1 es que no existe la clave o ha habido un error.
+
   for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++)
     if (jsoneq(obj.json_string,&obj.tokens[i],clave) == 0){
       

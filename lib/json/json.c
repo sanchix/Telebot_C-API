@@ -11,6 +11,28 @@ int jsoneq(const char *json, jsmntok_t *tok, const char *s);
 void analize_all(char *json);
 int analize_element(jsmntok_t *t, char *json);
 
+typedef struct{
+	int id;
+	bool is_bot;
+	char first_name[25];
+	char last_name[50];
+	char language_code[5];
+} from_t;
+
+typedef struct{
+	int id;
+	char first_name[25];
+	char last_name[50];
+	chat type[20];
+} chat_t;
+
+typedef struct{
+	int message_id;
+	from_t from;
+	chat_t chat;
+	long date;
+	char text[1000];
+} message_t;
 
 /*
 **   Parámetros:  char *cad: cadena de caracteres a parsear
@@ -86,6 +108,7 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
     return valor;
 }
 
+
 /*
 **   Parámetro:  json_parsed_t obj: para recibir el token.
 **				  
@@ -94,12 +117,17 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
 **
 **  Descripción:  Devuelve el tamaño de una lista json.
 */
+<<<<<<< HEAD
+int json_list_size (json_parsed_t obj){
+=======
 
 int json_element_size (json_parsed_t obj){
+>>>>>>> e61c10f48f8d7f85845191affff386663cade18b
   int size;
   size = obj.tokens[0].size;
   return size;
 }
+
 
 /*
 **   Parámetros:  char *clave: clave del elemento.
@@ -125,6 +153,43 @@ int json_listFromObj(char *clave, jsmntok_t ** list, json_parsed_t  obj){
 	   offset += analize_element(&obj.tokens[offset+1],obj.json_string) + 1;
 	}
 	return ret;
+}
+
+
+/*
+**   Parámetros:  char *clave: clave del elemento.
+**				  json_parsed_t *obj: Puntero al token referido al objeto
+**                
+**     Devuelve:  Una variable json_parsed_t que apunta al primer token de la lista
+**
+**  Descripción:  Devuelve una estructura json_parsed_t apuntando a la lista contenida en el objeto "obj" con clave "clave".
+*/
+int smsgFromObj(char *clave, message_t *message, json_parsed_t obj){
+	
+	int offset = 0;
+	int ret = -1;
+	jsmntok_t aux;
+	
+	message->message_id = json_primeFromObj("message_id", obj);
+	
+	aux = json_objFromObj("from", obj);
+	message->from.id = json_primeFromObj("id", aux);
+	message->from.is_bot = json_primeFromObj("is_bot", aux);
+	strcpy(message->from.first_name, json_stringFromObj("first_name", aux));
+	strcpy(message->from.last_name, json_stringFromObj("last_name", aux));
+	strcpy(message->from.language_code, json_stringFromObj("language_core", aux));
+	
+	aux = json_objFromObj("chat", obj);
+	message->chat.id = json_primeFromObj("id", aux);
+	strcpy(message->chat.first_name, json_stringFromObj("first_name", aux));
+	strcpy(message->chat.last_name, json_stringFromObj("last_name", aux));
+	strcpy(message->chat.type, json_stringFromObj("type", aux));
+	
+	message->date = json_primeFromObj("date", obj);
+	message->text = json_stringFromObj("text", obj);
+	
+	return 0;
+	
 }
 
 

@@ -71,13 +71,16 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 }
 
 
-int telebot_sendMessage(char *response, int size, bot_info_t *bot_info){
+int telebot_sendMessage(char *response, int size, bot_info_t *bot_info,char chat_id,char text){
 	
 	int ret = -1;
 	int status = 0;
 	char url[200];
 	char method[15] = "/sendMessage";
-	char data[100] = "{\"chat_id\":150848014,\"text\":\"Hola\"}";
+	//char data[100] = "{\"chat_id\":150848014,\"text\":\"Hola\"}";
+	char data[100];//Maximo tamaño permitido por telegram es 4096 creo
+
+	sprintf(data,"{\"chat_id\":%s,\"text\":\"%s\"}",chat_id,text);
 	
 	strcpy(url, bot_info->url);
 	strcat(url, method);

@@ -77,6 +77,29 @@ int jsmn_primeFromObj(char *clave, json_parsed_t obj){
 }
 
 
+/*
+**   Parámetros:  char *clave: clave del elemento.
+**				  json_parsed_t *obj: Puntero al token referido al objeto
+**                
+**     Devuelve:  Una variable json_parsed_t que apunta al primer token de la lista
+**
+**  Descripción:  Devuelve una estructura json_parsed_t apuntando a la lista contenida en el objeto "obj" con clave "clave".
+*/
+int json_listFromObj(char *clave, json_parsed_t obj){
+	
+	int offset = 0;
+	int ret = -1;
+	
+	for(int i = 0; i < obj.tokens[0].size && ret == -1; i++){
+		
+		
+		
+	}
+	
+}
+
+
+
 int analize_list(jsmntok_t *t,char *json){
 	int tokensize = 0;
 	int offset = 1;

@@ -34,3 +34,5 @@ borra:
 	echo > Done cleaning testbot
 	make -C $(LIB) borra
 	
+borraclave:
+	ipcrm -Q 1882193940

@@ -12,13 +12,10 @@
 
 LIB_TELEBOT = telebot_Capi/
 LIB_HTTPS = https_lib/
-LIB_JSON = json/
 
 todo:	
 	make -C $(LIB_HTTPS)
 	make -C $(LIB_TELEBOT)
-	make -C $(LIB_JSON)
-	
+
 borra:
 	make -C $(LIB_TELEBOT) borra
-	make -C $(LIB_JSON)	clean

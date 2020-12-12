@@ -55,7 +55,7 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
   int size_valor=-1;
   //Si size_valor se queda a -1 es que no existe la clave o ha habido un error.
 
-  for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++)
+  for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++){
     if (jsoneq(obj.json_string,&obj.tokens[i],clave) == 0){
       
       size_valor = obj.tokens[i+1].end - obj.tokens[i+1].start;
@@ -70,6 +70,7 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
 	valor = atoi (aux);
       }
     }
+  }
 
   if (size_valor == -1)
     return size_valor;
@@ -113,6 +114,21 @@ int json_listFromObj(char *clave, json_parsed_t obj){
 	
 }
 
+
+int analize_element(jsmntok_t *t, char *json){
+	
+	int token_size = 1;
+	
+	if(t->type == JSMN_OBJECT){
+		token_size = analize_object(t, json);
+	}
+	else if(t->type == JSMN_ARRAY){
+		token_size = analize_list(t,json);
+	}
+	
+	return token_size;
+	
+}
 
 
 int analize_list(jsmntok_t *t,char *json){

@@ -36,6 +36,7 @@ void *parser(void *resp){
 	key_t clave;
 	int msgqueue_id;
 	struct msgbuf msq_buffer;
+	json_parsed_t parsed;
 	
 	clave = ftok(".", 'p');  //Equivalent to 1882193940
 	msq_buffer.mtype = OFFSET_MSG_TYPE;
@@ -49,8 +50,8 @@ void *parser(void *resp){
 		
 		/*	--------  CODE  --------  */
 		
-		//Function content in json.h
-		analizar_objeto(jsmn_init;jsmn_parse) -> tokens
+		json_parse(response, &parsed);
+		analizar_objeto(jsmn_init;jsmn_parse) -> struct_parsed
 		
 		//primeFromObj, listFromObj, list_size, objFromList, smsgFromObj
 		

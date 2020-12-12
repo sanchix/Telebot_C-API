@@ -21,4 +21,4 @@ todo:
 
 borra:
 	make -C $(LIB_TELEBOT) borra
-	make -C $(LIB_JSON) borra
+	make -C $(LIB_JSON) clean

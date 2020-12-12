@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
 		telebot_getMe(info, sizeof(info), &bot_info);
 		while(1){
 			sleep(10);
-			printf("Info: %s\n", info);
+			//printf("Info: %s\n", info);
 		}
 
 	}

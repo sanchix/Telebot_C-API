@@ -47,7 +47,7 @@ int json_parse(char *cad, json_parsed_t *parsed){
 **
 **  Descripción:  Inicializa las funciones de la librería.
 */
-int jsmn_primeFromObj(char *clave, json_parsed_t obj){
+int json_primeFromObj(char *clave, json_parsed_t obj){
   
   //tokens[0] = referido a "{"
   int valor; 
@@ -76,6 +76,20 @@ int jsmn_primeFromObj(char *clave, json_parsed_t obj){
     return valor;
 }
 
+/*
+**   Parámetro:  json_parsed_t obj: para recibir el token.
+**				  
+**                
+**     Devuelve:  int: tamaño de la lista
+**
+**  Descripción:  Devuelve el tamaño de una lista json.
+*/
+
+int json_list_size (json_parsed_t obj){
+  int size;
+  size = obj.tokens[0].size;
+  return size;
+}
 
 int analize_list(jsmntok_t *t,char *json){
 	int tokensize = 0;

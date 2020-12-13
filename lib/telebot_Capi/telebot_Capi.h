@@ -21,7 +21,6 @@
 #include <errno.h>
 
 /* Includes de la aplicacion */
-#include "pooling.h"
 #include "https_lib/https.h"
 #include "jansson.h"
 

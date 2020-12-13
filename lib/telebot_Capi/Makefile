@@ -17,7 +17,7 @@ todo: telebot_Capi.o pooling.o
 telebot_Capi.o: telebot_Capi.c telebot_Capi.h
 	gcc -W -Wall $(INCLUDES) -c telebot_Capi.c
 	
-pooling.o: pooling.c telebot_Capi.h pooling.h
+pooling.o: pooling.c telebot_Capi.h
 	gcc -W -Wall $(INCLUDES) -c pooling.c
 
 borra: 

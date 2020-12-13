@@ -15,6 +15,7 @@
 #include <sys/ipc.h>
 #include "https_lib/https.h"
 #include "telebot_Capi.h"
+#include "jansson.h"
 
 #include <errno.h>
 
@@ -51,35 +52,40 @@ void *parser(void *resp){
 		/*	--------  CODE  --------  */
 		
 		json_parse(response, &parsed);
-		analizar_objeto(jsmn_init;jsmn_parse) -> struct_parsed
 		
 		//primeFromObj(V), listFromObj, list_size(V), objFromList, smsgFromObj
 		
 		//Buscamos el valor de ok y result)
-		valido = json_primeFromObj(key="ok",objeto=tokens)
-		if (!valido) error()
-		lista_updates = json_listFromObj(key="result",objeto=tokens)
+		int valido = json_primeFromObj("ok",parsed.tokens,parsed);
+		printf("Válido: %i", valido);
+		//if (!valido) error()
+		jsmntok_t *lista_updates;
+		json_elementFromObj("result",&lista_updates, parsed.tokens, parsed);
 		
 		//Fast last_update_id search
-		
-		for(i = 0; i < list_size(list_updates); i++){
-			update = json_objFromList(index=i,lista=lista_updates)
+		jsmntok_t update;
+		for(int i = 0; i < json_element_size(lista_updates); i++){
+			jsmntok_t *update;
+			json_elementFromList(i,&update, lista_updates, parsed);
+			int update_id;
+			update_id = json_primeFromObj("update_id",update, parsed);
+			printf("Update id: %i", update_id);
+			//send2pool(update_id)
 			
-			update_id = json_primeFromObj(key="update_id",object=update)
-			send2pool(update_id)
-			
-			struct message = json_smsgFromObj(key="message",objet=update)
-			sent2client(struct message)
+			message_t mensage;
+			json_smsgFromObj("message",&mensage, update, parsed);
+			//sent2client(struct message)
+			printf("Mensaje: %s", mensage.text);
 			
 		}
 		
 		/*	--------  CODE  --------  */
 		
-		/*
+		
 		sleep(1);
 		strcpy(msq_buffer.mtext, "-1");
 		msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
-		*/
+		
 		
 	}
 	

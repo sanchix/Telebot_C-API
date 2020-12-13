@@ -1,5 +1,5 @@
 /*
-**     Fichero:  telebot_Capi/telebot_Capi.c
+**     Fichero:  lib/telebot_Capi/telebot_Capi.c
 **       Group:  Grupo 8
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
 **       Fecha:  07/dec/2020

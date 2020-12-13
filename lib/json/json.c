@@ -1,38 +1,17 @@
-#include "jsmn.h"
+/*
+**     Fichero:  lib/json/json.c
+**       Group:  Grupo 8
+**		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
+**       Fecha:  12/dec/2020
+**
+** Descripcion:  Código complementario a la librería jsmn necesario para trabajar con las cadenas json que se utilizan en la API de telegram.
+*/
+
+#include "json.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-//#define DEBUG 1
-
-int analize_list(jsmntok_t *t, char *json);
-int analize_object(jsmntok_t *t,char *json);
-int jsoneq(const char *json, jsmntok_t *tok, const char *s);
-void analize_all(char *json);
-int analize_element(jsmntok_t *t, char *json);
-
-typedef struct{
-	int id;
-	bool is_bot;
-	char first_name[25];
-	char last_name[50];
-	char language_code[5];
-} from_t;
-
-typedef struct{
-	int id;
-	char first_name[25];
-	char last_name[50];
-	chat type[20];
-} chat_t;
-
-typedef struct{
-	int message_id;
-	from_t from;
-	chat_t chat;
-	long date;
-	char text[1000];
-} message_t;
 
 /*
 **   Parámetros:  char *cad: cadena de caracteres a parsear
@@ -65,6 +44,21 @@ int json_parse(char *cad, json_parsed_t *parsed){
 
 
 /*
+**   Parámetro:  json_parsed_t obj: para recibir el token.
+**				  
+**                
+**     Devuelve:  int: tamaño de la lista/objeto/elemento
+**
+**  Descripción:  Devuelve el tamaño de una lista json.
+*/
+int json_element_size (jsmntok_t *element){
+  int size;
+  size = element[0].size;
+  return size;
+}
+
+
+/*
 **   Parámetros:  char *clave: clave del elemento.
 **				  obj_token *bot_info: Puntero a un tipo bot_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
 **                
@@ -72,7 +66,7 @@ int json_parse(char *cad, json_parsed_t *parsed){
 **
 **  Descripción:  Inicializa las funciones de la librería.
 */
-int json_primeFromObj(char *clave, json_parsed_t obj){
+int json_primeFromObj(char *clave, jsmntok_t *obj, json_parsed_t parsed){
   
   //tokens[0] = referido a "{"
   int valor; 
@@ -81,11 +75,11 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
   int offset=1;
   //Si size_valor se queda a -1 es que no existe la clave o ha habido un error.
 
-  for (int i = 0; i<obj.tokens[0].size && size_valor==-1; i++){
-    if (jsoneq(obj.json_string,&obj.tokens[offset],clave) == 0){
+  for (int i = 0; i<obj[0].size && size_valor==-1; i++){
+    if (jsoneq(parsed.json_string,&obj[offset],clave) == 0){
       
-      size_valor = obj.tokens[offset+1].end - obj.tokens[offset+1].start;
-      sprintf(aux,"%.*s",size_valor,obj.json_string+obj.tokens[offset+1].start);
+      size_valor = obj[offset+1].end - obj[offset+1].start;
+      sprintf(aux,"%.*s",size_valor,parsed.json_string+obj[offset+1].start);
       
       if (strcmp(aux,"true")==0 || strcmp(aux,"false")==0){
 	if (strcmp(aux,"true")==0)
@@ -99,7 +93,7 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
     }
 
     
-    offset += analize_element(&obj.tokens[offset+1],obj.json_string) + 1;
+    offset += analize_element(&obj[offset+1],parsed.json_string) + 1;
   }
 
   if (size_valor == -1)
@@ -110,22 +104,68 @@ int json_primeFromObj(char *clave, json_parsed_t obj){
 
 
 /*
-**   Parámetro:  json_parsed_t obj: para recibir el token.
-**				  
+**   Parámetros:  char *clave: clave del elemento.
+**				  obj_token *bot_info: Puntero a un tipo bot_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
 **                
-**     Devuelve:  int: tamaño de la lista/objeto/elemento
+**     Devuelve:  int: valor del tipo primitivo
 **
-**  Descripción:  Devuelve el tamaño de una lista json.
+**  Descripción:  Inicializa las funciones de la librería.
 */
-<<<<<<< HEAD
-int json_list_size (json_parsed_t obj){
-=======
+int json_stringFromObj(char *clave, char* string, jsmntok_t *obj, json_parsed_t parsed){
+  
+	//tokens[0] = referido a "{"
+	char aux[20];
+	int size_valor=-1;
+	int offset=1;
+	//Si size_valor se queda a -1 es que no existe la clave o ha habido un error.
 
-int json_element_size (json_parsed_t obj){
->>>>>>> e61c10f48f8d7f85845191affff386663cade18b
-  int size;
-  size = obj.tokens[0].size;
-  return size;
+	//Hacer que este bucle termine cuando lo encuentre
+	for (int i = 0; i<obj[0].size && size_valor == -1; i++){
+		if (jsoneq(parsed.json_string,&obj[offset],clave) == 0){
+      
+			size_valor = obj[offset+1].end - obj[offset+1].start;
+			sprintf(aux,"%.*s",size_valor,parsed.json_string+obj[offset+1].start);
+      
+			strcpy(string, aux);
+			
+		}
+
+		offset += analize_element(&obj[offset+1],parsed.json_string) + 1;
+	}
+
+	//Cambiar para qe devuelva error;
+	return 0;
+
+}
+
+
+/*
+**   Parámetros:  int index: índice del elemento.
+**                jsmntok_t **element: Puntero a puntero al token referido al elemento requerido
+**		  json_parsed_t obj: Puntero al token referido a la lista
+**                
+**     Devuelve:  Una variable json_parsed_t que apunta al primer token de la lista
+**
+**  Descripción:  Devuelve una estructura json_parsed_t apuntando a la lista contenida en el objeto "obj" con clave "clave".
+*/
+int json_elementFromList(int index, jsmntok_t **element, jsmntok_t *list, json_parsed_t parsed){
+	
+	int offset = 1;
+	int ret = -1;
+	
+	if(index >= list[0].size){
+		printf("json.c: Error, índice mayor que tamaño de lista\n");
+	}
+	else{
+		ret = 0;
+		for(int i = 0; i != index; i++){
+			offset += analize_element(&list[offset],parsed.json_string);
+		}
+		*element = (&(list[offset]));
+	}
+	
+	return ret;
+	
 }
 
 
@@ -138,19 +178,19 @@ int json_element_size (json_parsed_t obj){
 **
 **  Descripción:  Devuelve una estructura json_parsed_t apuntando a la lista contenida en el objeto "obj" con clave "clave".
 */
-int json_listFromObj(char *clave, jsmntok_t ** list, json_parsed_t  obj){
+int json_elementFromObj(char *clave, jsmntok_t **element, jsmntok_t *obj, json_parsed_t parsed){
 	
 	int offset = 1;
 	int ret = -1;
 	
 	
-	for(int i = 0; i < obj.tokens[0].size && ret == -1; i++){
-	   if (jsoneq(obj.json_string,&obj.tokens[offset],clave) == 0){
+	for(int i = 0; i < obj[0].size && ret == -1; i++){
+	   if (jsoneq(parsed.json_string,&obj[offset],clave) == 0){
 	     ret = 0;
-	     *list = (&(obj.tokens[offset+1]));
+	     *element = (&(obj[offset+1]));
 	   }
 	   
-	   offset += analize_element(&obj.tokens[offset+1],obj.json_string) + 1;
+	   offset += analize_element(&obj[offset+1],parsed.json_string) + 1;
 	}
 	return ret;
 }
@@ -164,29 +204,34 @@ int json_listFromObj(char *clave, jsmntok_t ** list, json_parsed_t  obj){
 **
 **  Descripción:  Devuelve una estructura json_parsed_t apuntando a la lista contenida en el objeto "obj" con clave "clave".
 */
-int smsgFromObj(char *clave, message_t *message, json_parsed_t obj){
+int json_smsgFromObj(char *clave, message_t *message, jsmntok_t *obj, json_parsed_t parsed){
 	
 	int offset = 0;
 	int ret = -1;
-	jsmntok_t aux;
+	jsmntok_t *aux;
+	char aux_str[20];
 	
-	message->message_id = json_primeFromObj("message_id", obj);
+	message->message_id = json_primeFromObj("message_id", obj, parsed);
 	
-	aux = json_objFromObj("from", obj);
-	message->from.id = json_primeFromObj("id", aux);
-	message->from.is_bot = json_primeFromObj("is_bot", aux);
-	strcpy(message->from.first_name, json_stringFromObj("first_name", aux));
-	strcpy(message->from.last_name, json_stringFromObj("last_name", aux));
-	strcpy(message->from.language_code, json_stringFromObj("language_core", aux));
+	json_elementFromObj("from", &aux, obj, parsed);
+	message->from.id = json_primeFromObj("id", aux, parsed);
+	message->from.is_bot = json_primeFromObj("is_bot", aux, parsed);
+	json_stringFromObj("first_name", aux_str, aux, parsed);
+	strcpy(message->from.first_name, aux_str);
+	json_stringFromObj("last_name", aux_str, aux, parsed);
+	strcpy(message->from.last_name, aux_str);
+	json_stringFromObj("language_core", aux_str, aux, parsed);
+	strcpy(message->from.language_code, aux_str);
 	
-	aux = json_objFromObj("chat", obj);
-	message->chat.id = json_primeFromObj("id", aux);
-	strcpy(message->chat.first_name, json_stringFromObj("first_name", aux));
-	strcpy(message->chat.last_name, json_stringFromObj("last_name", aux));
-	strcpy(message->chat.type, json_stringFromObj("type", aux));
+	aux = json_objFromObj("chat", obj, parsed);
+	message->chat.id = json_primeFromObj("id", aux, parsed);
+	json_stringFromObj("first_name", aux_str, aux, parsed);
+	strcpy(message->chat.first_name, aux_str);
+	json_stringFromObj("last_name", aux_str, aux, parsed);
+	strcpy(message->chat.last_name, aux_str	strcpy(message->chat.type, json_stringFromObj("type", aux, parsed));
 	
-	message->date = json_primeFromObj("date", obj);
-	message->text = json_stringFromObj("text", obj);
+	message->date = json_primeFromObj("date", obj, parsed);
+	message->text = json_stringFromObj("text", obj, parsed);
 	
 	return 0;
 	
@@ -299,6 +344,8 @@ int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
   }
   return -1;
 }
+
+//BORRAR
 void analize_all(char *json){
   int i;
   int r;

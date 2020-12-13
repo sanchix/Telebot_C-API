@@ -1,2 +1,0 @@
-./scripts/clang-format-check: línea 6: type: clang-format: no encontrado
-SKIP scripts/clang-format-check (exit status: 77)

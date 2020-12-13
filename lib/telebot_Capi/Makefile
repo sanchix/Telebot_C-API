@@ -10,14 +10,14 @@ LIB = ../
 LIB_HTTPS = $(LIB)https_lib/
 LIB_JANSSON = $(LIB)jansson/
 
-INCLUDES = -I$(LIB) -I$(LIB_JANSSON)/include/ -I$(LIB_HTTPS)mbedtls/include/
+INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_HTTPS)mbedtls/include/
 
 todo: telebot_Capi.o pooling.o
 
 telebot_Capi.o: telebot_Capi.c telebot_Capi.h
 	gcc -W -Wall $(INCLUDES) -c telebot_Capi.c
 	
-pooling.o: pooling.c telebot_Capi.h
+pooling.o: pooling.c telebot_Capi.h pooling.h
 	gcc -W -Wall $(INCLUDES) -c pooling.c
 
 borra: 

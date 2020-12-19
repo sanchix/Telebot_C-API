@@ -34,7 +34,8 @@
 #define OFFSET_MSG_TYPE 1
 #define MAX_URL_TAM 200
 #define MAX_USER_TAM 64 //Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
-#deifne CONDITION_UNASSIGNED 0
+#define MAX_UPDATE_HANDLERS 20
+#define CONDITION_UNASSIGNED 0
 
 
 /* Tipos definidos por el usuario */
@@ -62,13 +63,6 @@ typedef struct{
 } event_t;
 
 
-// TODO: Comentar
-typedef struct{
-	char *response;
-	bot_info_t *bot_info;
-} response_info_t;
-
-
 /*
 **		 Campos:  HTTP_INFO hi: Informacion del protocolo HTTPS para la librería de HTTPS.
 **				  char url[200]: URL con el token para acceder al bot.
@@ -81,6 +75,13 @@ typedef struct{
 	// TODO: Add MAX_UPDATE_HANDLERS list
 	event_t updateEvents[MAX_UPDATE_HANDLERS];	// updateHandlers[0] is default handler
 } bot_info_t;
+
+
+// TODO: Comentar
+typedef struct{
+	char *response;
+	bot_info_t *bot_info;
+} response_info_t;
 
 
 // TODO: Comentar
@@ -124,7 +125,7 @@ typedef struct{
 **
 **  Descripción:  Inicializa las funciones de la librería telebot_Capi.
 */
-int telebot_init(char tok[50], bot_info_t *bot_info);
+int telebot_init(char *tok, bot_info_t *bot_info);
 
 
 /*

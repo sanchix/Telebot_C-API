@@ -8,8 +8,9 @@
 
 LIB = ../
 LIB_HTTPS = $(LIB)https_lib/
+LIB_JANSSON = $(LIB)jansson/
 
-INCLUDES = -I$(LIB) -I$(LIB_HTTPS)mbedtls/include/
+INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_HTTPS)mbedtls/include/
 
 todo: telebot_Capi.o pooling.o
 

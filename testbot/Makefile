@@ -10,20 +10,20 @@ LIB = ../lib/
 LIB_TELEBOT = $(LIB)telebot_Capi/
 LIB_HTTPS = $(LIB)https_lib/
 LIB_MBEDTLS = $(LIB_HTTPS)mbedtls/library/
-LIB_JSON = $(LIB)json/
+LIB_JANSSON = $(LIB)jansson/
 
-INCLUDES = -I$(LIB) -I$(LIB_HTTPS)mbedtls/include/
+INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_HTTPS)mbedtls/include/
 
 LIB_TELEBOT_FILES = $(LIB_TELEBOT)telebot_Capi.o $(LIB_TELEBOT)pooling.o
 LIB_HTTPS_FILES = $(LIB_HTTPS)https.o $(LIB_MBEDTLS)libmbedx509.a $(LIB_MBEDTLS)libmbedtls.a $(LIB_MBEDTLS)libmbedcrypto.a
-LIB_JSON_FILES = $(LIB_JSON)json.o
+LIB_JANSSON_FILES = -L../lib/jansson/lib/ -ljansson
 
 todo:
 	make -C $(LIB)
 	make testbot
 
 testbot: testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) $(LIB_JSON_FILES)
-	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) $(LIB_JSON_FILES) -lpthread
+	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) $(LIB_JANSSON_FILES) -lpthread
 	
 testbot.o: testbot.c
 	gcc -W -Wall $(INCLUDES) -c testbot.c

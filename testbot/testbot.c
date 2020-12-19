@@ -25,14 +25,14 @@ int main(int argc, char* argv[]){
 		printf("Error al iniciar https\n");
 		
 	}else{
-		
+		char texto[] = "Hola";
+		char id[] = "150848014";
 		sleep(2);
 		printf("Initialized\n");
 		telebot_getMe(info, sizeof(info), &bot_info);
-		while(1){
-			sleep(10);
-			//printf("Info: %s\n", info);
-		}
+		printf("Enviando un mensaje:\n");
+		telebot_sendMessage(id,texto, &bot_info);
+		sleep(15);
 
 	}
 	

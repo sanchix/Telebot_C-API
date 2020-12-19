@@ -12,9 +12,11 @@
 
 /* Includes del sistema */ 
 #include <unistd.h>
-#include <pthread.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <fcntl.h> 
 #include <sys/msg.h>
 #include <sys/ipc.h>
 // TODO: Poner este siguiente include para debug (ifdef debug)
@@ -126,6 +128,17 @@ typedef struct{
 **  Descripción:  Inicializa las funciones de la librería telebot_Capi.
 */
 int telebot_init(char *tok, bot_info_t *bot_info);
+
+
+/*
+**   Parámetros:  
+**				  
+**                
+**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
+**
+**  Descripción:  Cierra semáforos.
+*/
+int telebot_close();
 
 
 /*

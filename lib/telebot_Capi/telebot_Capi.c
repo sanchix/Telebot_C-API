@@ -27,7 +27,12 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	
 	int ret = -1;
 	printf("Initializing telebot_Capi\n");
-	
+
+	//Inicializamos los semáforos
+	sem_t * mutex_updateEvents;
+    mutex_updateEvents = sem_open("mutex_updateEvents", O_CREAT,0600,1);
+
+
 	// Inicializamos la librería https_lib
 	// TODO: Comprobar que la inicialización es correcta
 	http_init(&(bot_info->hi), TRUE);
@@ -47,6 +52,30 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	else{
 		ret = 0;
 	}
+	
+	return ret;
+	
+}
+
+/*
+**   Parámetros:  
+**				  
+**                
+**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
+**
+**  Descripción:  Cierra semáforos.
+*/
+// TODO: hacer que cierre tambien la cola...
+int telebot_close(){
+	
+	int ret = 0;
+	printf("Cerrando telebot_Capi\n");
+	if ( sem_unlink("mutex_updateEvents")!=0 ){
+		printf("Ha habido un problema al cerrar el semaforo mutex_updateEvents");
+		ret = -1;
+	}
+
+	
 	
 	return ret;
 	

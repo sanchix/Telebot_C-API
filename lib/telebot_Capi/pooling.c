@@ -91,7 +91,7 @@ void *parser(void *resp){
 	json_t *aux;
 	
 	// Creamos la cola de mensajes para comunicarnos con pool
-	clave = ftok(".", 'p');  //Equivalent to 1882193940
+	clave = ftok("/home/dit/Documentos/telebot", 'p');  //Equivalent to 1882193940
 	printf("%i", clave);
 	msq_buffer.mtype = OFFSET_MSG_TYPE;
 	if((msgqueue_id = msgget(clave, 0660)) == -1){
@@ -196,7 +196,7 @@ void *pool(void *info){
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	
 	// Prepare message queue to communicate with parser threads
-	clave = ftok(".",'p');
+	clave = ftok("/home/dit/Documentos/telebot",'p');
 	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token.
 	// TODO: Hay que hacer una función para cerrar los hilos y parar el pooling (cerrar también las colas)
 	printf("clave: %i\n", clave);

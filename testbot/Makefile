@@ -35,4 +35,4 @@ borra:
 	make -C $(LIB) borra
 	
 borraclave:
-	ipcrm -Q 1882193940
+	ipcrm -Q 1879114716

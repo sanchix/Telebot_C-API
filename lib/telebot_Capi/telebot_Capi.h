@@ -12,9 +12,11 @@
 
 /* Includes del sistema */ 
 #include <unistd.h>
-#include <pthread.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <fcntl.h> 
 #include <sys/msg.h>
 #include <sys/ipc.h>
 // TODO: Poner este siguiente include para debug (ifdef debug)

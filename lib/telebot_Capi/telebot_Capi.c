@@ -29,7 +29,7 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	printf("Initializing telebot_Capi\n");
 
 	//Inicializamos los semáforos
-	sem_t * semaforo;
+	sem_t * mutex_updateEvents;
     mutex_updateEvents = sem_open("mutex_updateEvents", O_CREAT,0600,1);
 
 

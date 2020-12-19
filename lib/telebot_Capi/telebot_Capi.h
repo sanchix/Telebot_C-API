@@ -118,6 +118,17 @@ int telebot_init(char tok[50], bot_info_t *bot_info);
 
 
 /*
+**   Parámetros:  
+**				  
+**                
+**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
+**
+**  Descripción:  Cierra semáforos.
+*/
+int telebot_close();
+
+
+/*
 **   Parámetros:  char *response: Valor devuelto por el método de la API getMe.
 **                int size: Tamaño de la respuesta.
 **				  bot_info_t *bot_info: Creado en telebot_init()

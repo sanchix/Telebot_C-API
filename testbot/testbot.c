@@ -36,6 +36,11 @@ int main(int argc, char* argv[]){
 		telebot_sendMessage(id,texto, &bot_info);
 		sleep(15);
 
+		int x = telebot_close();
+		if (x == -1){
+			printf("Ha habido un problema al cerrar el bot");
+		}
+
 	}
 	
 	return 0; 

@@ -142,6 +142,12 @@ void *parser(void *resp){
 			printf("From: %s %s\n", message.from.first_name, message.from.last_name);
 			printf("Text: %s\n", message.text);
 			
+			// TODO: Analizar eventos y llamar a la función
+			// TODO: Poner exclusión mutua
+			// bajar mutex
+			//for(){}
+			// subir mutex
+			
 		}
 		
 		// TODO: Quitar este sleep (es debug)
@@ -169,12 +175,13 @@ void *parser(void *resp){
 **  Descripción:  Inicializa las funciones de la librería.
 */
 // TODO: Comentar
+// TODO: Cambiar por poll
 void *pool(void *info){
 	
 	int status;
 	int error = 0;
-	char url[250];
-	char fullurl[250];
+	char url[MAX_URL_TAM];
+	char fullurl[MAX_URL_TAM];
 	char *offset = "0";
 	char response[MAX_RESP_TAM];
 	useconds_t interval = 1000000;

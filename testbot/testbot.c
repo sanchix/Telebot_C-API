@@ -22,19 +22,19 @@ int main(int argc, char* argv[]){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
 	}
 	else if(telebot_init(argv[1], &bot_info) != 0){
-		printf("Error al iniciar https\n");
-		
+			printf("Error al iniciar https\n");
 	}else{
-		
-		sleep(2);
+	
 		printf("Initialized\n");
+		sleep(2);
+		
 		telebot_getMe(info, sizeof(info), &bot_info);
 		
 		while(1){
 			sleep(10);
 			//printf("Info: %s\n", info);
 		}
-
+	
 	}
 	
 	return 0; 

@@ -13,7 +13,7 @@
 
 
 /************************************************************/
-/* Declaración de funciones locales. */
+/* Definición de funciones locales. */
 
 /*
 **   Parámetros:  char *tok: Token del BOT.
@@ -36,6 +36,9 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	// TODO: ¿comprobar si no desborda? ¿existe un parámetro en strcpy y strcat para verlo?
 	strcpy(bot_info->url,API_URL);
 	strcat(bot_info->url,tok);
+	
+	// Inicializamos los handlers (para el "por defecto" -> dejar en la cola, los demás vacíos)
+	initUpdateHandlers(&bot_info->updateHandlers);
 	
 	// Inicializamos la funcion de pooling.
 	if(tbc_pooling_init(bot_info) != 0){

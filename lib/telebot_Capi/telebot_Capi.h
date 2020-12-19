@@ -48,6 +48,17 @@ struct msgbuf{
 };
 
 
+// TODO: Comentar
+// TODO: Pensar valores de retorno y parámetros
+typedef void *(*eventHandler_t)(void *);
+
+// TODO: Comentar
+typedef struct{
+	eventHandler_t handler;
+	// TODO: Add conditions
+} event_t;
+
+
 /*
 **		 Campos:  HTTP_INFO hi: Informacion del protocolo HTTPS para la librería de HTTPS.
 **				  char url[200]: URL con el token para acceder al bot.
@@ -57,6 +68,8 @@ struct msgbuf{
 typedef struct{
 	HTTP_INFO hi;
 	char url[MAX_URL_TAM];
+	// TODO: Add MAX_UPDATE_HANDLERS list
+	event_t updateEvents[MAX_UPDATE_HANDLERS];	// updateHandlers[0] is default handler
 } bot_info_t;
 
 

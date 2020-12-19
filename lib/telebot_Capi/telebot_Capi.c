@@ -38,7 +38,7 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	strcat(bot_info->url,tok);
 	
 	// Inicializamos los handlers (para el "por defecto" -> dejar en la cola, los demás vacíos)
-	initUpdateHandlers(&bot_info->updateHandlers);
+	initUpdateEvents(&bot_info->updateEvents);
 	
 	// Inicializamos la funcion de pooling.
 	if(tbc_pooling_init(bot_info) != 0){

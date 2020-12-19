@@ -24,30 +24,18 @@ int main(int argc, char* argv[]){
 	else if(telebot_init(argv[1], &bot_info) != 0){
 			printf("Error al iniciar https\n");
 	}else{
-<<<<<<< HEAD
-	
-=======
+
 		char texto[] = "Hola";
 		char id[] = "150848014";
 		sleep(2);
->>>>>>> 51fbc0e4ca5a1cc4364732e761077dde9a3673df
 		printf("Initialized\n");
 		sleep(2);
 		
 		telebot_getMe(info, sizeof(info), &bot_info);
-<<<<<<< HEAD
-		
-		while(1){
-			sleep(10);
-			//printf("Info: %s\n", info);
-		}
-	
-=======
 		printf("Enviando un mensaje:\n");
 		telebot_sendMessage(id,texto, &bot_info);
 		sleep(15);
 
->>>>>>> 51fbc0e4ca5a1cc4364732e761077dde9a3673df
 	}
 	
 	return 0; 

@@ -90,8 +90,7 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 
 
 /*
-**   Parámetros:  int size: Tamaño reservado para response.
-**				  char *chat_id: Id del chat al que mandar la petición.
+**   Parámetros:  char *chat_id: Id del chat al que mandar la petición.
 **				  char *text: Texto a enviar en el mensaje.
 **				  bot_info_t *bot_info: Creado en telebot_init()
 **                
@@ -99,10 +98,9 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 **
 **  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo la respuesta en *response.
 */
-int telebot_sendMessage(int size, char *chat_id,char *text, bot_info_t *bot_info){
-	
-	// TODO: Hacer que no devuelva la respuesta, sino que intente corregir posibles errores y en caso de que no lo consiga notifique al llamante de la función devolviendo -1 o algo parecido.
-	// TODO: Cambiar el parámetro char_id y añadir los parámetros necesarios para mandar un mensaje (comprobar que es lo que se debe mandar en el método sendMessage en la API de Telegram). 
+int telebot_sendMessage( char *chat_id,char *text, bot_info_t *bot_info){
+
+	// TODO: Cambiar el parámetro chat_id y añadir los parámetros necesarios para mandar un mensaje (comprobar que es lo que se debe mandar en el método sendMessage en la API de Telegram). 
 	// ¿Hacer que se pasen los parámetros mediante una estructura (podría ser útil para reenvíar mensajes recibidos)? ¿Hacer dos funciones una con parámetros separados y otra con la estructura?
 	
 	char respuesta[MAX_RESP_TAM]; //Valor devuelto por el método de la API sendMessage.
@@ -120,18 +118,33 @@ int telebot_sendMessage(int size, char *chat_id,char *text, bot_info_t *bot_info
 	// TODO: ¿Hacer una función para que haga esto?
 	sprintf(data,"{\"chat_id\":%s,\"text\":\"%s\"}",chat_id,text);
 
-	printf("%s \n",data);	
-
 	// Realizamos la petición con POST
-	status = http_post(&(bot_info->hi), url, data, respuesta, size);
+	status = http_post(&(bot_info->hi), url, data, respuesta, MAX_RESP_TAM);
 
-	printf("%s \n",respuesta);
-
-	// TODO: Realizar más comprobaciones, como que lo que se recibe de respuesta es el mismo mensaje que se ha enviado.
 	if(status == 200){
-		ret = 0;
+
+		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
+		json_error_t error;	
+		json_t *root;
+		json_t *ok;
+		json_t *result;
+		json_t *texto;
+		char *datos;
+
+		root = json_loads(respuesta, 0, &error);
+		// Obtenemos el valor de ok
+		ok = json_object_get(root, "ok");
+		if(json_is_true(ok)){
+			result = json_object_get(root, "result");		
+			// Se obtiene el objeto from
+			texto = json_object_get(result, "text");
+			datos = json_string_value(texto);
+			if (strcmp(datos,text)==0){
+				ret = 0;
+			}
+		}
+
 	}
-	
 	return ret;
 	
 }

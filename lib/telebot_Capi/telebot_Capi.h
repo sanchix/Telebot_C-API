@@ -29,6 +29,7 @@
 #define API_URL "https://api.telegram.org/bot"
 // TODO: Pensar estas constantes (ver si hay algo definido sobre tamaños máximos en la API de telegram)
 #define MAX_RESP_TAM 4096
+#define MAX_SEND_UPDATE_TAM 4096
 #define MAX_OFFSET_TAM 20
 #define OFFSET_MSG_TYPE 1
 

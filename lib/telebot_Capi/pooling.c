@@ -74,7 +74,7 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 **  Descripción:  <Descripción>
 */
 // TODO: Comentar
-void *parser(void *resp){
+void *parser(void *resp_info){
 	
 	char response[MAX_RESP_TAM];
 	key_t clave;
@@ -100,7 +100,7 @@ void *parser(void *resp){
 	
 	else{
 		// TODO: Pensar si hace falta almacenar en otra variable la respuesta. Quizás sea mejor pasarla de otra forma, por ejemplo que el pool haga un malloc y aquí hagamos un free cuando terminemos u otro sistema...
-		strcpy(response, (char *)resp);
+		strcpy(response, ((respone_info_t *)resp).response);
 		
 		// TODO: Quitar (es para depuración)
 		printf("\nUpdate:\n");
@@ -145,7 +145,7 @@ void *parser(void *resp){
 			// TODO: Analizar eventos y llamar a la función
 			// TODO: Poner exclusión mutua
 			// bajar mutex
-			//for(){}
+			
 			// subir mutex
 			
 		}
@@ -190,6 +190,7 @@ void *pool(void *info){
 	key_t clave;
 	int msgqueue_id;
 	struct msgbuf msq_buffer;
+	response_info_t resp_info;
 	
 	// Prepare URL to get updates
 	bot_info_t *bot_info = (bot_info_t *)info;
@@ -201,6 +202,7 @@ void *pool(void *info){
 	// Prepare variables to create parser threads
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	resp_info.bot_info = bot_info;
 	
 	// Prepare message queue to communicate with parser threads
 	clave = ftok("/home/dit/Documentos/telebot",'p');
@@ -233,7 +235,8 @@ void *pool(void *info){
 		}
 		
 		// Creamos el hilo que se encargará de parsear con los parámetros correspondientes
-		else if(pthread_create(&thread, &attr, parser, response) != 0){
+		resp_info.response = response;
+		else if(pthread_create(&thread, &attr, parser, resp_info) != 0){
 			printf("Failed to create parse thread\n");
 			error = 1;
 		}

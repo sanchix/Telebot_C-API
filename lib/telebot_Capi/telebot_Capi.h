@@ -28,6 +28,7 @@
 
 
 /* Definición de constantes */ 
+// TODO: Ordenar por ficheros (esto y el resto de cosas)
 #define API_URL "https://api.telegram.org/bot"
 #define MAX_RESP_TAM 4096
 #define MAX_POST_TAM 4096
@@ -35,6 +36,7 @@
 #define OFFSET_MSG_TYPE 1
 #define MAX_URL_TAM 200
 #define MAX_USER_TAM 64 //Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
+#deifne CONDITION_UNASSIGNED 0
 
 
 /* Tipos definidos por el usuario */
@@ -58,7 +60,15 @@ typedef void *(*eventHandler_t)(void *);
 typedef struct{
 	eventHandler_t handler;
 	// TODO: Add conditions
+	int condition; // CONDITION_UNASSIGNED = none
 } event_t;
+
+
+// TODO: Comentar
+typedef struct{
+	char *response;
+	bot_info_t *bot_info;
+} response_info_t;
 
 
 /*
@@ -183,7 +193,7 @@ int unpack_json_message(message_t *message, json_t *message_obj);
 **  Descripción:  <Descripción>
 */
 // TODO: Comentar
-void *parser(void *resp);
+void *parser(void *resp_info);
 
 
 /*
@@ -218,6 +228,21 @@ int tbc_pooling_init(bot_info_t *bot_info);
 */
 int telebot_sendMessage( char *chat_id,char *text, bot_info_t *bot_info);
 
+
+// TODO: Comentar
+void *doNothing(void *p);
+
+
+// TODO: Comentar
+void initUpdateEvents(event_t *updateEvents);
+
+
+// TODO: Comentar
+int addUpdateEvent(event_t *updateEvents, event_t newEvent);
+
+
+// TODO: Comentar
+int removeUpdateEvent(event_t *updateEvents, event_t event)
 
 
 #endif

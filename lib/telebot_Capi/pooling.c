@@ -92,6 +92,7 @@ void *parser(void *resp){
 	
 	// Creamos la cola de mensajes para comunicarnos con pool
 	clave = ftok(".", 'p');  //Equivalent to 1882193940
+	printf("%i", clave);
 	msq_buffer.mtype = OFFSET_MSG_TYPE;
 	if((msgqueue_id = msgget(clave, 0660)) == -1){
 		printf("> Parser thread: error al acceder a la cola de mensajes: %s\n", strerror(errno));

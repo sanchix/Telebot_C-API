@@ -29,9 +29,10 @@
 #define API_URL "https://api.telegram.org/bot"
 // TODO: Pensar estas constantes (ver si hay algo definido sobre tamaños máximos en la API de telegram)
 #define MAX_RESP_TAM 4096
-#define MAX_SEND_UPDATE_TAM 4096
+#define MAX_POST_TAM 4096
 #define MAX_OFFSET_TAM 20
 #define OFFSET_MSG_TYPE 1
+#define MAX_URL_TAM 200
 
 
 /* Tipos definidos por el usuario */
@@ -55,8 +56,7 @@ struct msgbuf{
  */
 typedef struct{
 	HTTP_INFO hi;
-	// TODO: Pensar el tamaño máximo de la URL y definirlo en una constante a parte.
-	char url[200];
+	char url[MAX_URL_TAM];
 } bot_info_t;
 
 

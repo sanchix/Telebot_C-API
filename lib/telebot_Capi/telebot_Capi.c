@@ -66,7 +66,7 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 
 	int ret = -1;
 	int status = 0;
-	char url[200];
+	char url[MAX_URL_TAM];
 	char method[10] = "/getMe";
 	
 	// Formamos la url con el método correspondiente
@@ -87,8 +87,7 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 
 
 /*
-**   Parámetros:  char *response: Valor devuelto por el método de la API sendMessage.
-**                int size: Tamaño reservado para response.
+**   Parámetros:  int size: Tamaño reservado para response.
 **				  char *chat_id: Id del chat al que mandar la petición.
 **				  char *text: Texto a enviar en el mensaje.
 **				  bot_info_t *bot_info: Creado en telebot_init()
@@ -97,17 +96,18 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 **
 **  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo la respuesta en *response.
 */
-int telebot_sendMessage(char *response, int size, char *chat_id,char *text, bot_info_t *bot_info){
+int telebot_sendMessage(int size, char *chat_id,char *text, bot_info_t *bot_info){
 	
 	// TODO: Hacer que no devuelva la respuesta, sino que intente corregir posibles errores y en caso de que no lo consiga notifique al llamante de la función devolviendo -1 o algo parecido.
-	// TODO: Cambiar el parámetro char_id y añadir los parámetros necesarios para mandar un mensaje (comprobar que es lo que se debe mandar en el método sendMessage en la API de Telegram). ¿Hacer que se pasen los parámetros mediante una estructura (podría ser útil para reenvíar mensajes recibidos)? ¿Hacer dos funciones una con parámetros separados y otra con la estructura?
+	// TODO: Cambiar el parámetro char_id y añadir los parámetros necesarios para mandar un mensaje (comprobar que es lo que se debe mandar en el método sendMessage en la API de Telegram). 
+	// ¿Hacer que se pasen los parámetros mediante una estructura (podría ser útil para reenvíar mensajes recibidos)? ¿Hacer dos funciones una con parámetros separados y otra con la estructura?
 	
+	char respuesta[MAX_RESP_TAM]; //Valor devuelto por el método de la API sendMessage.
 	int ret = -1;
 	int status = 0;
-	char url[200];
+	char url[MAX_URL_TAM];
 	char method[15] = "/sendMessage";
-	// TODO: Buscar el tamaño máximo permito por telegram (es 4096 creo)
-	char data[100];
+	char data[MAX_POST_TAM];
 
 	// Generamos la url con el método correspondiente
 	strcpy(url, bot_info->url);
@@ -116,10 +116,14 @@ int telebot_sendMessage(char *response, int size, char *chat_id,char *text, bot_
 	// Generamos la cadena JSON
 	// TODO: ¿Hacer una función para que haga esto?
 	sprintf(data,"{\"chat_id\":%s,\"text\":\"%s\"}",chat_id,text);
-	
+
+	printf("%s \n",data);	
+
 	// Realizamos la petición con POST
-	status = http_post(&(bot_info->hi), url, data, response, size);
-	
+	status = http_post(&(bot_info->hi), url, data, respuesta, size);
+
+	printf("%s \n",respuesta);
+
 	// TODO: Realizar más comprobaciones, como que lo que se recibe de respuesta es el mismo mensaje que se ha enviado.
 	if(status == 200){
 		ret = 0;

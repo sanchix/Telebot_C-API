@@ -1,5 +1,5 @@
 /*
-**     Fichero:  tele_bot/tele_bot.c
+**     Fichero:  testbot/testbot.c
 **       Group:  Grupo 8
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
 **       Fecha:  07/dec/2020
@@ -29,6 +29,7 @@ int main(int argc, char* argv[]){
 		sleep(2);
 		printf("Initialized\n");
 		telebot_getMe(info, sizeof(info), &bot_info);
+		
 		while(1){
 			sleep(10);
 			//printf("Info: %s\n", info);

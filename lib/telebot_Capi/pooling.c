@@ -100,6 +100,9 @@ void *parser(void *r_info){
 	response_info_t *resp_info;
 	update_t update;
 	
+	//Semáforo
+	sem_t * mutex_updateEvents = resp_info->poll_info->mutex_updateEvents;
+
 	json_t *json_root;
 	json_error_t error;
 	json_t *json_ok;
@@ -164,6 +167,7 @@ void *parser(void *r_info){
 		    printf("From: %s %s\n", message.from.first_name, message.from.last_name);
 		    printf("Text: %s\n", message.text);
 			
+<<<<<<< HEAD
 		    // TODO: Analizar eventos y llamar a la función
 		    // TODO: Poner exclusión mutua
 		    // bajar mutex
@@ -179,11 +183,40 @@ void *parser(void *r_info){
 			  update.content = (void *)(&message);
 			  update.bot_info = &(resp_info->poll_info->bot_info);
 			  handler(&update);
+=======
+			// TODO: Analizar eventos y llamar a la función
+			// TODO: Poner exclusión mutua
+
+
+			// bajar mutex
+			//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+			sem_wait(mutex_updateEvents);
+
+			found = 0;
+			for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
+				if(resp_info->poll_info->updateEvents[i].condition != CONDITION_UNASSIGNED){
+					printf("> FOUND HANDLER\n");
+					handler = resp_info->poll_info->updateEvents[i].handler;
+					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
+					if(handler != NULL){
+						// TODO: Cambiar NULL por puntero a la estructura message de respuesta
+						update.type = UPDATE_MESSAGE;
+						update.content = (void *)(&message);
+						update.bot_info = &(resp_info->poll_info->bot_info);
+						handler(&update);
+					}
+					else{
+						// TODO: Don't update queue
+						printf("> DONT UPDATE QUEUE\n");
+					}
+				}
+>>>>>>> 2f55fa96c6390d2341b3a5376797553801883022
 			}
 			else{
 			  // TODO: Don't update queue
 			  printf("> DONT UPDATE QUEUE\n");
 			}
+<<<<<<< HEAD
 		      }
 		    }
 		    if(!found){
@@ -203,6 +236,12 @@ void *parser(void *r_info){
 		      }
 		    }
 		    // subir mutex
+=======
+			// subir mutex
+			//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+			sem_post(mutex_updateEvents);
+
+>>>>>>> 2f55fa96c6390d2341b3a5376797553801883022
 			
 		  }
 		

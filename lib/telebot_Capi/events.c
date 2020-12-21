@@ -36,22 +36,22 @@ void *doNothing(update_t *p){/*do nothing absolutely*/ return NULL; }
 **  Descripción:  <Descripción>
 */
 // Comentar: Esta función no tiene porqué bloquear los eventos (aún no se ha ejecutado el hilo de polling)
-void initUpdateEvents(event_t *updateEvents){
+void initUpdateNotifiers(update_notifier_t *notifiers){
 	
-	// TODO: Set first update handler to NULL (don't change offset on HTTP request), and others to "doNothing()"
-	updateEvents[0].handler = NULL;
-	updateEvents[0].condition = CONDITION_DEFFAULT;
+	// TODO: Set first update handle to NULL (don't change offset on HTTP request), and others to "doNothing()"
+	notifiers[0].handle = NULL;
+	notifiers[0].event = EVENT_DEFFAULT;
 	for(int i = 1; i < MAX_UPDATE_EVENTS; i++){
-		updateEvents[i].handler = doNothing;
-		updateEvents[i].condition = CONDITION_UNASSIGNED;
+		notifiers[i].handle = doNothing;
+		notifiers[i].event = EVENT_UNASSIGNED;
 	}
 	
 }
 
 
 // TODO: Comentar: Esta función debe bloquear los eventos (hay que poner un mutex)
-// TODO: Cambiar el parametro newEvent por algo más userfriendly? Probablemente con hacer event_t más userfrienly sea suficiente...
-int addUpdateEvent(bot_info_t *bot_info, event_t newEvent){
+// TODO: Cambiar el parametro newEvent por algo más userfriendly? Probablemente con hacer update_notifier_t más userfrienly sea suficiente...
+int addUpdateNotifier(bot_info_t *bot_info, update_notifier_t newNotifier){
 	
 	int found = 0;
 	sem_t * mutex_updateEvents = bot_info->mutex_updateEvents;
@@ -60,15 +60,15 @@ int addUpdateEvent(bot_info_t *bot_info, event_t newEvent){
 	//bajar
 	sem_wait(mutex_updateEvents);
 
-	if(newEvent.condition == CONDITION_DEFFAULT){
-		bot_info->updateEvents[0].handler = newEvent.handler;
+	if(newNotifier.event == EVENT_DEFFAULT){
+		bot_info->notifiers[0].handle = newNotifier.handle;
 	}
 	else{
 		for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 			// Cuando encontremos uno vacío lo usamos
-			if(bot_info->updateEvents[i].condition == CONDITION_UNASSIGNED){
-				bot_info->updateEvents[i].handler = newEvent.handler;
-				bot_info->updateEvents[i].condition = newEvent.condition;
+			if(bot_info->notifiers[i].event == EVENT_UNASSIGNED){
+				bot_info->notifiers[i].handle = newNotifier.handle;
+				bot_info->notifiers[i].event = newNotifier.event;
 				found = 1;
 			}
 		}
@@ -82,7 +82,7 @@ int addUpdateEvent(bot_info_t *bot_info, event_t newEvent){
 
 
 // TODO: Comentar
-int removeUpdateEvent(bot_info_t *bot_info, event_t event){
+int removeUpdateNotifier(bot_info_t *bot_info, update_notifier_t notifier){
 	
 	int found = 0;
 	sem_t * mutex_updateEvents = bot_info->mutex_updateEvents;
@@ -91,15 +91,15 @@ int removeUpdateEvent(bot_info_t *bot_info, event_t event){
 	// TODO: ¿Cambiar la exclusión mutua para que solo la garantice cuando moficica? Realmente no tiene mucha importancia porque modificar es un hecho anecdótico.
 	//bajar
 	sem_wait(mutex_updateEvents);
-	if(event.condition == CONDITION_DEFFAULT){
+	if(notifier.event == EVENT_DEFFAULT){
 		// TODO: Cambiar NULL por una función especial "DEFAULT"
-		bot_info->updateEvents[0].handler = NULL;
+		bot_info->notifiers[0].handle = NULL;
 	}
 	for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 		// TODO: Cambiar este "found" a algo que diga si son iguales (¿por una comparación hash?, ¿elemento a elemento?)
 		if(found){
-			bot_info->updateEvents[i].handler = doNothing;
-			bot_info->updateEvents[i].condition = CONDITION_UNASSIGNED;
+			bot_info->notifiers[i].handle = doNothing;
+			bot_info->notifiers[i].event = EVENT_UNASSIGNED;
 			found = 1;
 		}
 	}

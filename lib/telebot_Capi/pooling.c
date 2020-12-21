@@ -95,7 +95,7 @@ void *parser(void *r_info){
 	struct msgbuf msq_buffer;
 	message_t message;
 	int found;
-	updateHandler_t handler;
+	updateHandler_t handle;
 	response_info_t *resp_info;
 	update_t update;
 	sem_t *mutex_updateEvents;
@@ -177,16 +177,16 @@ void *parser(void *r_info){
 
 				found = 0;
 				for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
-					if(resp_info->bot_info->updateEvents[i].condition != CONDITION_UNASSIGNED){
+					if(resp_info->bot_info->notifiers[i].event != EVENT_UNASSIGNED){
 						printf("> FOUND HANDLER\n");
-						handler = resp_info->bot_info->updateEvents[i].handler;
+						handle = resp_info->bot_info->notifiers[i].handle;
 						// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-						if(handler != NULL){
+						if(handle != NULL){
 							// TODO: Cambiar NULL por puntero a la estructura message de respuesta
 							update.type = UPDATE_MESSAGE;
 							update.content = (void *)(&message);
 							update.http_info = &(resp_info->bot_info->http_info);
-							handler(&update);
+							handle(&update);
 						}
 						else{
 							// TODO: Don't update queue
@@ -196,14 +196,14 @@ void *parser(void *r_info){
 				}
 				if(!found){
 					printf("> USING DEFAULT HANDLER\n");
-					handler = resp_info->bot_info->updateEvents[0].handler;
+					handle = resp_info->bot_info->notifiers[0].handle;
 					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-					if(handler != NULL){
+					if(handle != NULL){
 						// TODO: Cambiar NULL por puntero a la estructura message de respuesta
 						update.type = UPDATE_MESSAGE;
 						update.content = (void *)(&message);
 						update.http_info = &(resp_info->bot_info->http_info);
-						handler(&update);
+						handle(&update);
 					}
 					else{
 						// TODO: Don't update queue
@@ -274,8 +274,8 @@ void *pool(void *info){
 	// Prepare message queue to communicate with parser threads
 	clave = ftok("/home/dit/Documentos/telebot",'p');
 	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token.
+	//printf("clave: %i\n", clave);
 	// TODO: Hay que hacer una función para cerrar los hilos y parar el pooling (cerrar también las colas)
-	printf("clave: %i\n", clave);
 	if((msgqueue_id = msgget(clave,IPC_CREAT|IPC_EXCL|0660)) == -1){
 		printf("> Pooling thread: error al iniciar la cola de mensajes: %s\n", strerror(errno));
 		error = 1;

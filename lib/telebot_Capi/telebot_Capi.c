@@ -16,14 +16,14 @@
 /* Definición de funciones locales. */
 
 /*
-**   Parámetros:  char *tok: Token del BOT.
+**   Parámetros:  char *token: Token del BOT.
 **				  http_info_t *http_info: Devuelve información de la comunicación https con Telegram para el BOT específico.
 **                
 **     Devuelve:  0 si la inicializción se ha completado con éxito, -1 en caso de error.
 **
 **  Descripción:  Inicializa las funciones de la librería.
 */
-int telebot_init(char *tok, bot_info_t *bot_info){
+int telebot_init(char *token, bot_info_t *bot_info){
 	
 	int ret = -1;
 	printf("Initializing telebot_Capi\n");
@@ -40,10 +40,10 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	// Formamos la URL de acceso al BOT y la almacenamos en http_info.
 	// TODO: ¿comprobar si no desborda? ¿existe un parámetro en strcpy y strcat para verlo?
 	strcpy(bot_info->http_info.url,API_URL);
-	strcat(bot_info->http_info.url,tok);
+	strcat(bot_info->http_info.url,token);
 	
 	// Inicializamos los handlers (para el "por defecto" -> dejar en la cola, los demás vacíos)
-	initUpdateEvents(bot_info->updateEvents);
+	initUpdateNotifiers(bot_info->notifiers);
 	
 	// Inicializamos la funcion de pooling.
 	if(tbc_pooling_init(bot_info) != 0){
@@ -157,7 +157,6 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 		json_t *ok;
 		json_t *result;
 		json_t *texto;
-		char *datos;
 
 		root = json_loads(respuesta, 0, &error);
 		// Obtenemos el valor de ok
@@ -166,8 +165,7 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 			result = json_object_get(root, "result");		
 			// Se obtiene el objeto from
 			texto = json_object_get(result, "text");
-			datos = json_string_value(texto);
-			if (strcmp(datos,text)==0){
+			if (strcmp(json_string_value(texto),text)==0){
 				ret = 0;
 			}
 		}

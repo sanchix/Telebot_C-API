@@ -38,8 +38,8 @@
 #define MAX_URL_TAM 200
 #define MAX_USER_TAM 64 // Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
 #define MAX_UPDATE_EVENTS 20
-#define CONDITION_UNASSIGNED -1
-#define CONDITION_DEFFAULT 0
+#define EVENT_UNASSIGNED -1
+#define EVENT_DEFFAULT 0
 #define UPDATE_MESSAGE 1
 
 
@@ -112,17 +112,17 @@ typedef void *(*updateHandler_t)(update_t *);
 
 // TODO: Comentar
 typedef struct{
-	updateHandler_t handler;
-	// TODO: Add conditions
-	int condition; // CONDITION_UNASSIGNED = none
-} event_t;
+	updateHandler_t handle;
+	// TODO: Add possible events
+	int event; // EVENT_UNASSIGNED = none
+} update_notifier_t;
 
 
 
 
 typedef struct{
 	http_info_t http_info;
-	event_t updateEvents[MAX_UPDATE_EVENTS];
+	update_notifier_t notifiers[MAX_UPDATE_EVENTS];
 	sem_t * mutex_updateEvents;
 } bot_info_t;
 
@@ -146,7 +146,7 @@ typedef struct{
 **
 **  Descripción:  Inicializa las funciones de la librería telebot_Capi.
 */
-int telebot_init(char *tok, bot_info_t *bot_info);
+int telebot_init(char *token, bot_info_t *bot_info);
 
 
 /*
@@ -254,15 +254,15 @@ void *doNothing(update_t *p);
 
 
 // TODO: Comentar
-void initUpdateEvents(event_t *updateEvents);
+void initUpdateNotifiers(update_notifier_t *notifiers);
 
 
 // TODO: Comentar
-int addUpdateEvent(bot_info_t *bot_info, event_t newEvent);
+int addUpdateNotifier(bot_info_t *bot_info, update_notifier_t newNotifier);
 
 
 // TODO: Comentar
-int removeUpdateEvent(bot_info_t *bot_info, event_t event);
+int removeUpdateNotifier(bot_info_t *bot_info, update_notifier_t notifier);
 
 
 #endif

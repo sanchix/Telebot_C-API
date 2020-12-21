@@ -11,27 +11,41 @@
 #include <unistd.h>
 #include "telebot_Capi/telebot_Capi.h"
 
-void *imprimeMensaje(update_t *update){
+
+void *doEcho(update_t *update){
+	
 	message_t *message;
 	char cid[20];
+	
+	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
+		
 		message = (message_t *)update->content;
+		
+		// Se imprime el mensaje
 		printf("Mensaje recibido de %s: %s\n", message->from.first_name, message->text);
+		
+		// Se hace eco
 		printf("Haciendo eco...\n");
 		sprintf(cid, "%i", message->chat.id);
 		telebot_sendMessage(cid, message->text, update->http_info);
+		
 	}
+	
+	// Si lo recibido no es un mensaje no hacemos nada
 	else{
 		printf("Algo recibido: ...\n");
 	}
+	
+	// TODO: Pensar que poner en el retorno
 	return NULL;
 }
 
+
 int main(int argc, char* argv[]){
 	
-	char info[4096] = {};
 	bot_info_t bot_info;
-	event_t imprime;
+	update_notifier_t eco;
 	
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
@@ -40,27 +54,29 @@ int main(int argc, char* argv[]){
 	// Iniciamos las funciones de librería en bot_info
 	else if(telebot_init(argv[1], &bot_info) != 0){
 			printf("Error al iniciar https\n");
-	}else{
-		char texto[] = "Hola";
-		char id[] = "150848014";
-		sleep(2);
+	}
+	
+	// Si todo va correcto procedemos a realizar pruebas:
+	else{
+		
 		printf("Initialized\n");
-		imprime.condition = CONDITION_DEFFAULT;
-		imprime.handler = imprimeMensaje;
-
-		addUpdateEvent(&bot_info, imprime);
-		sleep(2);
 		
-		//telebot_getMe(info, sizeof(info), &http_info);
-		//printf("Enviando un mensaje:\n");
-		//telebot_sendMessage(id,texto, &http_info);
+		// Configuramos el handle imprime:
+		// evento -> EVENT_DEFFAULT = Comportamiento por defecto
+		// handle -> imprimeMensaje
+		eco.event = EVENT_DEFFAULT;
+		eco.handle = doEcho;
+		// TODO: Comprobar que funcionan los semáforos
+		addUpdateNotifier(&bot_info, eco);
 		
+		
+		// Loop to keep alive main thread
 		while(1){
 			sleep(15);
 		}
 
-		int x = telebot_close();
-		if (x == -1){
+		
+		if (telebot_close() == -1){
 			printf("Ha habido un problema al cerrar el bot");
 		}
 

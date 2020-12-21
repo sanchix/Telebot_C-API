@@ -15,68 +15,81 @@
 /************************************************************/
 /* Declaración de funciones locales. */
 
-/* Declaración de funciones locales. Para cada función: */
 /*
-**   Parámetros:  <tipo1> <parm1> <Descripción>
-**                <tipo2> <parm2> <Descripción>
+/*
+**   Parámetros:  message_t * message Estructura de tipo mensaje para guardar los parametros mas importantes del json recibido.
+**                json_t * message_obj Objeto json completo a procesar.
 **                ...
-**     Devuelve:  <tipo> <Descripción>
+**     Devuelve:  int -1 si ha habido error, 0 si el objeto se ha procesado correctamente.
 **
-**  Descripción:  <Descripción>
+**  Descripción:  Función que a partir de un objeto json nos lo formatea en un objeto message_t con nuestros valores a recoger.
 */
-// TODO: Comentar
-// TODO: poner comprobaciones de error
-// TODO: pensar si es mejor reservar memoria y devolver el mensaje del tirón o que reserve memoria el llamante (esta última opción es como está ahora)
+// DONE Comentar
+// DONETE: poner comprobaciones de error
+// DONE: pensar si es mejor reservar memoria y devolver el mensaje del tirón o que reserve memoria el llamante (esta última opción es como está ahora)
 int unpack_json_message(message_t *message, json_t *message_obj){
 	
-	// TODO: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo valla bien
-	int ret = 0;
+	// DONE: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo vaya bien
+	int ret = -1;
 	json_t *aux;
 	
-	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo)
+	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo) PD: NO TE RAYE
 	
 	// Desempaquetamos message_id
 	message->message_id = json_integer_value(json_object_get(message_obj, "message_id"));
 	
 	// Desempaquetamos from
-	aux = json_object_get(message_obj, "from");
-	message->from.id = json_integer_value(json_object_get(aux, "id"));
-	message->from.is_bot = json_boolean_value(json_object_get(aux, "is_bot"));
-	strcpy(message->from.first_name, json_string_value(json_object_get(aux, "first_name")));
-	strcpy(message->from.last_name, json_string_value(json_object_get(aux, "last_name")));
-	strcpy(message->from.language_code, json_string_value(json_object_get(aux, "language_code")));
+	;
+	if ((aux = json_object_get(message_obj, "from"))!=NULL){ //Comprobamos si no hay error en la recogida de from.
 	
-	// Desempaquetamos chat
-	aux = json_object_get(message_obj, "chat");
-	message->chat.id = json_integer_value(json_object_get(aux, "id"));
-	strcpy(message->chat.first_name, json_string_value(json_object_get(aux, "first_name")));
-	strcpy(message->chat.last_name, json_string_value(json_object_get(aux, "last_name")));
-	strcpy(message->chat.type, json_string_value(json_object_get(aux, "type")));
+	  message->from.id = json_integer_value(json_object_get(aux, "id"));
+	  message->from.is_bot = json_boolean_value(json_object_get(aux, "is_bot"));
+	  strcpy(message->from.first_name, json_string_value(json_object_get(aux, "first_name")));
+	  strcpy(message->from.last_name, json_string_value(json_object_get(aux, "last_name")));
+	  strcpy(message->from.language_code, json_string_value(json_object_get(aux, "language_code")));
 	
-	// Desempaquetamos date
-	message->date = json_integer_value(json_object_get(message_obj, "date"));
+	  // Desempaquetamos chat
+	  if((aux = json_object_get(message_obj, "chat"))!=NULL){ //Comprobamos si no hay error en la recogida de chat.
+	    message->chat.id = json_integer_value(json_object_get(aux, "id"));
+	    strcpy(message->chat.first_name, json_string_value(json_object_get(aux, "first_name")));
+	    strcpy(message->chat.last_name, json_string_value(json_object_get(aux, "last_name")));
+	    strcpy(message->chat.type, json_string_value(json_object_get(aux, "type")));
+	    
+	    // Desempaquetamos date
+	    if((aux = json_object_get(message_obj, "date"))!=NULL){ //Comprobamos si no hay error en la recogida de date.
+	      message->date = json_integer_value(aux);
+	      // Desempaquetamos text
+	      if((aux = json_object_get(message_obj, "text"))!=NULL){ //Comprobamos si no hay error en la recogida de text.
+		
+		strcpy(message->text, json_string_value(aux));
+		ret = 0;
+		
+	      }
+	    }
+	  }
 	
-	// Desempaquetamos text
-	strcpy(message->text, json_string_value(json_object_get(message_obj, "text")));
+	}
 	
+	  
+	  
 	return ret;
 	
 }
 
 
-/* Declaración de funciones locales. Para cada función: */
 /*
-**   Parámetros:  <tipo1> <parm1> <Descripción>
-**                <tipo2> <parm2> <Descripción>
+/*
+**   Parámetros:  Por definición a las funciones pasadas a hilos => void * r_info Informacion de la respuesta dada por el bot 
+**               
 **                ...
-**     Devuelve:  <tipo> <Descripción>
+**     Devuelve:  void* Por definición a las funciones pasadas a hilos
 **
-**  Descripción:  <Descripción>
+**  Descripción:  Parsea la respuesta recibida del bot
 */
 // TODO: Comentar
 void *parser(void *r_info){
 	
-	char response[MAX_RESP_TAM];
+  //char response[MAX_RESP_TAM];
 	key_t clave;
 	int msgqueue_id;
 	int update_id;
@@ -103,102 +116,105 @@ void *parser(void *r_info){
 	}
 	
 	else{
-		// TODO: Pensar si hace falta almacenar en otra variable la respuesta. Quizás sea mejor pasarla de otra forma, por ejemplo que el pool haga un malloc y aquí hagamos un free cuando terminemos u otro sistema...
+		// DONE: Pensar si hace falta almacenar en otra variable la respuesta. Quizás sea mejor pasarla de otra forma, por ejemplo que el pool haga un malloc y aquí hagamos un free cuando terminemos u otro sistema...
 		resp_info = (response_info_t *)r_info;
-		strcpy(response, resp_info->response);
+		
 		
 		// TODO: Quitar (es para depuración)
 		printf("\nUpdate:\n");
 		
 		// Realizamos el parse con la librería jansson
-		json_root = json_loads(response, 0, &error);
+		json_root = json_loads(resp_info->response, 0, &error);
 		
 		// Obtenemos el valor de ok
 		// TODO: Hacer algo con esto, que notifique a alguien si no es ok o haga algo de provecho más que imprimirlo
 		json_ok = json_object_get(json_root, "ok");
-		if(json_is_true(json_ok)){
-			printf("ok\n");
+
+		//TODO: Probar si esto funciona bien
+		if(json_is_false(json_ok)){
+		  printf("Message received not ok: %s (error code: %d)\n",json_string_value(json_object_get(json_root,"description")),json_integer_value(json_object_get(json_root,"error_code")));
+		 
 		}
 		else{
-			printf("Message received not ok\n");
-		}
+		  printf("ok\n");
 		
-		// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
 		
-		// Analizamos el resultado (lista de objetos update)
-		json_result = json_object_get(json_root, "result");
-		for(size_t i = 0; i < json_array_size(json_result); i++){
+		  // TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
+		
+		  // Analizamos el resultado (lista de objetos update)
+		  json_result = json_object_get(json_root, "result");
+		  for(size_t i = 0; i < json_array_size(json_result); i++){
 			
-			// Se obtiene el objeto update
-			json_update = json_array_get(json_result, i);
+		    // Se obtiene el objeto update
+		    json_update = json_array_get(json_result, i);
 			
-			// Obtenemos update_id
-			json_aux = json_object_get(json_update, "update_id");
-			update_id = json_integer_value(json_aux);
-			//TODO: quitar esta impresión (es debug)
-			printf("Update id: %i\n", update_id);
+		    // Obtenemos update_id
+		    json_aux = json_object_get(json_update, "update_id");
+		    update_id = json_integer_value(json_aux);
+		    //TODO: quitar esta impresión (es debug)
+		    printf("Update id: %i\n", update_id);
 			
-			// Obtenemos el objeto message y lo desempaquetamos
-			// TODO: Pensar quien tiene que reservar memoria para este objeto y como vamos a pasarlo.
-			// TODO: Poner un if (no tiene porque ser un mensaje)
-			json_aux = json_object_get(json_update, "message");
-			unpack_json_message(&message, json_aux);
+		    // Obtenemos el objeto message y lo desempaquetamos
+		    // DONE: Pensar quien tiene que reservar memoria para este objeto y como vamos a pasarlo.
+		    // TODO: Poner un if (no tiene porque ser un mensaje)
+		    json_aux = json_object_get(json_update, "message");
+		    unpack_json_message(&message, json_aux);
 			
-			// TODO: Pasar el mensaje al usuario (notificarle) en vez de imprimirlo. Pensar si se va a hacer por paso de mensajes o mediante un puntero a una función que esta función (parser) debe ejecutar. En este caso, esa función se encontrará en el fichero del bot que haya programado el usuario de la librería y llegará hasta aquí mediante parámetros (es algo parecido a lo que se hace en python con los eventos).
-			printf("From: %s %s\n", message.from.first_name, message.from.last_name);
-			printf("Text: %s\n", message.text);
+		    // TODO: Pasar el mensaje al usuario (notificarle) en vez de imprimirlo. Pensar si se va a hacer por paso de mensajes o mediante un puntero a una función que esta función (parser) debe ejecutar. En este caso, esa función se encontrará en el fichero del bot que haya programado el usuario de la librería y llegará hasta aquí mediante parámetros (es algo parecido a lo que se hace en python con los eventos).
+		    printf("From: %s %s\n", message.from.first_name, message.from.last_name);
+		    printf("Text: %s\n", message.text);
 			
-			// TODO: Analizar eventos y llamar a la función
-			// TODO: Poner exclusión mutua
-			// bajar mutex
-			found = 0;
-			for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
-				if(resp_info->poll_info->updateEvents[i].condition != CONDITION_UNASSIGNED){
-					printf("> FOUND HANDLER\n");
-					handler = resp_info->poll_info->updateEvents[i].handler;
-					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-					if(handler != NULL){
-						// TODO: Cambiar NULL por puntero a la estructura message de respuesta
-						update.type = UPDATE_MESSAGE;
-						update.content = (void *)(&message);
-						update.bot_info = &(resp_info->poll_info->bot_info);
-						handler(&update);
-					}
-					else{
-						// TODO: Don't update queue
-						printf("> DONT UPDATE QUEUE\n");
-					}
-				}
+		    // TODO: Analizar eventos y llamar a la función
+		    // TODO: Poner exclusión mutua
+		    // bajar mutex
+		    found = 0;
+		    for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
+		      if(resp_info->poll_info->updateEvents[i].condition != CONDITION_UNASSIGNED){
+			printf("> FOUND HANDLER\n");
+			handler = resp_info->poll_info->updateEvents[i].handler;
+			// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
+			if(handler != NULL){
+			  // TODO: Cambiar NULL por puntero a la estructura message de respuesta
+			  update.type = UPDATE_MESSAGE;
+			  update.content = (void *)(&message);
+			  update.bot_info = &(resp_info->poll_info->bot_info);
+			  handler(&update);
 			}
-			if(!found){
-				printf("> USING DEFAULT HANDLER\n");
-				handler = resp_info->poll_info->updateEvents[0].handler;
-				// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-					if(handler != NULL){
-						// TODO: Cambiar NULL por puntero a la estructura message de respuesta
-						update.type = UPDATE_MESSAGE;
-						update.content = (void *)(&message);
-						update.bot_info = &(resp_info->poll_info->bot_info);
-						handler(&update);
-					}
-					else{
-						// TODO: Don't update queue
-						printf("> DONT UPDATE QUEUE\n");
-					}
+			else{
+			  // TODO: Don't update queue
+			  printf("> DONT UPDATE QUEUE\n");
 			}
-			// subir mutex
+		      }
+		    }
+		    if(!found){
+		      printf("> USING DEFAULT HANDLER\n");
+		      handler = resp_info->poll_info->updateEvents[0].handler;
+		      // TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
+		      if(handler != NULL){
+			// TODO: Cambiar NULL por puntero a la estructura message de respuesta
+			update.type = UPDATE_MESSAGE;
+			update.content = (void *)(&message);
+			update.bot_info = &(resp_info->poll_info->bot_info);
+			handler(&update);
+		      }
+		      else{
+			// TODO: Don't update queue
+			printf("> DONT UPDATE QUEUE\n");
+		      }
+		    }
+		    // subir mutex
 			
+		  }
+		
+		  // TODO: Quitar este sleep (es debug)
+		  sleep(1);
+		
+		  // TODO: mandar aquí el último update_id. Realmente esto lo quitaremos cuando hagamos la búsqueda anticipada (antes del bucle)
+		  strcpy(msq_buffer.mtext, "-1");
+		  msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
+		
 		}
-		
-		// TODO: Quitar este sleep (es debug)
-		sleep(1);
-		
-		// TODO: mandar aquí el último update_id. Realmente esto lo quitaremos cuando hagamos la búsqueda anticipada (antes del bucle)
-		strcpy(msq_buffer.mtext, "-1");
-		msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
-		
 	}
-	
 	// TODO: ¿Cerrar la cola y liberar otros recursos?
 	free(r_info);
 	pthread_exit(NULL);

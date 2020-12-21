@@ -87,6 +87,9 @@ void *parser(void *r_info){
 	response_info_t *resp_info;
 	update_t update;
 	
+	//Semáforo
+	sem_t * mutex_updateEvents = resp_info->poll_info->mutex_updateEvents;
+
 	json_t *json_root;
 	json_error_t error;
 	json_t *json_ok;
@@ -150,7 +153,12 @@ void *parser(void *r_info){
 			
 			// TODO: Analizar eventos y llamar a la función
 			// TODO: Poner exclusión mutua
+
+
 			// bajar mutex
+			//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+			sem_wait(mutex_updateEvents);
+
 			found = 0;
 			for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 				if(resp_info->poll_info->updateEvents[i].condition != CONDITION_UNASSIGNED){
@@ -187,6 +195,9 @@ void *parser(void *r_info){
 					}
 			}
 			// subir mutex
+			//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+			sem_post(mutex_updateEvents);
+
 			
 		}
 		

@@ -123,6 +123,7 @@ typedef struct{
 typedef struct{
 	bot_info_t bot_info;
 	event_t updateEvents[MAX_UPDATE_EVENTS];
+	sem_t * mutex_updateEvents;
 } poll_info_t;
 
 
@@ -257,11 +258,11 @@ void initUpdateEvents(event_t *updateEvents);
 
 
 // TODO: Comentar
-int addUpdateEvent(event_t *updateEvents, event_t newEvent);
+int addUpdateEvent(poll_info_t *poll_info, event_t newEvent);
 
 
 // TODO: Comentar
-int removeUpdateEvent(event_t *updateEvents, event_t event);
+int removeUpdateEvent(poll_info_t *poll_info, event_t event);
 
 
 #endif

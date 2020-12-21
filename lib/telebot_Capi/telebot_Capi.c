@@ -31,7 +31,7 @@ int telebot_init(char *tok, poll_info_t *poll_info){
 	//Inicializamos los semáforos
 	sem_t * mutex_updateEvents;
     mutex_updateEvents = sem_open("mutex_updateEvents", O_CREAT,0600,1);
-
+	poll_info->mutex_updateEvents = mutex_updateEvents;
 
 	// Inicializamos la librería https_lib
 	// TODO: Comprobar que la inicialización es correcta

@@ -12,9 +12,11 @@
 
 /* Includes del sistema */ 
 #include <unistd.h>
-#include <pthread.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <fcntl.h> 
 #include <sys/msg.h>
 #include <sys/ipc.h>
 // TODO: Poner este siguiente include para debug (ifdef debug)
@@ -26,11 +28,15 @@
 
 
 /* Definición de constantes */ 
+// TODO: Ordenar por ficheros (esto y el resto de cosas)
 #define API_URL "https://api.telegram.org/bot"
-// TODO: Pensar estas constantes (ver si hay algo definido sobre tamaños máximos en la API de telegram)
 #define MAX_RESP_TAM 4096
+#define MAX_POST_TAM 4096
 #define MAX_OFFSET_TAM 20
 #define OFFSET_MSG_TYPE 1
+#define MAX_URL_TAM 200
+#define MAX_USER_TAM 64 //Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
+#deifne CONDITION_UNASSIGNED 0
 
 
 /* Tipos definidos por el usuario */
@@ -46,6 +52,25 @@ struct msgbuf{
 };
 
 
+// TODO: Comentar
+// TODO: Pensar valores de retorno y parámetros
+typedef void *(*eventHandler_t)(void *);
+
+// TODO: Comentar
+typedef struct{
+	eventHandler_t handler;
+	// TODO: Add conditions
+	int condition; // CONDITION_UNASSIGNED = none
+} event_t;
+
+
+// TODO: Comentar
+typedef struct{
+	char *response;
+	bot_info_t *bot_info;
+} response_info_t;
+
+
 /*
 **		 Campos:  HTTP_INFO hi: Informacion del protocolo HTTPS para la librería de HTTPS.
 **				  char url[200]: URL con el token para acceder al bot.
@@ -54,27 +79,28 @@ struct msgbuf{
  */
 typedef struct{
 	HTTP_INFO hi;
-	// TODO: Pensar el tamaño máximo de la URL y definirlo en una constante a parte.
-	char url[200];
+	char url[MAX_URL_TAM];
+	// TODO: Add MAX_UPDATE_HANDLERS list
+	event_t updateEvents[MAX_UPDATE_HANDLERS];	// updateHandlers[0] is default handler
 } bot_info_t;
 
 
 // TODO: Comentar
-// TODO: Pensar los tamaños máximos de las cadenas (buscar en telegram si hay tamaños máximos)
+// TODO: Pensar los tamaños máximos de language_code y type
 // TODO: Pensar si es mejor poner punteros en vez de cadenas y que otro reserve la memoria
 typedef struct{
 	int id;
 	int is_bot;
-	char first_name[25];
-	char last_name[50];
+	char first_name[MAX_USER_TAM];
+	char last_name[MAX_USER_TAM];
 	char language_code[5];
 } from_t;
 
 // TODO: Igual que el struct anterior
 typedef struct{
 	int id;
-	char first_name[25];
-	char last_name[50];
+	char first_name[MAX_USER_TAM];
+	char last_name[MAX_USER_TAM];
 	char type[20];
 } chat_t;
 
@@ -84,7 +110,7 @@ typedef struct{
 	from_t from;
 	chat_t chat;
 	long date;
-	char text[1000];
+	char text[MAX_POST_TAM];
 } message_t;
 
 
@@ -101,6 +127,17 @@ typedef struct{
 **  Descripción:  Inicializa las funciones de la librería telebot_Capi.
 */
 int telebot_init(char tok[50], bot_info_t *bot_info);
+
+
+/*
+**   Parámetros:  
+**				  
+**                
+**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
+**
+**  Descripción:  Cierra semáforos.
+*/
+int telebot_close();
 
 
 /*
@@ -156,7 +193,7 @@ int unpack_json_message(message_t *message, json_t *message_obj);
 **  Descripción:  <Descripción>
 */
 // TODO: Comentar
-void *parser(void *resp);
+void *parser(void *resp_info);
 
 
 /*
@@ -180,6 +217,32 @@ void *pool(void *info);
 */
 int tbc_pooling_init(bot_info_t *bot_info);
 
+/*
+**   Parámetros:  char *chat_id: Id del chat al que mandar la petición.
+**				  char *text: Texto a enviar en el mensaje.
+**				  bot_info_t *bot_info: Creado en telebot_init()
+**                
+**     Devuelve:  0 si la petición finaliza correctamente, -1 en caso de error.
+**
+**  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo la respuesta en *response.
+*/
+int telebot_sendMessage( char *chat_id,char *text, bot_info_t *bot_info);
+
+
+// TODO: Comentar
+void *doNothing(void *p);
+
+
+// TODO: Comentar
+void initUpdateEvents(event_t *updateEvents);
+
+
+// TODO: Comentar
+int addUpdateEvent(event_t *updateEvents, event_t newEvent);
+
+
+// TODO: Comentar
+int removeUpdateEvent(event_t *updateEvents, event_t event)
 
 
 #endif

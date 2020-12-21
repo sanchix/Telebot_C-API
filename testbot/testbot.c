@@ -1,5 +1,5 @@
 /*
-**     Fichero:  tele_bot/tele_bot.c
+**     Fichero:  testbot/testbot.c
 **       Group:  Grupo 8
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
 **       Fecha:  07/dec/2020
@@ -22,16 +22,23 @@ int main(int argc, char* argv[]){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
 	}
 	else if(telebot_init(argv[1], &bot_info) != 0){
-		printf("Error al iniciar https\n");
-		
+			printf("Error al iniciar https\n");
 	}else{
-		
+
+		char texto[] = "Hola";
+		char id[] = "150848014";
 		sleep(2);
 		printf("Initialized\n");
+		sleep(2);
+		
 		telebot_getMe(info, sizeof(info), &bot_info);
-		while(1){
-			sleep(10);
-			//printf("Info: %s\n", info);
+		printf("Enviando un mensaje:\n");
+		telebot_sendMessage(id,texto, &bot_info);
+		sleep(15);
+
+		int x = telebot_close();
+		if (x == -1){
+			printf("Ha habido un problema al cerrar el bot");
 		}
 
 	}

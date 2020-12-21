@@ -13,7 +13,7 @@
 
 
 /************************************************************/
-/* Declaración de funciones locales. */
+/* Definición de funciones locales. */
 
 /*
 **   Parámetros:  char *tok: Token del BOT.
@@ -27,7 +27,12 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	
 	int ret = -1;
 	printf("Initializing telebot_Capi\n");
-	
+
+	//Inicializamos los semáforos
+	sem_t * mutex_updateEvents;
+    mutex_updateEvents = sem_open("mutex_updateEvents", O_CREAT,0600,1);
+
+
 	// Inicializamos la librería https_lib
 	// TODO: Comprobar que la inicialización es correcta
 	http_init(&(bot_info->hi), TRUE);
@@ -37,6 +42,9 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	strcpy(bot_info->url,API_URL);
 	strcat(bot_info->url,tok);
 	
+	// Inicializamos los handlers (para el "por defecto" -> dejar en la cola, los demás vacíos)
+	initUpdateEvents(&bot_info->updateEvents);
+	
 	// Inicializamos la funcion de pooling.
 	if(tbc_pooling_init(bot_info) != 0){
 		printf("telebot_Capi: Error initializing pooling thread\n");
@@ -44,6 +52,30 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	else{
 		ret = 0;
 	}
+	
+	return ret;
+	
+}
+
+/*
+**   Parámetros:  
+**				  
+**                
+**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
+**
+**  Descripción:  Cierra semáforos.
+*/
+// TODO: hacer que cierre tambien la cola...
+int telebot_close(){
+	
+	int ret = 0;
+	printf("Cerrando telebot_Capi\n");
+	if ( sem_unlink("mutex_updateEvents")!=0 ){
+		printf("Ha habido un problema al cerrar el semaforo mutex_updateEvents");
+		ret = -1;
+	}
+
+	
 	
 	return ret;
 	
@@ -66,7 +98,7 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 
 	int ret = -1;
 	int status = 0;
-	char url[200];
+	char url[MAX_URL_TAM];
 	char method[10] = "/getMe";
 	
 	// Formamos la url con el método correspondiente
@@ -87,9 +119,7 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 
 
 /*
-**   Parámetros:  char *response: Valor devuelto por el método de la API sendMessage.
-**                int size: Tamaño reservado para response.
-**				  char *chat_id: Id del chat al que mandar la petición.
+**   Parámetros:  char *chat_id: Id del chat al que mandar la petición.
 **				  char *text: Texto a enviar en el mensaje.
 **				  bot_info_t *bot_info: Creado en telebot_init()
 **                
@@ -97,17 +127,17 @@ int telebot_getMe(char *response, int size, bot_info_t *bot_info){
 **
 **  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo la respuesta en *response.
 */
-int telebot_sendMessage(char *response, int size, char *chat_id,char *text, bot_info_t *bot_info){
+int telebot_sendMessage( char *chat_id,char *text, bot_info_t *bot_info){
+
+	// TODO: Cambiar el parámetro chat_id y añadir los parámetros necesarios para mandar un mensaje (comprobar que es lo que se debe mandar en el método sendMessage en la API de Telegram). 
+	// ¿Hacer que se pasen los parámetros mediante una estructura (podría ser útil para reenvíar mensajes recibidos)? ¿Hacer dos funciones una con parámetros separados y otra con la estructura?
 	
-	// TODO: Hacer que no devuelva la respuesta, sino que intente corregir posibles errores y en caso de que no lo consiga notifique al llamante de la función devolviendo -1 o algo parecido.
-	// TODO: Cambiar el parámetro char_id y añadir los parámetros necesarios para mandar un mensaje (comprobar que es lo que se debe mandar en el método sendMessage en la API de Telegram). ¿Hacer que se pasen los parámetros mediante una estructura (podría ser útil para reenvíar mensajes recibidos)? ¿Hacer dos funciones una con parámetros separados y otra con la estructura?
-	
+	char respuesta[MAX_RESP_TAM]; //Valor devuelto por el método de la API sendMessage.
 	int ret = -1;
 	int status = 0;
-	char url[200];
+	char url[MAX_URL_TAM];
 	char method[15] = "/sendMessage";
-	// TODO: Buscar el tamaño máximo permito por telegram (es 4096 creo)
-	char data[100];
+	char data[MAX_POST_TAM];
 
 	// Generamos la url con el método correspondiente
 	strcpy(url, bot_info->url);
@@ -116,15 +146,34 @@ int telebot_sendMessage(char *response, int size, char *chat_id,char *text, bot_
 	// Generamos la cadena JSON
 	// TODO: ¿Hacer una función para que haga esto?
 	sprintf(data,"{\"chat_id\":%s,\"text\":\"%s\"}",chat_id,text);
-	
+
 	// Realizamos la petición con POST
-	status = http_post(&(bot_info->hi), url, data, response, size);
-	
-	// TODO: Realizar más comprobaciones, como que lo que se recibe de respuesta es el mismo mensaje que se ha enviado.
+	status = http_post(&(bot_info->hi), url, data, respuesta, MAX_RESP_TAM);
+
 	if(status == 200){
-		ret = 0;
+
+		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
+		json_error_t error;	
+		json_t *root;
+		json_t *ok;
+		json_t *result;
+		json_t *texto;
+		char *datos;
+
+		root = json_loads(respuesta, 0, &error);
+		// Obtenemos el valor de ok
+		ok = json_object_get(root, "ok");
+		if(json_is_true(ok)){
+			result = json_object_get(root, "result");		
+			// Se obtiene el objeto from
+			texto = json_object_get(result, "text");
+			datos = json_string_value(texto);
+			if (strcmp(datos,text)==0){
+				ret = 0;
+			}
+		}
+
 	}
-	
 	return ret;
 	
 }

@@ -39,14 +39,14 @@ int main(int argc, char* argv[]){
 	else if(telebot_init(argv[1], &poll_info) != 0){
 			printf("Error al iniciar https\n");
 	}else{
-
 		char texto[] = "Hola";
 		char id[] = "150848014";
 		sleep(2);
 		printf("Initialized\n");
 		imprime.condition = CONDITION_DEFFAULT;
 		imprime.handler = imprimeMensaje;
-		addUpdateEvent(poll_info.updateEvents, imprime);
+
+		addUpdateEvent(&poll_info, imprime);
 		sleep(2);
 		
 		//telebot_getMe(info, sizeof(info), &bot_info);

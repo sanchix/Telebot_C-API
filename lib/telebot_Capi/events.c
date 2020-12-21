@@ -51,26 +51,30 @@ void initUpdateEvents(event_t *updateEvents){
 
 // TODO: Comentar: Esta función debe bloquear los eventos (hay que poner un mutex)
 // TODO: Cambiar el parametro newEvent por algo más userfriendly? Probablemente con hacer event_t más userfrienly sea suficiente...
-int addUpdateEvent(event_t *updateEvents, event_t newEvent){
+int addUpdateEvent(poll_info_t *poll_info, event_t newEvent){
 	
 	int found = 0;
-	
+	sem_t * mutex_updateEvents = poll_info->mutex_updateEvents;
+
 	// TODO: Poner exclusión mutua
 	//bajar
+	sem_wait(mutex_updateEvents);
+
 	if(newEvent.condition == CONDITION_DEFFAULT){
-		updateEvents[0].handler = newEvent.handler;
+		poll_info->updateEvents[0].handler = newEvent.handler;
 	}
 	else{
 		for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 			// Cuando encontremos uno vacío lo usamos
-			if(updateEvents[i].condition == CONDITION_UNASSIGNED){
-				updateEvents[i].handler = newEvent.handler;
-				updateEvents[i].condition = newEvent.condition;
+			if(poll_info->updateEvents[i].condition == CONDITION_UNASSIGNED){
+				poll_info->updateEvents[i].handler = newEvent.handler;
+				poll_info->updateEvents[i].condition = newEvent.condition;
 				found = 1;
 			}
 		}
 	}
 	// subir
+	sem_post(mutex_updateEvents);
 	
 	return found-1;
 	
@@ -78,26 +82,29 @@ int addUpdateEvent(event_t *updateEvents, event_t newEvent){
 
 
 // TODO: Comentar
-int removeUpdateEvent(event_t *updateEvents, event_t event){
+int removeUpdateEvent(poll_info_t *poll_info, event_t event){
 	
 	int found = 0;
+	sem_t * mutex_updateEvents = poll_info->mutex_updateEvents;
 	
 	// TODO: Poner exclusión mutua
 	// TODO: ¿Cambiar la exclusión mutua para que solo la garantice cuando moficica? Realmente no tiene mucha importancia porque modificar es un hecho anecdótico.
 	//bajar
+	sem_wait(mutex_updateEvents);
 	if(event.condition == CONDITION_DEFFAULT){
 		// TODO: Cambiar NULL por una función especial "DEFAULT"
-		updateEvents[0].handler = NULL;
+		poll_info->updateEvents[0].handler = NULL;
 	}
 	for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 		// TODO: Cambiar este "found" a algo que diga si son iguales (¿por una comparación hash?, ¿elemento a elemento?)
 		if(found){
-			updateEvents[i].handler = doNothing;
-			updateEvents[i].condition = CONDITION_UNASSIGNED;
+			poll_info->updateEvents[i].handler = doNothing;
+			poll_info->updateEvents[i].condition = CONDITION_UNASSIGNED;
 			found = 1;
 		}
 	}
 	// subir
+	sem_post(mutex_updateEvents);
 	
 	return found-1;
 	

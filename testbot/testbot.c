@@ -11,17 +11,32 @@
 #include <unistd.h>
 #include "telebot_Capi/telebot_Capi.h"
 
-
+void *imprimeMensaje(update_t *update){
+	message_t *message;
+	char cid[20];
+	if(update->type == UPDATE_MESSAGE){
+		message = (message_t *)update->content;
+		printf("Mensaje recibido de %s: %s\n", message->from.first_name, message->text);
+		printf("Haciendo eco...\n");
+		sprintf(cid, "%i", message->chat.id);
+		telebot_sendMessage(cid, message->text, update->bot_info);
+	}
+	else{
+		printf("Algo recibido: ...\n");
+	}
+	return NULL;
+}
 
 int main(int argc, char* argv[]){
 	
 	char info[4096] = {};
-	bot_info_t bot_info;
+	poll_info_t poll_info;
+	event_t imprime;
 	
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
 	}
-	else if(telebot_init(argv[1], &bot_info) != 0){
+	else if(telebot_init(argv[1], &poll_info) != 0){
 			printf("Error al iniciar https\n");
 	}else{
 
@@ -29,12 +44,18 @@ int main(int argc, char* argv[]){
 		char id[] = "150848014";
 		sleep(2);
 		printf("Initialized\n");
+		imprime.condition = CONDITION_DEFFAULT;
+		imprime.handler = imprimeMensaje;
+		addUpdateEvent(poll_info.updateEvents, imprime);
 		sleep(2);
 		
-		telebot_getMe(info, sizeof(info), &bot_info);
-		printf("Enviando un mensaje:\n");
-		telebot_sendMessage(id,texto, &bot_info);
-		sleep(15);
+		//telebot_getMe(info, sizeof(info), &bot_info);
+		//printf("Enviando un mensaje:\n");
+		//telebot_sendMessage(id,texto, &bot_info);
+		
+		while(1){
+			sleep(15);
+		}
 
 		int x = telebot_close();
 		if (x == -1){

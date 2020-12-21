@@ -12,13 +12,16 @@ LIB_JANSSON = $(LIB)jansson/
 
 INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_HTTPS)mbedtls/include/
 
-todo: telebot_Capi.o pooling.o
+todo: telebot_Capi.o pooling.o events.o
 
 telebot_Capi.o: telebot_Capi.c telebot_Capi.h
 	gcc -W -Wall $(INCLUDES) -c telebot_Capi.c
 	
 pooling.o: pooling.c telebot_Capi.h
 	gcc -W -Wall $(INCLUDES) -c pooling.c
+	
+events.o: events.c telebot_Capi.h
+	gcc -W -Wall $(INCLUDES) -c events.c
 
 borra: 
 	rm -f telebot_Capi.o

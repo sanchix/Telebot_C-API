@@ -24,7 +24,7 @@
 
 
 // TODO: Comentar
-void *doNothing(void *p){/*do nothing absolutely*/ return NULL; }
+void *doNothing(update_t *p){/*do nothing absolutely*/ return NULL; }
 
 
 /*
@@ -39,11 +39,11 @@ void *doNothing(void *p){/*do nothing absolutely*/ return NULL; }
 void initUpdateEvents(event_t *updateEvents){
 	
 	// TODO: Set first update handler to NULL (don't change offset on HTTP request), and others to "doNothing()"
-	updateHandlers[0].handler = NULL;
-	updateHandlers[0].condition = CONDITION_UNASSIGNED;
-	for(int i = 1; i < MAX_UPDATE_HANDLERS; i++){
-		updateHandlers[i].handler = doNothing;
-		updateHandlers[i].condition = CONDITION_UNASSIGNED;
+	updateEvents[0].handler = NULL;
+	updateEvents[0].condition = CONDITION_DEFFAULT;
+	for(int i = 1; i < MAX_UPDATE_EVENTS; i++){
+		updateEvents[i].handler = doNothing;
+		updateEvents[i].condition = CONDITION_UNASSIGNED;
 	}
 	
 }
@@ -57,17 +57,22 @@ int addUpdateEvent(event_t *updateEvents, event_t newEvent){
 	
 	// TODO: Poner exclusión mutua
 	//bajar
-	for(int i = 1; i < MAX_UPDATE_HANDLERS && !found; i++){
-		// Cuando encontremos uno vacío lo usamos
-		if(updateEvents[i].condition == CONDITION_UNASSIGNED){
-			updateEvents[i].handler = newEvent.handler;
-			updateEvents[i].condition = newEvent.condition;
-			found = 1;
+	if(newEvent.condition == CONDITION_DEFFAULT){
+		updateEvents[0].handler = newEvent.handler;
+	}
+	else{
+		for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
+			// Cuando encontremos uno vacío lo usamos
+			if(updateEvents[i].condition == CONDITION_UNASSIGNED){
+				updateEvents[i].handler = newEvent.handler;
+				updateEvents[i].condition = newEvent.condition;
+				found = 1;
+			}
 		}
 	}
 	// subir
 	
-	return found-1
+	return found-1;
 }
 
 
@@ -77,17 +82,22 @@ int removeUpdateEvent(event_t *updateEvents, event_t event){
 	int found = 0;
 	
 	// TODO: Poner exclusión mutua
+	// TODO: ¿Cambiar la exclusión mutua para que solo la garantice cuando moficica? Realmente no tiene mucha importancia porque modificar es un hecho anecdótico.
 	//bajar
-	for(i in(1, MAX_UPDATE_HANDLERS) && !found){
+	if(event.condition == CONDITION_DEFFAULT){
+		// TODO: Cambiar NULL por una función especial "DEFAULT"
+		updateEvents[0].handler = NULL;
+	}
+	for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 		// TODO: Cambiar este "found" a algo que diga si son iguales (¿por una comparación hash?, ¿elemento a elemento?)
 		if(found){
-			updateEvents[i].handler = doNothing();
+			updateEvents[i].handler = doNothing;
 			updateEvents[i].condition = CONDITION_UNASSIGNED;
 			found = 1;
 		}
 	}
 	// subir
 	
-	return found-1
+	return found-1;
 	
 }

@@ -23,7 +23,7 @@
 **
 **  Descripción:  Inicializa las funciones de la librería.
 */
-int telebot_init(char *tok, bot_info_t *bot_info){
+int telebot_init(char *tok, poll_info_t *poll_info){
 	
 	int ret = -1;
 	printf("Initializing telebot_Capi\n");
@@ -35,18 +35,18 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 
 	// Inicializamos la librería https_lib
 	// TODO: Comprobar que la inicialización es correcta
-	http_init(&(bot_info->hi), TRUE);
+	http_init(&(poll_info->bot_info.hi), TRUE);
 	
 	// Formamos la URL de acceso al BOT y la almacenamos en bot_info.
 	// TODO: ¿comprobar si no desborda? ¿existe un parámetro en strcpy y strcat para verlo?
-	strcpy(bot_info->url,API_URL);
-	strcat(bot_info->url,tok);
+	strcpy(poll_info->bot_info.url,API_URL);
+	strcat(poll_info->bot_info.url,tok);
 	
 	// Inicializamos los handlers (para el "por defecto" -> dejar en la cola, los demás vacíos)
-	initUpdateEvents(&bot_info->updateEvents);
+	initUpdateEvents(poll_info->updateEvents);
 	
 	// Inicializamos la funcion de pooling.
-	if(tbc_pooling_init(bot_info) != 0){
+	if(tbc_pooling_init(poll_info) != 0){
 		printf("telebot_Capi: Error initializing pooling thread\n");
 	}
 	else{
@@ -56,6 +56,7 @@ int telebot_init(char *tok, bot_info_t *bot_info){
 	return ret;
 	
 }
+
 
 /*
 **   Parámetros:  
@@ -74,8 +75,6 @@ int telebot_close(){
 		printf("Ha habido un problema al cerrar el semaforo mutex_updateEvents");
 		ret = -1;
 	}
-
-	
 	
 	return ret;
 	

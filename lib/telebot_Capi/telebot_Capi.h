@@ -12,6 +12,7 @@
 
 /* Includes del sistema */ 
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -35,9 +36,11 @@
 #define MAX_OFFSET_TAM 20
 #define OFFSET_MSG_TYPE 1
 #define MAX_URL_TAM 200
-#define MAX_USER_TAM 64 //Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
-#define MAX_UPDATE_HANDLERS 20
-#define CONDITION_UNASSIGNED 0
+#define MAX_USER_TAM 64 // Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
+#define MAX_UPDATE_EVENTS 20
+#define CONDITION_UNASSIGNED -1
+#define CONDITION_DEFFAULT 0
+#define UPDATE_MESSAGE 1
 
 
 /* Tipos definidos por el usuario */
@@ -51,39 +54,6 @@ struct msgbuf{
 	long mtype;
 	char mtext[MAX_OFFSET_TAM];
 };
-
-
-// TODO: Comentar
-// TODO: Pensar valores de retorno y parámetros
-typedef void *(*eventHandler_t)(void *);
-
-// TODO: Comentar
-typedef struct{
-	eventHandler_t handler;
-	// TODO: Add conditions
-	int condition; // CONDITION_UNASSIGNED = none
-} event_t;
-
-
-/*
-**		 Campos:  HTTP_INFO hi: Informacion del protocolo HTTPS para la librería de HTTPS.
-**				  char url[200]: URL con el token para acceder al bot.
-**
-**	Descripción: Almacena los datos relativos a la comunicación HTTPS con los servidores de telegram.
- */
-typedef struct{
-	HTTP_INFO hi;
-	char url[MAX_URL_TAM];
-	// TODO: Add MAX_UPDATE_HANDLERS list
-	event_t updateEvents[MAX_UPDATE_HANDLERS];	// updateHandlers[0] is default handler
-} bot_info_t;
-
-
-// TODO: Comentar
-typedef struct{
-	char *response;
-	bot_info_t *bot_info;
-} response_info_t;
 
 
 // TODO: Comentar
@@ -115,6 +85,54 @@ typedef struct{
 } message_t;
 
 
+/*
+**		 Campos:  HTTP_INFO hi: Informacion del protocolo HTTPS para la librería de HTTPS.
+**				  char url[200]: URL con el token para acceder al bot.
+**
+**	Descripción: Almacena los datos relativos a la comunicación HTTPS con los servidores de telegram.
+ */
+typedef struct{
+	HTTP_INFO hi;
+	char url[MAX_URL_TAM];
+} bot_info_t;
+
+
+// TODO: Comentar
+typedef struct{
+	int type; // Defined in UPDATE_<type>
+	void *content;
+	// TODO_ Pensar si esta es la mejor forma de que una función de evento pueda mandar mensajes o si hay otra.
+	bot_info_t *bot_info;
+} update_t;
+
+
+// TODO: Comentar
+// TODO: Pensar valores de retorno y parámetros
+typedef void *(*updateHandler_t)(update_t *);
+
+// TODO: Comentar
+typedef struct{
+	updateHandler_t handler;
+	// TODO: Add conditions
+	int condition; // CONDITION_UNASSIGNED = none
+} event_t;
+
+
+
+
+typedef struct{
+	bot_info_t bot_info;
+	event_t updateEvents[MAX_UPDATE_EVENTS];
+} poll_info_t;
+
+
+// TODO: Comentar
+typedef struct{
+	char response[MAX_RESP_TAM];
+	poll_info_t *poll_info;
+} response_info_t;
+
+
 
 /*********************   telebot_Capi.c   *********************/
 /* Declaración de funciones exportadas. */
@@ -127,7 +145,7 @@ typedef struct{
 **
 **  Descripción:  Inicializa las funciones de la librería telebot_Capi.
 */
-int telebot_init(char *tok, bot_info_t *bot_info);
+int telebot_init(char *tok, poll_info_t *poll_info);
 
 
 /*
@@ -216,7 +234,7 @@ void *pool(void *info);
 **
 **  Descripción:  Inicializa la función de pooling.
 */
-int tbc_pooling_init(bot_info_t *bot_info);
+int tbc_pooling_init(poll_info_t *poll_info);
 
 /*
 **   Parámetros:  char *chat_id: Id del chat al que mandar la petición.
@@ -231,7 +249,7 @@ int telebot_sendMessage( char *chat_id,char *text, bot_info_t *bot_info);
 
 
 // TODO: Comentar
-void *doNothing(void *p);
+void *doNothing(update_t *p);
 
 
 // TODO: Comentar
@@ -243,7 +261,7 @@ int addUpdateEvent(event_t *updateEvents, event_t newEvent);
 
 
 // TODO: Comentar
-int removeUpdateEvent(event_t *updateEvents, event_t event)
+int removeUpdateEvent(event_t *updateEvents, event_t event);
 
 
 #endif

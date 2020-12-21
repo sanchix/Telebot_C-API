@@ -51,24 +51,24 @@ void initUpdateEvents(event_t *updateEvents){
 
 // TODO: Comentar: Esta función debe bloquear los eventos (hay que poner un mutex)
 // TODO: Cambiar el parametro newEvent por algo más userfriendly? Probablemente con hacer event_t más userfrienly sea suficiente...
-int addUpdateEvent(poll_info_t *poll_info, event_t newEvent){
+int addUpdateEvent(bot_info_t *bot_info, event_t newEvent){
 	
 	int found = 0;
-	sem_t * mutex_updateEvents = poll_info->mutex_updateEvents;
+	sem_t * mutex_updateEvents = bot_info->mutex_updateEvents;
 
 	// TODO: Poner exclusión mutua
 	//bajar
 	sem_wait(mutex_updateEvents);
 
 	if(newEvent.condition == CONDITION_DEFFAULT){
-		poll_info->updateEvents[0].handler = newEvent.handler;
+		bot_info->updateEvents[0].handler = newEvent.handler;
 	}
 	else{
 		for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 			// Cuando encontremos uno vacío lo usamos
-			if(poll_info->updateEvents[i].condition == CONDITION_UNASSIGNED){
-				poll_info->updateEvents[i].handler = newEvent.handler;
-				poll_info->updateEvents[i].condition = newEvent.condition;
+			if(bot_info->updateEvents[i].condition == CONDITION_UNASSIGNED){
+				bot_info->updateEvents[i].handler = newEvent.handler;
+				bot_info->updateEvents[i].condition = newEvent.condition;
 				found = 1;
 			}
 		}
@@ -82,10 +82,10 @@ int addUpdateEvent(poll_info_t *poll_info, event_t newEvent){
 
 
 // TODO: Comentar
-int removeUpdateEvent(poll_info_t *poll_info, event_t event){
+int removeUpdateEvent(bot_info_t *bot_info, event_t event){
 	
 	int found = 0;
-	sem_t * mutex_updateEvents = poll_info->mutex_updateEvents;
+	sem_t * mutex_updateEvents = bot_info->mutex_updateEvents;
 	
 	// TODO: Poner exclusión mutua
 	// TODO: ¿Cambiar la exclusión mutua para que solo la garantice cuando moficica? Realmente no tiene mucha importancia porque modificar es un hecho anecdótico.
@@ -93,13 +93,13 @@ int removeUpdateEvent(poll_info_t *poll_info, event_t event){
 	sem_wait(mutex_updateEvents);
 	if(event.condition == CONDITION_DEFFAULT){
 		// TODO: Cambiar NULL por una función especial "DEFAULT"
-		poll_info->updateEvents[0].handler = NULL;
+		bot_info->updateEvents[0].handler = NULL;
 	}
 	for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 		// TODO: Cambiar este "found" a algo que diga si son iguales (¿por una comparación hash?, ¿elemento a elemento?)
 		if(found){
-			poll_info->updateEvents[i].handler = doNothing;
-			poll_info->updateEvents[i].condition = CONDITION_UNASSIGNED;
+			bot_info->updateEvents[i].handler = doNothing;
+			bot_info->updateEvents[i].condition = CONDITION_UNASSIGNED;
 			found = 1;
 		}
 	}

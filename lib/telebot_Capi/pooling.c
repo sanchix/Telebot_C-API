@@ -16,7 +16,6 @@
 /* Declaración de funciones locales. */
 
 /*
-/*
 **   Parámetros:  message_t * message Estructura de tipo mensaje para guardar los parametros mas importantes del json recibido.
 **                json_t * message_obj Objeto json completo a procesar.
 **                ...
@@ -78,7 +77,6 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 
 
 /*
-/*
 **   Parámetros:  Por definición a las funciones pasadas a hilos => void * r_info Informacion de la respuesta dada por el bot 
 **               
 **                ...
@@ -89,19 +87,18 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 // TODO: Comentar
 void *parser(void *r_info){
 	
-  //char response[MAX_RESP_TAM];
+	//char response[MAX_RESP_TAM];
 	key_t clave;
 	int msgqueue_id;
-	int update_id;
+	// TODO: Dimensionar update_id
+	long long int update_id;
 	struct msgbuf msq_buffer;
 	message_t message;
 	int found;
 	updateHandler_t handler;
 	response_info_t *resp_info;
 	update_t update;
-	
-	//Semáforo
-	sem_t * mutex_updateEvents = resp_info->poll_info->mutex_updateEvents;
+	sem_t *mutex_updateEvents;
 
 	json_t *json_root;
 	json_error_t error;
@@ -122,6 +119,8 @@ void *parser(void *r_info){
 		// DONE: Pensar si hace falta almacenar en otra variable la respuesta. Quizás sea mejor pasarla de otra forma, por ejemplo que el pool haga un malloc y aquí hagamos un free cuando terminemos u otro sistema...
 		resp_info = (response_info_t *)r_info;
 		
+		//Semáforo
+		mutex_updateEvents = resp_info->bot_info->mutex_updateEvents;
 		
 		// TODO: Quitar (es para depuración)
 		printf("\nUpdate:\n");
@@ -135,83 +134,75 @@ void *parser(void *r_info){
 
 		//TODO: Probar si esto funciona bien
 		if(json_is_false(json_ok)){
-		  printf("Message received not ok: %s (error code: %d)\n",json_string_value(json_object_get(json_root,"description")),json_integer_value(json_object_get(json_root,"error_code")));
+			printf("Message received not ok: %s (error code: %lld)\n",json_string_value(json_object_get(json_root,"description")),json_integer_value(json_object_get(json_root,"error_code")));
 		 
 		}
 		else{
-		  printf("ok\n");
+			printf("ok\n");
 		
 		
-		  // TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
+			// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
 		
-		  // Analizamos el resultado (lista de objetos update)
-		  json_result = json_object_get(json_root, "result");
-		  for(size_t i = 0; i < json_array_size(json_result); i++){
+			// Analizamos el resultado (lista de objetos update)
+			json_result = json_object_get(json_root, "result");
+			for(size_t i = 0; i < json_array_size(json_result); i++){
 			
-		    // Se obtiene el objeto update
-		    json_update = json_array_get(json_result, i);
+				// Se obtiene el objeto update
+				json_update = json_array_get(json_result, i);
+				
+				// Obtenemos update_id
+				json_aux = json_object_get(json_update, "update_id");
+				update_id = json_integer_value(json_aux);
+				//TODO: quitar esta impresión (es debug)
+				printf("Update id: %lld\n", update_id);
+				
+				// Obtenemos el objeto message y lo desempaquetamos
+				// DONE: Pensar quien tiene que reservar memoria para este objeto y como vamos a pasarlo.
+				// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
+				// TODO: Poner un if (no tiene porque ser un mensaje)
+				json_aux = json_object_get(json_update, "message");
+				unpack_json_message(&message, json_aux);
 			
-		    // Obtenemos update_id
-		    json_aux = json_object_get(json_update, "update_id");
-		    update_id = json_integer_value(json_aux);
-		    //TODO: quitar esta impresión (es debug)
-		    printf("Update id: %i\n", update_id);
+				// TODO: Pasar el mensaje al usuario (notificarle) en vez de imprimirlo. Pensar si se va a hacer por paso de mensajes o mediante un puntero a una función que esta función (parser) debe ejecutar. En este caso, esa función se encontrará en el fichero del bot que haya programado el usuario de la librería y llegará hasta aquí mediante parámetros (es algo parecido a lo que se hace en python con los eventos).
+				printf("From: %s %s\n", message.from.first_name, message.from.last_name);
+				printf("Text: %s\n", message.text);
 			
-<<<<<<< HEAD
-			// Obtenemos el objeto message y lo desempaquetamos
-			// TODO: Pensar quien tiene que reservar memoria para este objeto y como vamos a pasarlo.
-			// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
-			// TODO: Poner un if (no tiene porque ser un mensaje)
-			json_aux = json_object_get(json_update, "message");
-			unpack_json_message(&message, json_aux);
-=======
-		    // Obtenemos el objeto message y lo desempaquetamos
-		    // DONE: Pensar quien tiene que reservar memoria para este objeto y como vamos a pasarlo.
-		    // TODO: Poner un if (no tiene porque ser un mensaje)
-		    json_aux = json_object_get(json_update, "message");
-		    unpack_json_message(&message, json_aux);
->>>>>>> c9b711ce1cde3fb24c22acf8b6ec8ebcb5cf5f75
-			
-		    // TODO: Pasar el mensaje al usuario (notificarle) en vez de imprimirlo. Pensar si se va a hacer por paso de mensajes o mediante un puntero a una función que esta función (parser) debe ejecutar. En este caso, esa función se encontrará en el fichero del bot que haya programado el usuario de la librería y llegará hasta aquí mediante parámetros (es algo parecido a lo que se hace en python con los eventos).
-		    printf("From: %s %s\n", message.from.first_name, message.from.last_name);
-		    printf("Text: %s\n", message.text);
-			
-<<<<<<< HEAD
-		    // TODO: Analizar eventos y llamar a la función
-		    // TODO: Poner exclusión mutua
-		    // bajar mutex
-		    found = 0;
-		    for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
-		      if(resp_info->poll_info->updateEvents[i].condition != CONDITION_UNASSIGNED){
-			printf("> FOUND HANDLER\n");
-			handler = resp_info->poll_info->updateEvents[i].handler;
-			// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-			if(handler != NULL){
-			  // TODO: Cambiar NULL por puntero a la estructura message de respuesta
-			  update.type = UPDATE_MESSAGE;
-			  update.content = (void *)(&message);
-			  update.bot_info = &(resp_info->poll_info->bot_info);
-			  handler(&update);
-=======
-			// TODO: Analizar eventos y llamar a la función
-			// TODO: Poner exclusión mutua
+				// TODO: Analizar eventos y llamar a la función
+				// TODO: Poner exclusión mutua
 
 
-			// bajar mutex
-			//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
-			sem_wait(mutex_updateEvents);
+				// bajar mutex
+				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+				sem_wait(mutex_updateEvents);
 
-			found = 0;
-			for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
-				if(resp_info->poll_info->updateEvents[i].condition != CONDITION_UNASSIGNED){
-					printf("> FOUND HANDLER\n");
-					handler = resp_info->poll_info->updateEvents[i].handler;
+				found = 0;
+				for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
+					if(resp_info->bot_info->updateEvents[i].condition != CONDITION_UNASSIGNED){
+						printf("> FOUND HANDLER\n");
+						handler = resp_info->bot_info->updateEvents[i].handler;
+						// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
+						if(handler != NULL){
+							// TODO: Cambiar NULL por puntero a la estructura message de respuesta
+							update.type = UPDATE_MESSAGE;
+							update.content = (void *)(&message);
+							update.http_info = &(resp_info->bot_info->http_info);
+							handler(&update);
+						}
+						else{
+							// TODO: Don't update queue
+							printf("> DONT UPDATE QUEUE\n");
+						}
+					}
+				}
+				if(!found){
+					printf("> USING DEFAULT HANDLER\n");
+					handler = resp_info->bot_info->updateEvents[0].handler;
 					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
 					if(handler != NULL){
 						// TODO: Cambiar NULL por puntero a la estructura message de respuesta
 						update.type = UPDATE_MESSAGE;
 						update.content = (void *)(&message);
-						update.bot_info = &(resp_info->poll_info->bot_info);
+						update.http_info = &(resp_info->bot_info->http_info);
 						handler(&update);
 					}
 					else{
@@ -219,38 +210,9 @@ void *parser(void *r_info){
 						printf("> DONT UPDATE QUEUE\n");
 					}
 				}
->>>>>>> 2f55fa96c6390d2341b3a5376797553801883022
-			}
-			else{
-			  // TODO: Don't update queue
-			  printf("> DONT UPDATE QUEUE\n");
-			}
-<<<<<<< HEAD
-		      }
-		    }
-		    if(!found){
-		      printf("> USING DEFAULT HANDLER\n");
-		      handler = resp_info->poll_info->updateEvents[0].handler;
-		      // TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-		      if(handler != NULL){
-			// TODO: Cambiar NULL por puntero a la estructura message de respuesta
-			update.type = UPDATE_MESSAGE;
-			update.content = (void *)(&message);
-			update.bot_info = &(resp_info->poll_info->bot_info);
-			handler(&update);
-		      }
-		      else{
-			// TODO: Don't update queue
-			printf("> DONT UPDATE QUEUE\n");
-		      }
-		    }
-		    // subir mutex
-=======
-			// subir mutex
-			//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
-			sem_post(mutex_updateEvents);
-
->>>>>>> 2f55fa96c6390d2341b3a5376797553801883022
+				// subir mutex
+				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+				sem_post(mutex_updateEvents);
 			
 		  }
 		
@@ -258,11 +220,13 @@ void *parser(void *r_info){
 		  sleep(1);
 		
 		  // TODO: mandar aquí el último update_id. Realmente esto lo quitaremos cuando hagamos la búsqueda anticipada (antes del bucle)
-		  strcpy(msq_buffer.mtext, "-1");
+		  sprintf(msq_buffer.mtext, "%lld", update_id + 1);
+		  //strcpy(msq_buffer.mtext, "-1");
 		  msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
 		
 		}
 	}
+	
 	// TODO: ¿Cerrar la cola y liberar otros recursos?
 	free(r_info);
 	pthread_exit(NULL);
@@ -272,7 +236,7 @@ void *parser(void *r_info){
 
 /*
 **   Parámetros:  char *tok: Token del BOT.
-**				  bot_info_t *bot_info: Puntero a un tipo bot_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
+**				  http_info_t *http_info: Puntero a un tipo http_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
 **                
 **     Devuelve:  int: 0 si la inicializción se ha completado con éxito, -1 en caso de error.
 **
@@ -297,8 +261,8 @@ void *pool(void *info){
 	response_info_t *resp_info;
 	
 	// Prepare URL to get updates
-	poll_info_t *poll_info = (poll_info_t *)info;
-	strcpy(url, poll_info->bot_info.url); 
+	bot_info_t *bot_info = (bot_info_t *)info;
+	strcpy(url, bot_info->http_info.url); 
 	strcat(url, "/getUpdates?offset=");
 	strcpy(fullurl, url);
 	strcat(fullurl, offset);
@@ -326,10 +290,10 @@ void *pool(void *info){
 		usleep(interval);
 		
 		// TODO: Quitar esta impresión (es para debugging)
-		printf("URL: %s\n", fullurl);
+		printf("\n Request to: %s\n", fullurl);
 		
 		// Realizamos la petición HTTP
-		status = http_get(&(poll_info->bot_info.hi), fullurl, response, MAX_RESP_TAM);
+		status = http_get(&(bot_info->http_info.hi), fullurl, response, MAX_RESP_TAM);
 		
 		// Analizamos la respuesta
 		// TODO: ¿Poner que tras x intentos fallidos se cierre el servidor o se notifique al usuario?
@@ -346,7 +310,7 @@ void *pool(void *info){
 				printf("Poll: malloc failed\n");
 			}
 			strcpy(resp_info->response, response);
-			resp_info->poll_info = poll_info;
+			resp_info->bot_info = bot_info;
 			
 			if(pthread_create(&thread, &attr, parser, resp_info) != 0){
 				printf("Failed to create parse thread\n");
@@ -375,13 +339,13 @@ void *pool(void *info){
 
 
 /*
-**   Parámetros:  bot_info_t *bot_info: Puntero a una variable bot_info_t con información HTTPS del bot.
+**   Parámetros:  http_info_t *http_info: Puntero a una variable http_info_t con información HTTPS del bot.
 **                
 **     Devuelve:  int: 0 si se completa con éxito, -1 en caso
 **
 **  Descripción:  Inicializa la función de pooling.
 */
-int tbc_pooling_init(poll_info_t *poll_info){
+int tbc_pooling_init(bot_info_t *bot_info){
 	
 	// TODO: Hacer que el valor de retorno suponga error (-1) y se ponga a 0 si todo va bien
 	int ret = 0;	// Valor de retorno
@@ -391,7 +355,7 @@ int tbc_pooling_init(poll_info_t *poll_info){
 	// Se crea el hilo que se encargara del pooling
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	if(pthread_create(&thread, &attr, pool, poll_info) != 0)
+	if(pthread_create(&thread, &attr, pool, bot_info) != 0)
 		ret = -1;
 	pthread_attr_destroy(&attr);
 	

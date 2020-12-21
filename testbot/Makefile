@@ -31,7 +31,6 @@ testbot.o: testbot.c
 borra:
 	rm -f testbot.o
 	rm -f testbot
-	echo > Done cleaning testbot
 	make -C $(LIB) borra
 	
 borraclave:

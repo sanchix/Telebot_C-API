@@ -19,7 +19,7 @@ void *imprimeMensaje(update_t *update){
 		printf("Mensaje recibido de %s: %s\n", message->from.first_name, message->text);
 		printf("Haciendo eco...\n");
 		sprintf(cid, "%i", message->chat.id);
-		telebot_sendMessage(cid, message->text, update->bot_info);
+		telebot_sendMessage(cid, message->text, update->http_info);
 	}
 	else{
 		printf("Algo recibido: ...\n");
@@ -30,13 +30,15 @@ void *imprimeMensaje(update_t *update){
 int main(int argc, char* argv[]){
 	
 	char info[4096] = {};
-	poll_info_t poll_info;
+	bot_info_t bot_info;
 	event_t imprime;
 	
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
 	}
-	else if(telebot_init(argv[1], &poll_info) != 0){
+	
+	// Iniciamos las funciones de librería en bot_info
+	else if(telebot_init(argv[1], &bot_info) != 0){
 			printf("Error al iniciar https\n");
 	}else{
 		char texto[] = "Hola";
@@ -46,12 +48,12 @@ int main(int argc, char* argv[]){
 		imprime.condition = CONDITION_DEFFAULT;
 		imprime.handler = imprimeMensaje;
 
-		addUpdateEvent(&poll_info, imprime);
+		addUpdateEvent(&bot_info, imprime);
 		sleep(2);
 		
-		//telebot_getMe(info, sizeof(info), &bot_info);
+		//telebot_getMe(info, sizeof(info), &http_info);
 		//printf("Enviando un mensaje:\n");
-		//telebot_sendMessage(id,texto, &bot_info);
+		//telebot_sendMessage(id,texto, &http_info);
 		
 		while(1){
 			sleep(15);

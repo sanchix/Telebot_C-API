@@ -140,6 +140,7 @@ void *parser(void *r_info){
 			
 			// Obtenemos el objeto message y lo desempaquetamos
 			// TODO: Pensar quien tiene que reservar memoria para este objeto y como vamos a pasarlo.
+			// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
 			// TODO: Poner un if (no tiene porque ser un mensaje)
 			json_aux = json_object_get(json_update, "message");
 			unpack_json_message(&message, json_aux);
@@ -277,7 +278,7 @@ void *pool(void *info){
 		else{
 			
 			// Creamos el hilo que se encargará de parsear con los parámetros correspondientes
-			
+			// TODO: Hacer que no se reserver siempre para el máximo, sino que sea variable (hay que reservar tamaño para la estructura y el string todo en el mismo malloc (para que sea más rápido) y luego organizar la memoria a nuestra bola (hay que hacer que el punero a char de la estructura apunte a la zona del malloc que hemos dejado para el string.
 			if((resp_info = (response_info_t *)malloc(sizeof(response_info_t))) == NULL){
 				printf("Poll: malloc failed\n");
 			}

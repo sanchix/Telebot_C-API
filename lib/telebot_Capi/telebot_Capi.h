@@ -34,13 +34,15 @@
 #define MAX_RESP_TAM 4096
 #define MAX_POST_TAM 4096
 #define MAX_OFFSET_TAM 20
-#define OFFSET_MSG_TYPE 1
+#define OFFSET_MSQ_TYPE 1
 #define MAX_URL_TAM 200
 #define MAX_USER_TAM 64 // Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
 #define MAX_UPDATE_EVENTS 20
 #define EVENT_UNASSIGNED -1
 #define EVENT_DEFFAULT 0
 #define UPDATE_MESSAGE 1
+#define UPDATE_DROP 0
+#define UPDATE_HOLD 1
 
 
 /* Tipos definidos por el usuario */
@@ -108,13 +110,15 @@ typedef struct{
 
 // TODO: Comentar
 // TODO: Pensar valores de retorno y parámetros
-typedef void *(*updateHandler_t)(update_t *);
+typedef int (*updateHandle_t)(update_t *);
+
+typedef int event_t;
 
 // TODO: Comentar
 typedef struct{
-	updateHandler_t handle;
+	updateHandle_t handle;
 	// TODO: Add possible events
-	int event; // EVENT_UNASSIGNED = none
+	event_t event; // EVENT_UNASSIGNED = none
 } update_notifier_t;
 
 
@@ -123,7 +127,7 @@ typedef struct{
 typedef struct{
 	http_info_t http_info;
 	update_notifier_t notifiers[MAX_UPDATE_EVENTS];
-	sem_t * mutex_updateEvents;
+	sem_t * mutex_updateNotifiers;
 } bot_info_t;
 
 
@@ -136,7 +140,6 @@ typedef struct{
 
 
 /*********************   telebot_Capi.c   *********************/
-/* Declaración de funciones exportadas. */
 
 /*
 **   Parámetros:  char tok[50]: Token para el acceso al bot.
@@ -174,23 +177,20 @@ int telebot_getMe(char *response, int size, http_info_t *http_info);
 
 
 /*
-**   Parámetros:  char *response: Valor devuelto por el método de la API getMe.
-**                int size: Tamaño de la respuesta.
+**   Parámetros:  char *chat_id: Id del chat al que mandar la petición.
+**				  char *text: Texto a enviar en el mensaje.
 **				  http_info_t *http_info: Creado en telebot_init()
 **                
 **     Devuelve:  0 si la petición finaliza correctamente, -1 en caso de error.
 **
-**  Descripción:  Realiza una petición a la API de telegram con el método getMe, devolviendo la respuesta en *response.
+**  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo la respuesta en *response.
 */
-// TODO: comentar: devuelve 0 si bien, -1 si error
-int unpack_message(message_t *message, json_t *message_obj);
+int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info);
 
 
 
 /*********************     pooling.c      *********************/
-/* Declaración de funciones exportadas. */
 
-/* Declaración de funciones locales. Para cada función: */
 /*
 **   Parámetros:  <tipo1> <parm1> <Descripción>
 **                <tipo2> <parm2> <Descripción>
@@ -216,16 +216,8 @@ int unpack_json_message(message_t *message, json_t *message_obj);
 void *parser(void *resp_info);
 
 
-/*
-**   Parámetros:  char *tok: Token del BOT.
-**				  http_info_t *http_info: Puntero a un tipo http_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
-**                
-**     Devuelve:  int: 0 si la inicializción se ha completado con éxito, -1 en caso de error.
-**
-**  Descripción:  Inicializa las funciones de la librería.
-*/
 // TODO: Comentar
-void *pool(void *info);
+void *poll(void *info);
 	
 
 /*
@@ -233,36 +225,34 @@ void *pool(void *info);
 **                
 **     Devuelve:  int: 0 si se completa con éxito, -1 en caso
 **
-**  Descripción:  Inicializa la función de pooling.
+**  Descripción:  Inicializa la función de polling.
 */
-int tbc_pooling_init(bot_info_t *bot_info);
+int polling_init(bot_info_t *bot_info);
 
-/*
-**   Parámetros:  char *chat_id: Id del chat al que mandar la petición.
-**				  char *text: Texto a enviar en el mensaje.
-**				  http_info_t *http_info: Creado en telebot_init()
-**                
-**     Devuelve:  0 si la petición finaliza correctamente, -1 en caso de error.
-**
-**  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo la respuesta en *response.
-*/
-int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info);
 
+
+/*********************     events.c      *********************/
 
 // TODO: Comentar
-void *doNothing(update_t *p);
+int ignoreUpdate(update_t *p);
 
+// TODO: Comentar
+int holdUpdate(update_t *p);
+
+// TODO: Pensar, en cuanto a los update events, si se va a poder tener más de un handle para un mismo evento.
 
 // TODO: Comentar
 void initUpdateNotifiers(update_notifier_t *notifiers);
 
 
 // TODO: Comentar
-int addUpdateNotifier(bot_info_t *bot_info, update_notifier_t newNotifier);
-
+int addUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_info);
 
 // TODO: Comentar
-int removeUpdateNotifier(bot_info_t *bot_info, update_notifier_t notifier);
+int modifyUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_info);
+
+// TODO: Comentar
+int removeUpdateNotifier(event_t event, bot_info_t *bot_info);
 
 
 #endif

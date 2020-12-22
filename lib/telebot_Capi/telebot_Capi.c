@@ -17,27 +17,28 @@
 
 /*
 **   Parámetros:  char *token: Token del BOT.
-**				  http_info_t *http_info: Devuelve información de la comunicación https con Telegram para el BOT específico.
+**				  bot_info_t *bot_info: Devuelve información necesaria para el funcionamiento de la libería.
 **                
-**     Devuelve:  0 si la inicializción se ha completado con éxito, -1 en caso de error.
+**     Devuelve:  0 si éxito, -1 en caso de error.
 **
 **  Descripción:  Inicializa las funciones de la librería.
 */
 int telebot_init(char *token, bot_info_t *bot_info){
 	
+	sem_t * mutex_updateNotifiers;
 	int ret = -1;
+	
 	printf("Initializing telebot_Capi\n");
-
+	
 	//Inicializamos los semáforos
-	sem_t * mutex_updateEvents;
-    mutex_updateEvents = sem_open("mutex_updateEvents", O_CREAT,0600,1);
-	bot_info->mutex_updateEvents = mutex_updateEvents;
+    mutex_updateNotifiers = sem_open("mutex_updateNotifiers", O_CREAT,0600,1);
+	bot_info->mutex_updateNotifiers = mutex_updateNotifiers;
 
 	// Inicializamos la librería https_lib
 	// TODO: Comprobar que la inicialización es correcta
 	http_init(&(bot_info->http_info.hi), TRUE);
 	
-	// Formamos la URL de acceso al BOT y la almacenamos en http_info.
+	// Se forma la URL de acceso a la API para el BOT y se almacena en http_info.
 	// TODO: ¿comprobar si no desborda? ¿existe un parámetro en strcpy y strcat para verlo?
 	strcpy(bot_info->http_info.url,API_URL);
 	strcat(bot_info->http_info.url,token);
@@ -45,9 +46,9 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	// Inicializamos los handlers (para el "por defecto" -> dejar en la cola, los demás vacíos)
 	initUpdateNotifiers(bot_info->notifiers);
 	
-	// Inicializamos la funcion de pooling.
-	if(tbc_pooling_init(bot_info) != 0){
-		printf("telebot_Capi: Error initializing pooling thread\n");
+	// Inicializamos la funcion de polling.
+	if(polling_init(bot_info) != 0){
+		printf("telebot_Capi: Error initializing polling thread\n");
 	}
 	else{
 		ret = 0;
@@ -71,8 +72,8 @@ int telebot_close(){
 	
 	int ret = 0;
 	printf("Cerrando telebot_Capi\n");
-	if ( sem_unlink("mutex_updateEvents")!=0 ){
-		printf("Ha habido un problema al cerrar el semaforo mutex_updateEvents");
+	if ( sem_unlink("mutex_updateNotifiers")!=0 ){
+		printf("Ha habido un problema al cerrar el semaforo mutex_updateNotifiers");
 		ret = -1;
 	}
 	
@@ -111,6 +112,20 @@ int telebot_getMe(char *response, int size, http_info_t *http_info){
 	}
 	
 	// TODO: Analizar la respuesta y guardarla en la estructura respuesta (previamente hay que crearla, ver los TODOs del principio de esta función)
+	// TODO: En telebot_Capi.h estaba esto:
+		/*
+		**   Parámetros:  char *response: Valor devuelto por el método de la API getMe.
+		**                int size: Tamaño de la respuesta.
+		**				  http_info_t *http_info: Creado en telebot_init()
+		**                
+		**     Devuelve:  0 si la petición finaliza correctamente, -1 en caso de error.
+		**
+		**  Descripción:  Realiza una petición a la API de telegram con el método getMe, devolviendo la respuesta en *response.
+		*/
+		// TODO: comentar: devuelve 0 si bien, -1 si error
+		/*
+		int unpack_message(message_t *message, json_t *message_obj);
+		*/
 	
 	return ret;
 	

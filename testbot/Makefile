@@ -14,7 +14,7 @@ LIB_JANSSON = $(LIB)jansson/
 
 INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_HTTPS)mbedtls/include/
 
-LIB_TELEBOT_FILES = $(LIB_TELEBOT)telebot_Capi.o $(LIB_TELEBOT)pooling.o $(LIB_TELEBOT)events.o
+LIB_TELEBOT_FILES = $(LIB_TELEBOT)telebot_Capi.o $(LIB_TELEBOT)polling.o $(LIB_TELEBOT)events.o
 LIB_HTTPS_FILES = $(LIB_HTTPS)https.o $(LIB_MBEDTLS)libmbedx509.a $(LIB_MBEDTLS)libmbedtls.a $(LIB_MBEDTLS)libmbedcrypto.a
 LIB_JANSSON_FILES = -L../lib/jansson/lib/ -ljansson
 

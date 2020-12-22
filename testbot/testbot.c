@@ -12,7 +12,7 @@
 #include "telebot_Capi/telebot_Capi.h"
 
 
-void *doEcho(update_t *update){
+int doEcho(update_t *update){
 	
 	message_t *message;
 	char cid[20];
@@ -38,14 +38,14 @@ void *doEcho(update_t *update){
 	}
 	
 	// TODO: Pensar que poner en el retorno
-	return NULL;
+	return UPDATE_DROP;
+	
 }
 
 
 int main(int argc, char* argv[]){
 	
 	bot_info_t bot_info;
-	update_notifier_t eco;
 	
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
@@ -64,11 +64,9 @@ int main(int argc, char* argv[]){
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto
 		// handle -> imprimeMensaje
-		eco.event = EVENT_DEFFAULT;
-		eco.handle = doEcho;
-		// TODO: Comprobar que funcionan los semáforos
-		addUpdateNotifier(&bot_info, eco);
+		addUpdateNotifier(doEcho, EVENT_DEFFAULT, &bot_info);
 		
+		// TODO: Comprobar que funcionan los semáforos
 		
 		// Loop to keep alive main thread
 		while(1){

@@ -13,18 +13,16 @@
 
 
 /************************************************************/
-/* Declaración de funciones locales. */
+/* Definiciones de funciones locales. */
 
 /*
-**   Parámetros:  message_t * message Estructura de tipo mensaje para guardar los parametros mas importantes del json recibido.
-**                json_t * message_obj Objeto json completo a procesar.
-**                ...
-**     Devuelve:  int -1 si ha habido error, 0 si el objeto se ha procesado correctamente.
+**   Parámetros:  message_t * message: Estructura de tipo mensaje para guardar los parametros mas importantes del json recibido.
+**                json_t * message_obj: Objeto json completo a procesar.
+**                
+**     Devuelve:  int: -1 si ha habido error, 0 si el objeto se ha procesado correctamente.
 **
 **  Descripción:  Función que a partir de un objeto json nos lo formatea en un objeto message_t con nuestros valores a recoger.
 */
-// DONE Comentar
-// DONETE: poner comprobaciones de error
 // DONE: pensar si es mejor reservar memoria y devolver el mensaje del tirón o que reserve memoria el llamante (esta última opción es como está ahora)
 int unpack_json_message(message_t *message, json_t *message_obj){
 	
@@ -95,10 +93,10 @@ void *parser(void *r_info){
 	struct msgbuf msq_buffer;
 	message_t message;
 	int found;
-	updateHandler_t handle;
+	updateHandle_t handle;
 	response_info_t *resp_info;
 	update_t update;
-	sem_t *mutex_updateEvents;
+	sem_t *mutex_updateNotifiers;
 
 	json_t *json_root;
 	json_error_t error;
@@ -108,9 +106,8 @@ void *parser(void *r_info){
 	json_t *json_aux;
 	
 	// Creamos la cola de mensajes para comunicarnos con pool
-	clave = ftok("/home/dit/Documentos/telebot", 'p'); 
-	//printf("%i", clave);
-	msq_buffer.mtype = OFFSET_MSG_TYPE;
+	clave = ftok(".", 'p');
+	msq_buffer.mtype = OFFSET_MSQ_TYPE;
 	if((msgqueue_id = msgget(clave, 0660)) == -1){
 		printf("> Parser thread: error al acceder a la cola de mensajes: %s\n", strerror(errno));
 	}
@@ -120,7 +117,7 @@ void *parser(void *r_info){
 		resp_info = (response_info_t *)r_info;
 		
 		//Semáforo
-		mutex_updateEvents = resp_info->bot_info->mutex_updateEvents;
+		mutex_updateNotifiers = resp_info->bot_info->mutex_updateNotifiers;
 		
 		// TODO: Quitar (es para depuración)
 		printf("\nUpdate:\n");
@@ -173,7 +170,7 @@ void *parser(void *r_info){
 
 				// bajar mutex
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
-				sem_wait(mutex_updateEvents);
+				sem_wait(mutex_updateNotifiers);
 
 				found = 0;
 				for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
@@ -212,7 +209,7 @@ void *parser(void *r_info){
 				}
 				// subir mutex
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
-				sem_post(mutex_updateEvents);
+				sem_post(mutex_updateNotifiers);
 			
 		  }
 		
@@ -234,18 +231,10 @@ void *parser(void *r_info){
 }
 
 
-/*
-**   Parámetros:  char *tok: Token del BOT.
-**				  http_info_t *http_info: Puntero a un tipo http_info_t, que almacenará información para la comunicación https con la api de Telegram para el BOT específico.
-**                
-**     Devuelve:  int: 0 si la inicializción se ha completado con éxito, -1 en caso de error.
-**
-**  Descripción:  Inicializa las funciones de la librería.
-*/
 // TODO: Comentar
-// TODO: Cambiar por poll
-void *pool(void *info){
+void *poll(void *info){
 	
+	// TODO: Ordenar
 	int status;
 	int error = 0;
 	char url[MAX_URL_TAM];
@@ -259,11 +248,13 @@ void *pool(void *info){
 	int msgqueue_id;
 	struct msgbuf msq_buffer;
 	response_info_t *resp_info;
+	bot_info_t *bot_info;
 	
 	// Prepare URL to get updates
-	bot_info_t *bot_info = (bot_info_t *)info;
+	bot_info = (bot_info_t *)info;
 	strcpy(url, bot_info->http_info.url); 
 	strcat(url, "/getUpdates?offset=");
+	// Prepare first url to get updates (offset=0)
 	strcpy(fullurl, url);
 	strcat(fullurl, offset);
 	
@@ -272,13 +263,17 @@ void *pool(void *info){
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	
 	// Prepare message queue to communicate with parser threads
-	clave = ftok("/home/dit/Documentos/telebot",'p');
-	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token.
+	clave = ftok(".",'p');
+	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token. Otra opción es hacer que se borre la cola al principio.
 	//printf("clave: %i\n", clave);
 	// TODO: Hay que hacer una función para cerrar los hilos y parar el pooling (cerrar también las colas)
-	if((msgqueue_id = msgget(clave,IPC_CREAT|IPC_EXCL|0660)) == -1){
+	if((msgqueue_id = msgget(clave,IPC_CREAT|0660)) == -1){
 		printf("> Pooling thread: error al iniciar la cola de mensajes: %s\n", strerror(errno));
 		error = 1;
+	}
+	// Vaciamos la cola:
+	else{
+		while(msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSQ_TYPE, IPC_NOWAIT) != -1){}
 	}
 	
 	// Siempre que no haya error iteramos
@@ -305,7 +300,7 @@ void *pool(void *info){
 		else{
 			
 			// Creamos el hilo que se encargará de parsear con los parámetros correspondientes
-			// TODO: Hacer que no se reserver siempre para el máximo, sino que sea variable (hay que reservar tamaño para la estructura y el string todo en el mismo malloc (para que sea más rápido) y luego organizar la memoria a nuestra bola (hay que hacer que el punero a char de la estructura apunte a la zona del malloc que hemos dejado para el string.
+			// TODO: Hacer que no se reserve siempre para el máximo, sino que sea variable (hay que reservar tamaño para la estructura y el string todo en el mismo malloc (para que sea más rápido) y luego organizar la memoria a nuestra bola (hay que hacer que el punero a char de la estructura apunte a la zona del malloc que hemos dejado para el string.
 			if((resp_info = (response_info_t *)malloc(sizeof(response_info_t))) == NULL){
 				printf("Poll: malloc failed\n");
 			}
@@ -320,7 +315,7 @@ void *pool(void *info){
 			
 				// Esperamos a que el parser nos indique el offset del último mensaje y lo almacenamos en la siguiente URL.
 				// TODO: Hacer algo en la función de parse para que en caso de error devuelva el último offset o 0 (el offset 0 devuelve todos los examenes si no recuerdo mal, pero habría que comprobarlo en la API de telegram).
-				msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSG_TYPE, 0);
+				msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSQ_TYPE, 0);
 				offset = msq_buffer.mtext;
 				strcpy(fullurl, url);
 				strcat(fullurl, offset);
@@ -343,11 +338,10 @@ void *pool(void *info){
 **                
 **     Devuelve:  int: 0 si se completa con éxito, -1 en caso
 **
-**  Descripción:  Inicializa la función de pooling.
+**  Descripción:  Inicializa la función de polling.
 */
-int tbc_pooling_init(bot_info_t *bot_info){
+int polling_init(bot_info_t *bot_info){
 	
-	// TODO: Hacer que el valor de retorno suponga error (-1) y se ponga a 0 si todo va bien
 	int ret = 0;	// Valor de retorno
 	pthread_attr_t attr;
 	pthread_t thread;
@@ -355,8 +349,9 @@ int tbc_pooling_init(bot_info_t *bot_info){
 	// Se crea el hilo que se encargara del pooling
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	if(pthread_create(&thread, &attr, pool, bot_info) != 0)
+	if(pthread_create(&thread, &attr, poll, bot_info) != 0){
 		ret = -1;
+	}
 	pthread_attr_destroy(&attr);
 	
 	return ret;

@@ -25,10 +25,12 @@ int doEcho(update_t *update){
 		// Se imprime el mensaje
 		printf("Mensaje recibido de %s: %s\n", message->from.first_name, message->text);
 		
-		// Se hace eco
-		printf("Haciendo eco...\n");
-		sprintf(cid, "%i", message->chat.id);
-		telebot_sendMessage(cid, message->text, update->http_info);
+		// Se hace eco si se ha recibido texto
+		if(message->text != NULL){
+			printf("Haciendo eco...\n");
+			sprintf(cid, "%i", message->chat.id);
+			telebot_sendMessage(cid, message->text, update->http_info);
+		}
 		
 	}
 	
@@ -46,6 +48,8 @@ int doEcho(update_t *update){
 int main(int argc, char* argv[]){
 	
 	bot_info_t bot_info;
+	
+	//telebot_close();
 	
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);

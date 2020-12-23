@@ -91,6 +91,9 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 	// Desempaquetamos text (es opcional)
 	if((aux = json_object_get(message_obj, "text"))!=NULL){ //Comprobamos si no hay error en la recogida de text.
 		// TODO: Reservar memo para text
+		if((message->text = (char *)malloc(MAX_RESP_TAM)) == NULL){
+				printf("Parse: malloc failed\n");
+		}
 		strcpy(message->text, json_string_value(aux));
 	}
 	else{
@@ -188,9 +191,9 @@ void *parser(void *r_info){
 					unpack_json_message(&message, json_aux);
 			
 					if(message.from.id != 0){
-						printf("From: %s %s\n", message.from.first_name, message.from.last_name);
+						printf("\tFrom: %s %s\n", message.from.first_name, message.from.last_name);
 					}
-					printf("Text: %s\n", message.text);
+					printf("\tText: %s\n", message.text);
 				}
 
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
@@ -200,7 +203,7 @@ void *parser(void *r_info){
 				// Analizamos los eventos para llamar a la función correspondiente
 				found = 0;
 				for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
-					if(strcmp(resp_info->bot_info->notifiers[i].event,EVENT_UNASSIGNED)==0){
+					if(strcmp(resp_info->bot_info->notifiers[i].event,EVENT_UNASSIGNED)!=0){
 						printf("> FOUND HANDLER\n");
 						handle = resp_info->bot_info->notifiers[i].handle;
 						// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).

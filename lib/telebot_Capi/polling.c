@@ -145,20 +145,20 @@ void *parser(void *r_info){
 	}
 	
 	else{
-		// DONE: Pensar si hace falta almacenar en otra variable la respuesta. Quizás sea mejor pasarla de otra forma, por ejemplo que el pool haga un malloc y aquí hagamos un free cuando terminemos u otro sistema...
+		// Preparamos resp_info para evitar usar el cast en el código
 		resp_info = (response_info_t *)r_info;
 		
-		//Semáforo
+		// Preparamos los semáforos
 		mutex_updateNotifiers = resp_info->bot_info->mutex_updateNotifiers;
 		
-		// TODO: Quitar (es para depuración)
+		// TODO: Quitar (es para depuración).
 		printf("\nUpdate:\n");
 		
 		// Realizamos el parse con la librería jansson
 		json_root = json_loads(resp_info->response, 0, &error);
 		
 		// Obtenemos el valor de ok
-		// TODO: Hacer algo con esto, que notifique a alguien si no es ok o haga algo de provecho más que imprimirlo
+		// TODO: Hacer algo con esto, que notifique a alguien si no es ok o haga algo de provecho más que imprimirlo.
 		json_ok = json_object_get(json_root, "ok");
 
 		//TODO: Probar si esto funciona bien
@@ -166,18 +166,23 @@ void *parser(void *r_info){
 			printf("Message received not ok: %s (error code: %lld)\n",json_string_value(json_object_get(json_root,"description")),json_integer_value(json_object_get(json_root,"error_code")));
 		 
 		}
-		else{
-			printf("\tok\n");
 		
+		// Si todo va bien
+		else{
+			// TODO: Quitar, es de debug
+			printf("\tok\n");
 		
 			// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
 		
 			// Analizamos el resultado (lista de objetos update)
 			json_result = json_object_get(json_root, "result");
-			printf("JSON: %s", json_string_value(json_result));
+			// TODO: Quitar este printf (debug)
+			//printf("JSON: %s", json_string_value(json_result));
+			
+			// Para cada objeto del array
 			for(size_t i = 0; i < json_array_size(json_result); i++){
 			
-				// Se obtiene el objeto update
+				// Se obtiene el objeto update para la iteración
 				json_update = json_array_get(json_result, i);
 				
 				// Obtenemos update_id
@@ -186,9 +191,13 @@ void *parser(void *r_info){
 				//TODO: quitar esta impresión (es debug)
 				printf("\tUpdate id: %lld\n", update_id);
 				
+				
+				// Procedemos a almacenar el evento
+				
 				// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
-				// Obtenemos el objeto message y lo desempaquetamos
+				// Si lo que se ha recibido es un mensaje...
 				if((json_aux = json_object_get(json_update, "message")) != NULL){
+					// Obtenemos el objeto message y lo desempaquetamos
 					// TODO: Hay que liberar
 					if((message = (message_t *)malloc(sizeof(message_t))) == NULL){
 						printf("Poll: malloc failed\n");
@@ -200,12 +209,16 @@ void *parser(void *r_info){
 					}
 					printf("\tText: %s\n", message->text);
 				}
-				// Obtenemos el resultado de la encuesta
+				
+				// Si lo que se ha recibido es una actualización de encuesta
 				else if((json_aux = json_object_get(json_update, "poll")) != NULL){
+					// Obtenemos el resultado de la encuesta
 					// TODO: Hacer
 					printf("Received poll update\n");
 				}
 				
+				
+				// Procedemos a analizar el evento
 				// Se entra en la región compartida
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?				
 				sem_wait(mutex_updateNotifiers);

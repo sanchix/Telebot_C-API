@@ -90,10 +90,12 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 	
 	// Desempaquetamos text (es opcional)
 	if((aux = json_object_get(message_obj, "text"))!=NULL){ //Comprobamos si no hay error en la recogida de text.
+		// TODO: Reservar memo para text
 		strcpy(message->text, json_string_value(aux));
 	}
 	else{
-		message->text[0] = '\0';
+		// TODO: Reservar memo
+		message->text = NULL;
 	}
 	  
 	return ret;
@@ -182,7 +184,7 @@ void *parser(void *r_info){
 				
 				// Obtenemos el objeto message y lo desempaquetamos
 				// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
-				if((json_aux = json_object_get(json_update, "message") != NULL){
+				if((json_aux = json_object_get(json_update, "message")) != NULL){
 					unpack_json_message(&message, json_aux);
 			
 					if(message.from.id != 0){

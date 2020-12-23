@@ -27,47 +27,74 @@
 int unpack_json_message(message_t *message, json_t *message_obj){
 	
 	// DONE: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo vaya bien
-	int ret = -1;
+	int ret = 0;
 	json_t *aux;
+	json_t *aux2;
 	
 	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo) PD: NO TE RAYE
+	
+	// TODO: Poner opcionales las cosas opcionales (rellenar con null). Hay que hacer que el resto de objetos que usen message_t se esperen que haya cosas NULL.
 	
 	// Desempaquetamos message_id
 	message->message_id = json_integer_value(json_object_get(message_obj, "message_id"));
 	
-	// Desempaquetamos from
-	;
-	if ((aux = json_object_get(message_obj, "from"))!=NULL){ //Comprobamos si no hay error en la recogida de from.
-	
-	  message->from.id = json_integer_value(json_object_get(aux, "id"));
-	  message->from.is_bot = json_boolean_value(json_object_get(aux, "is_bot"));
-	  strcpy(message->from.first_name, json_string_value(json_object_get(aux, "first_name")));
-	  strcpy(message->from.last_name, json_string_value(json_object_get(aux, "last_name")));
-	  strcpy(message->from.language_code, json_string_value(json_object_get(aux, "language_code")));
-	
-	  // Desempaquetamos chat
-	  if((aux = json_object_get(message_obj, "chat"))!=NULL){ //Comprobamos si no hay error en la recogida de chat.
-	    message->chat.id = json_integer_value(json_object_get(aux, "id"));
-	    strcpy(message->chat.first_name, json_string_value(json_object_get(aux, "first_name")));
-	    strcpy(message->chat.last_name, json_string_value(json_object_get(aux, "last_name")));
-	    strcpy(message->chat.type, json_string_value(json_object_get(aux, "type")));
-	    
-	    // Desempaquetamos date
-	    if((aux = json_object_get(message_obj, "date"))!=NULL){ //Comprobamos si no hay error en la recogida de date.
-	      message->date = json_integer_value(aux);
-	      // Desempaquetamos text
-	      if((aux = json_object_get(message_obj, "text"))!=NULL){ //Comprobamos si no hay error en la recogida de text.
+	// Desempaquetamos from (si hay, pues es opcional)
+	if ((aux = json_object_get(message_obj, "from"))!=NULL){
 		
-		strcpy(message->text, json_string_value(aux));
-		ret = 0;
+		message->from.id = json_integer_value(json_object_get(aux, "id"));
+		message->from.is_bot = json_boolean_value(json_object_get(aux, "is_bot"));
+		strcpy(message->from.first_name, json_string_value(json_object_get(aux, "first_name")));
 		
-	      }
-	    }
-	  }
-	
+		// Last name is optional
+		if((aux2 = json_object_get(aux, "last_name")) != NULL){
+			strcpy(message->from.last_name, json_string_value(aux2));
+		}
+		else{
+			message->from.last_name[0] = '\0';
+		}
+		
+		// Language code is optional
+		if((aux2 = json_object_get(aux, "language_code")) != NULL){
+			strcpy(message->from.language_code, json_string_value(aux2));
+		}
+		else{
+			message->from.language_code[0] = '\0';
+		}
+		
+	}
+	else{
+		message->from.id = 0;
 	}
 	
-	  
+	// Desempaquetamos date
+	message->date = json_integer_value(aux);
+	
+	// Desempaquetamos chat
+	aux = json_object_get(message_obj, "chat");
+	message->chat.id = json_integer_value(json_object_get(aux, "id"));
+	strcpy(message->chat.type, json_string_value(json_object_get(aux, "type")));
+	// Desempaquetamos first name (es opcional)
+	if((aux = json_object_get(aux, "first_name")) != NULL){
+		strcpy(message->chat.first_name, json_string_value(aux));
+	}
+	else{
+		message->chat.first_name[0] = '\0';
+	}
+	// Desempaquetamos last_name (es opcional)
+	if((aux = json_object_get(aux, "last_name")) != NULL){
+		strcpy(message->chat.last_name, json_string_value(aux));
+	}
+	else{
+		message->chat.last_name[0] = '\0';
+	}
+	
+	// Desempaquetamos text (es opcional)
+	if((aux = json_object_get(message_obj, "text"))!=NULL){ //Comprobamos si no hay error en la recogida de text.
+		strcpy(message->text, json_string_value(aux));
+	}
+	else{
+		message->text[0] = '\0';
+	}
 	  
 	return ret;
 	
@@ -135,7 +162,7 @@ void *parser(void *r_info){
 		 
 		}
 		else{
-			printf("ok\n");
+			printf("\tok\n");
 		
 		
 			// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
@@ -151,27 +178,24 @@ void *parser(void *r_info){
 				json_aux = json_object_get(json_update, "update_id");
 				update_id = json_integer_value(json_aux);
 				//TODO: quitar esta impresión (es debug)
-				printf("Update id: %lld\n", update_id);
+				printf("\tUpdate id: %lld\n", update_id);
 				
 				// Obtenemos el objeto message y lo desempaquetamos
-				// DONE: Pensar quien tiene que reservar memoria para este objeto y como vamos a pasarlo.
 				// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
-				// TODO: Poner un if (no tiene porque ser un mensaje)
-				json_aux = json_object_get(json_update, "message");
-				unpack_json_message(&message, json_aux);
+				if((json_aux = json_object_get(json_update, "message") != NULL){
+					unpack_json_message(&message, json_aux);
 			
-				// TODO: Pasar el mensaje al usuario (notificarle) en vez de imprimirlo. Pensar si se va a hacer por paso de mensajes o mediante un puntero a una función que esta función (parser) debe ejecutar. En este caso, esa función se encontrará en el fichero del bot que haya programado el usuario de la librería y llegará hasta aquí mediante parámetros (es algo parecido a lo que se hace en python con los eventos).
-				printf("From: %s %s\n", message.from.first_name, message.from.last_name);
-				printf("Text: %s\n", message.text);
-			
-				// TODO: Analizar eventos y llamar a la función
-				// TODO: Poner exclusión mutua
+					if(message.from.id != 0){
+						printf("From: %s %s\n", message.from.first_name, message.from.last_name);
+					}
+					printf("Text: %s\n", message.text);
+				}
 
-
-				// bajar mutex
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+				// Se entra en la región compartida
 				sem_wait(mutex_updateNotifiers);
 
+				// Analizamos los eventos para llamar a la función correspondiente
 				found = 0;
 				for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 					if(resp_info->bot_info->notifiers[i].event != EVENT_UNASSIGNED){
@@ -207,18 +231,16 @@ void *parser(void *r_info){
 						printf("> DONT UPDATE QUEUE\n");
 					}
 				}
-				// subir mutex
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+				// Se sale de la región compartida
 				sem_post(mutex_updateNotifiers);
 			
 		  }
 		
 		  // TODO: Quitar este sleep (es debug)
-		  sleep(1);
+		  //sleep(1);
 		
-		  // TODO: mandar aquí el último update_id. Realmente esto lo quitaremos cuando hagamos la búsqueda anticipada (antes del bucle)
 		  sprintf(msq_buffer.mtext, "%lld", (update_id != 0)?(update_id + 1):0);
-		  //strcpy(msq_buffer.mtext, "-1");
 		  msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
 		
 		}

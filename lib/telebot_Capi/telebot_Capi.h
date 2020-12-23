@@ -62,12 +62,12 @@ struct msgbuf{
 // TODO: Pensar los tamaños máximos de language_code y type
 // TODO: Pensar si es mejor poner punteros en vez de cadenas y que otro reserve la memoria
 typedef struct{
-	int id;
+	int id;	// if id = 0 supose struct is empty
 	int is_bot;
 	char first_name[MAX_USER_TAM];
 	char last_name[MAX_USER_TAM];
-	char language_code[5];
-} from_t;
+	char language_code[10];
+} user_t;
 
 // TODO: Igual que el struct anterior
 typedef struct{
@@ -80,7 +80,7 @@ typedef struct{
 // TODO: Igual que el struct anterior
 typedef struct{
 	int message_id;
-	from_t from;
+	user_t from;
 	chat_t chat;
 	long date;
 	char text[MAX_POST_TAM];

@@ -163,6 +163,7 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 
 	// Realizamos la petición con POST
 	status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
+	printf("Send message: %s\n", data);
 
 	if(status == 200){
 

@@ -19,7 +19,7 @@
 **   Parámetros:  message_t * message: Estructura de tipo mensaje para guardar los parametros mas importantes del json recibido.
 **                json_t * message_obj: Objeto json completo a procesar.
 **                
-**     Devuelve:  int: -1 si ha habido error, 0 si el objeto se ha procesado correctamente.
+**     Devuelve:  int: 0 si éxito(el objeto se ha procesado correctamente), -1 en caso de error.
 **
 **  Descripción:  Función que a partir de un objeto json nos lo formatea en un objeto message_t con nuestros valores a recoger.
 */

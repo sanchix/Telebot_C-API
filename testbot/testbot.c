@@ -65,6 +65,12 @@ int main(int argc, char* argv[]){
 		
 		printf("Initialized\n");
 		
+		char pregunta[]= "¿Funcionara?";
+		char opciones[12][]= ["SI","NO","OBERSERVAD",NULL];
+	
+		telebot_sendPoll("166103691",pregunta,opciones, bot_info.http_info);
+
+
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto
 		// handle -> imprimeMensaje

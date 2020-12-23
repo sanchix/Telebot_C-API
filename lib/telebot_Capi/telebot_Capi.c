@@ -190,3 +190,60 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	return ret;
 	
 }
+
+int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *http_info){
+	
+	char respuesta[MAX_RESP_TAM]; //Valor devuelto por el método de la API sendPoll.
+	int ret = -1;
+	int status = 0;
+	char url[MAX_URL_TAM];
+	char data[15*MAX_POLL_OPTION_TAM];
+	char method[15] = "/sendPoll";
+	char parsedoptions[10*MAX_POLL_OPTION_TAM];
+	char opcion[MAX_POLL_OPTION_TAM];
+
+	// Generamos la url con el método correspondiente
+	strcpy(url, http_info->url);
+	strcat(url, method);
+
+	// Generamos la cadena JSON
+	sprintf(opcion,"\"%s\"",options[0]);
+	strcat(parsedoptions,opcion);
+	for (int i = 1 ; options[i] != NULL ; i++){
+		sprintf(opcion,",\"%s\"",options[i]);
+		strcat(parsedoptions,opcion);
+	}
+	
+	sprintf(data,"{\"chat_id\":%s,\"question\":\"%s\",\"options\":[%s]}",chat_id,question,parsedoptions);
+
+	// Realizamos la petición con POST
+	status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
+	printf("Send message: %s\n", data);
+
+	if(status == 200){
+
+		/*
+		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
+		json_error_t error;	
+		json_t *root;
+		json_t *ok;
+		json_t *result;
+		json_t *texto;
+
+		root = json_loads(respuesta, 0, &error);
+		// Obtenemos el valor de ok
+		ok = json_object_get(root, "ok");
+		if(json_is_true(ok)){
+			result = json_object_get(root, "result");		
+			// Se obtiene el objeto from
+			texto = json_object_get(result, "text");
+			if (strcmp(json_string_value(texto),text)==0){
+				ret = 0;
+			}
+		}
+		*/
+		ret = 0;
+	}
+	return ret;
+	
+}

@@ -46,6 +46,8 @@
 #define UPDATE_HOLD 1
 #define COMANDO '/'
 #define MAX_COMMAND_TAM 30
+#define MAX_POLL_QUESTION_TAM 300
+#define MAX_POLL_OPTION_TAM 100
 
 
 /* Tipos definidos por el usuario */
@@ -191,6 +193,8 @@ int telebot_getMe(char *response, int size, http_info_t *http_info);
 **				  la respuesta en *response.
 */
 int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info);
+
+int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *http_info);
 
 
 

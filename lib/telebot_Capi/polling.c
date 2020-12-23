@@ -174,7 +174,7 @@ void *parser(void *r_info){
 
 				found = 0;
 				for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
-					if(resp_info->bot_info->notifiers[i].event != EVENT_UNASSIGNED){
+					if(strcmp(resp_info->bot_info->notifiers[i].event,EVENT_UNASSIGNED)==0){
 						printf("> FOUND HANDLER\n");
 						handle = resp_info->bot_info->notifiers[i].handle;
 						// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).

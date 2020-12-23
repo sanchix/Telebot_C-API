@@ -341,7 +341,6 @@ void *poll(void *info){
 	
 	// TODO: Ordenar
 	int status;
-	int error = 0;
 	char url[MAX_URL_TAM];
 	char fullurl[MAX_URL_TAM];
 	char *offset = "0";
@@ -374,7 +373,7 @@ void *poll(void *info){
 	// TODO: Hay que hacer una función para cerrar los hilos y parar el pooling (cerrar también las colas)
 	if((msgqueue_id = msgget(clave,IPC_CREAT|0660)) == -1){
 		printf("> Pooling thread: error al iniciar la cola de mensajes: %s\n", strerror(errno));
-		error = 1;
+		isRunning(1);
 	}
 	// Se vacía la cola.
 	else{
@@ -382,8 +381,8 @@ void *poll(void *info){
 	}
 	
 	// Siempre que no haya error iteramos
-	while(!error){
-		
+	sleep(1);
+	while(isRunning(0)){
 		// Esperamos un tiempo para no sobrecargar la red
 		// TODO: Cambiar por esperar x segundos entre iteración, no siempre x segundos en esta linea
 		// TODO: Variar la frecuencia de pooling dinámicamente
@@ -413,7 +412,7 @@ void *poll(void *info){
 			
 			if(pthread_create(&thread, &attr, parser, resp_info) != 0){
 				printf("Failed to create parse thread\n");
-				error = 1;
+				isRunning(1);
 			}
 			else{
 			
@@ -435,7 +434,8 @@ void *poll(void *info){
 	}
 	
 	//TODO: Añadir que mande una señal al proceso principal para que se entere del fallo.
-	
+	http_close(&(bot_info->http_info.hi));
+	printf("Exiting pooling thread\n");
 	pthread_exit(NULL);
 	
 }

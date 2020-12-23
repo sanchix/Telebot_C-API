@@ -48,6 +48,7 @@
 
 
 /* Tipos definidos por el usuario */
+
 /*
 **		 Campos:  HTTP_INFO hi: Informacion del protocolo HTTPS para la librería de HTTPS.
 **				  char url[200]: URL con el token para acceder al bot.
@@ -170,6 +171,9 @@ typedef struct{
 
 /*********************   telebot_Capi.c   *********************/
 
+// TODO: Comentar
+int isRunning(int stop);
+
 /*
 **   Parámetros:  char tok[50]: Token para el acceso al bot.
 **                http_info_t *http_info: Puntero a una estructura http_info_t que almacena información del bot relativa 
@@ -190,7 +194,7 @@ int telebot_init(char *token, bot_info_t *bot_info);
 **
 **  Descripción:  Cierra semáforos.
 */
-int telebot_close();
+void telebot_close(void);
 
 
 /*

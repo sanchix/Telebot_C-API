@@ -89,7 +89,7 @@ void *parser(void *r_info){
 	key_t clave;
 	int msgqueue_id;
 	// TODO: Dimensionar update_id
-	long long int update_id;
+	long long int update_id = 0;
 	struct msgbuf msq_buffer;
 	message_t message;
 	int found;
@@ -217,7 +217,7 @@ void *parser(void *r_info){
 		  sleep(1);
 		
 		  // TODO: mandar aquí el último update_id. Realmente esto lo quitaremos cuando hagamos la búsqueda anticipada (antes del bucle)
-		  sprintf(msq_buffer.mtext, "%lld", update_id + 1);
+		  sprintf(msq_buffer.mtext, "%lld", (update_id != 0)?(update_id + 1):0);
 		  //strcpy(msq_buffer.mtext, "-1");
 		  msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
 		
@@ -241,7 +241,7 @@ void *poll(void *info){
 	char fullurl[MAX_URL_TAM];
 	char *offset = "0";
 	char response[MAX_RESP_TAM];
-	useconds_t interval = 1000000;
+	useconds_t interval = 1000;
 	pthread_attr_t attr;
 	pthread_t thread;
 	key_t clave;
@@ -264,14 +264,14 @@ void *poll(void *info){
 	
 	// Prepare message queue to communicate with parser threads
 	clave = ftok(".",'p');
-	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token. Otra opción es hacer que se borre la cola al principio.
+	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token.
 	//printf("clave: %i\n", clave);
 	// TODO: Hay que hacer una función para cerrar los hilos y parar el pooling (cerrar también las colas)
 	if((msgqueue_id = msgget(clave,IPC_CREAT|0660)) == -1){
 		printf("> Pooling thread: error al iniciar la cola de mensajes: %s\n", strerror(errno));
 		error = 1;
 	}
-	// Vaciamos la cola:
+	// Se vacía la cola.
 	else{
 		while(msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSQ_TYPE, IPC_NOWAIT) != -1){}
 	}
@@ -314,11 +314,15 @@ void *poll(void *info){
 			else{
 			
 				// Esperamos a que el parser nos indique el offset del último mensaje y lo almacenamos en la siguiente URL.
-				// TODO: Hacer algo en la función de parse para que en caso de error devuelva el último offset o 0 (el offset 0 devuelve todos los examenes si no recuerdo mal, pero habría que comprobarlo en la API de telegram).
+				// TODO: Hacer algo en la función de parse para que en caso de error devuelva el último offset leido o 0 (el offset 0 devuelve todos los updates si no recuerdo mal, pero habría que comprobarlo en la API de telegram). Podría devolver 0 en caso de que no haya updates y -1 en caso de error al parsear (puede haber varios reintentos).
 				msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSQ_TYPE, 0);
-				offset = msq_buffer.mtext;
-				strcpy(fullurl, url);
-				strcat(fullurl, offset);
+				// Si hay que actualizar lo hacemos
+				// TODO: Hacer que el intercambio de mensajes sea en formato int, no en caracteres
+				if(msq_buffer.mtext[0] != '0'){
+					offset = msq_buffer.mtext;
+					strcpy(fullurl, url);
+					strcat(fullurl, offset);
+				}
 				
 			}
 			

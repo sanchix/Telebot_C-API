@@ -54,8 +54,6 @@ int main(int argc, char* argv[]){
 	bot_info_t bot_info;
 	event_t event;
 	
-	telebot_close();
-	
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
 	}
@@ -72,9 +70,10 @@ int main(int argc, char* argv[]){
 		
 		char pregunta[]= "¿Funcionara?";
 		char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
-	
+		
+		
 		telebot_sendPoll("166103691",pregunta,opciones, &bot_info.http_info);
-
+		
 
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto
@@ -87,12 +86,7 @@ int main(int argc, char* argv[]){
 		
 		// Loop to keep alive main thread
 		while(1){
-			sleep(15);
-		}
-
-		
-		if (telebot_close() == -1){
-			printf("Ha habido un problema al cerrar el bot");
+			sleep(1);
 		}
 
 	}

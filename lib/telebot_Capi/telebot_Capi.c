@@ -7,6 +7,9 @@
 ** Descripcion:  Código principal de la librería "telebot_Capi". Contiene las definiciones de las funciones que podrá utilizar el usuario de la librería.
 */
 
+/* Includes del sistema */
+#include <signal.h>
+
 /* Includes de la aplicacion */
 #include "telebot_Capi.h"
 
@@ -14,6 +17,42 @@
 
 /************************************************************/
 /* Definición de funciones locales. */
+
+// TODO: Comentar
+int isRunning(int stop){
+	static int running = 1;
+	if(stop){
+		running--;
+	}
+	return running;
+}
+
+/*
+**   Parámetros:  
+**				  
+**                
+**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
+**
+**  Descripción:  Cierra semáforos.
+*/
+// TODO: hacer que cierre tambien la cola...
+void telebot_close(void){
+	
+	pid_t pid;
+	
+	printf("Cerrando telebot_Capi\n");
+	if ( sem_unlink("mutex_updateNotifiers")!=0 ){
+		printf("Ha habido un problema al cerrar el semaforo mutex_updateNotifiers");
+	}
+	isRunning(1);
+	printf("Bot cerrado correctamente\n");
+	
+	sleep(5);
+	pid = getpid();
+	kill(pid, SIGKILL);
+	
+}
+
 
 /*
 **   Parámetros:  char *token: Token del BOT.
@@ -25,10 +64,17 @@
 */
 int telebot_init(char *token, bot_info_t *bot_info){
 	
+	struct sigaction term;
 	sem_t * mutex_updateNotifiers;
 	int ret = -1;
 	
 	printf("Initializing telebot_Capi\n");
+	
+	// Se arma la señal para la terminación
+	term.sa_handler= telebot_close;
+	term.sa_flags = 0;
+	sigemptyset(&term.sa_mask);
+	sigaction(SIGINT, &term, NULL);
 	
 	//Inicializamos los semáforos
     if((mutex_updateNotifiers = sem_open(
@@ -55,29 +101,6 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	}
 	else{
 		ret = 0;
-	}
-	
-	return ret;
-	
-}
-
-
-/*
-**   Parámetros:  
-**				  
-**                
-**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
-**
-**  Descripción:  Cierra semáforos.
-*/
-// TODO: hacer que cierre tambien la cola...
-int telebot_close(){
-	
-	int ret = 0;
-	printf("Cerrando telebot_Capi\n");
-	if ( sem_unlink("mutex_updateNotifiers")!=0 ){
-		printf("Ha habido un problema al cerrar el semaforo mutex_updateNotifiers");
-		ret = -1;
 	}
 	
 	return ret;

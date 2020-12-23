@@ -229,6 +229,8 @@ updateHandle_t findUpdateHandler(update_t update, update_notifier_t *notifiers){
 	
 	updateHandle_t handle = NULL;
 	
+	//Vamos a comprobar si el usuario del bot ha escrito un comando con el iniciador de comando COMANDO, extraer el comando en cuestión, que debe ser una unica palabra sin espacios, comprobar si tenemos un comando que coincida, y obtener un handler.
+	
 	// se busca el evento en particular...
 	for(int i = 1; (i < MAX_UPDATE_EVENTS) && (handle == NULL); i++){
 

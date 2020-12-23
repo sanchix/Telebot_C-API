@@ -135,7 +135,6 @@ void *parser(void *r_info){
 	// TODO: Dimensionar update_id
 	long long int update_id = 0;
 	struct msgbuf msq_buffer;
-	int found;
 	updateHandle_t handle;
 	response_info_t *resp_info;
 	update_t update;
@@ -239,33 +238,17 @@ void *parser(void *r_info){
 				
 				// Se entra en la región compartida
 				sem_wait(mutex_updateNotifiers);
-
-				found = 0;
 				
 				// Se busca handle filtrando primero por tipo de update
-				switch(update.type){
-					
-					case UPDATE_MESSAGE:
-						// Si lo recibido es un comando...
-						if (((message_t *)update.content)->command == NULL){
-//Vamos a comprobar si el usuario del bot ha escrito un comando con el iniciador de comando COMANDO, extraer el comando en cuestión, que debe ser una unica palabra sin espacios, comprobar si tenemos un comando que coincida, y obtener un handler.
-
-							if ((handle = findUpdateHandler(update, resp_info->bot_info->notifiers)) != NULL){
-								printf("> FOUND HANDLER\n");
-								// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-								handle(&update);
-							}
-							else{
-								printf("> No found event\n");						
-							}
-						}
-						break;
-					// TODO: case UPDATE_POLL
-					// TODO: poner DEFAULT
+				
+				if ((handle = findUpdateHandler(update, resp_info->bot_info->notifiers)) != NULL){
+					printf("> FOUND HANDLER\n");
+					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
+					handle(&update);
 				}
 				
-				// If no handler was found, use default handle
-				if(!found){
+				// If no handle was found, use default handle
+				else{
 					printf("> USING DEFAULT HANDLER\n");
 					handle = resp_info->bot_info->notifiers[0].handle;
 					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
@@ -364,11 +347,10 @@ void *poll(void *info){
 		
 		// Realizamos la petición HTTP
 		status = http_get(&(bot_info->http_info.hi), fullurl, response, MAX_RESP_TAM);
-		
 		// Analizamos la respuesta
 		// TODO: ¿Poner que tras x intentos fallidos se cierre el servidor o se notifique al usuario?
 		if(status != 200){
-			printf("Failed to update data\n");
+			printf("Failed to update data: %i, %s\n", status, response);
 		}
 		
 		// TODO: Hay que reservar memoria para resp_info

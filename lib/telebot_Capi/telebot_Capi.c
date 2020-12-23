@@ -31,7 +31,10 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	printf("Initializing telebot_Capi\n");
 	
 	//Inicializamos los semáforos
-    mutex_updateNotifiers = sem_open("mutex_updateNotifiers", O_CREAT,0600,1);
+    if((mutex_updateNotifiers = sem_open(
+	"mutex_updateNotifiers", O_CREAT,0600,1)) == SEM_FAILED){
+		printf("Telebot_init: Fallo al abrir el semáforo\n");
+	}
 	bot_info->mutex_updateNotifiers = mutex_updateNotifiers;
 
 	// Inicializamos la librería https_lib

@@ -83,7 +83,7 @@ typedef struct{
 	user_t from;
 	chat_t chat;
 	long date;
-	char text[MAX_POST_TAM];
+	char *text;
 } message_t;
 
 

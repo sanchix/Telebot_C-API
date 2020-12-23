@@ -123,7 +123,7 @@ void *parser(void *r_info){
 	// TODO: Dimensionar update_id
 	long long int update_id = 0;
 	struct msgbuf msq_buffer;
-	message_t message;
+	message_t *message;
 	int found;
 	updateHandle_t handle;
 	response_info_t *resp_info;
@@ -174,6 +174,7 @@ void *parser(void *r_info){
 		
 			// Analizamos el resultado (lista de objetos update)
 			json_result = json_object_get(json_root, "result");
+			printf("JSON: %s", json_string_value(json_result));
 			for(size_t i = 0; i < json_array_size(json_result); i++){
 			
 				// Se obtiene el objeto update
@@ -185,15 +186,24 @@ void *parser(void *r_info){
 				//TODO: quitar esta impresión (es debug)
 				printf("\tUpdate id: %lld\n", update_id);
 				
-				// Obtenemos el objeto message y lo desempaquetamos
 				// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
+				// Obtenemos el objeto message y lo desempaquetamos
 				if((json_aux = json_object_get(json_update, "message")) != NULL){
-					unpack_json_message(&message, json_aux);
-			
-					if(message.from.id != 0){
-						printf("\tFrom: %s %s\n", message.from.first_name, message.from.last_name);
+					// TODO: Hay que liberar
+					if((message = (message_t *)malloc(sizeof(message_t))) == NULL){
+						printf("Poll: malloc failed\n");
 					}
-					printf("\tText: %s\n", message.text);
+					unpack_json_message(message, json_aux);
+			
+					if(message->from.id != 0){
+						printf("\tFrom: %s %s\n", message->from.first_name, message->from.last_name);
+					}
+					printf("\tText: %s\n", message->text);
+				}
+				// Obtenemos el resultado de la encuesta
+				else if((json_aux = json_object_get(json_update, "poll")) != NULL){
+					// TODO: Hacer
+					printf("Received poll update\n");
 				}
 				
 				// Se entra en la región compartida
@@ -239,19 +249,25 @@ void *parser(void *r_info){
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
 				// Se sale de la región compartida
 				sem_post(mutex_updateNotifiers);
+				
+				if(update.type == UPDATE_MESSAGE){
+					free(message)
+				}
 			
-		  }
+			}
 		
-		  // TODO: Quitar este sleep (es debug)
-		  //sleep(1);
-		
-		  sprintf(msq_buffer.mtext, "%lld", (update_id != 0)?(update_id + 1):0);
-		  msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
+			// TODO: Quitar este sleep (es debug)
+			//sleep(1);
+			sprintf(msq_buffer.mtext, "%lld", (update_id != 0)?(update_id + 1):0);
+			msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
 		
 		}
 	}
 	
 	// TODO: ¿Cerrar la cola y liberar otros recursos?
+	if(message.text != NULL){
+		free(message.text);
+	}
 	free(r_info);
 	pthread_exit(NULL);
 	

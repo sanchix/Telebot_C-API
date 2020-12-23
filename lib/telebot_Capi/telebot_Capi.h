@@ -38,6 +38,7 @@
 #define MAX_URL_TAM 200
 #define MAX_USER_TAM 64 // Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
 #define MAX_UPDATE_EVENTS 20
+// TODO: Cambiar
 #define EVENT_UNASSIGNED "null"
 #define EVENT_DEFFAULT "deffault"
 #define UPDATE_MESSAGE 1

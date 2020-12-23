@@ -46,7 +46,7 @@ int compareEvents(event_t e1, event_t e2){
 // TODO: Comentar
 // TODO: Poner valor de retorno (errores)
 // No poner en el telebot_Capi.h
-int copyEvent(event_t *to, event_t from){
+void copyEvent(event_t *to, event_t from){
 	
 	to->update_type = from.update_type;
 	strcpy(to->command, from.command);
@@ -228,6 +228,8 @@ int removeUpdateNotifier(event_t event, bot_info_t *bot_info){
 updateHandle_t findUpdateHandler(update_t update, update_notifier_t *notifiers){
 	
 	updateHandle_t handle = NULL;
+	
+	//Vamos a comprobar si el usuario del bot ha escrito un comando con el iniciador de comando COMANDO, extraer el comando en cuestión, que debe ser una unica palabra sin espacios, comprobar si tenemos un comando que coincida, y obtener un handler.
 	
 	// se busca el evento en particular...
 	for(int i = 1; (i < MAX_UPDATE_EVENTS) && (handle == NULL); i++){

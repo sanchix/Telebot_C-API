@@ -16,7 +16,6 @@ int doEcho(update_t *update){
 	
 	message_t *message;
 	char cid[20];
-	
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		

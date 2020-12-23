@@ -43,6 +43,8 @@
 #define UPDATE_MESSAGE 1
 #define UPDATE_DROP 0
 #define UPDATE_HOLD 1
+#define COMANDO '/'
+#define MAX_COMMAND_TAM 30
 
 
 /* Tipos definidos por el usuario */
@@ -255,6 +257,17 @@ int modifyUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_i
 
 // TODO: Comentar
 int removeUpdateNotifier(event_t event, bot_info_t *bot_info);
+
+/*
+**   Parámetros:  event_t event: nombre del evento que estamos buscando
+**				  bot_info_t *bot_info 	
+**				  updateHandle_t *handle: ṕuntero a la direccion de memoria en la que hay que dejar el handler
+**                
+**     Devuelve:  int Devuelve 0 en caso de exit, -1 en caso de que no se haya podido encontrar. 
+**
+**  Descripción:  Comprobamos si existe un evento. 
+*/
+int findUpdateNotifier(event_t event, update_notifier_t *notifiers,updateHandle_t *handle);
 
 
 #endif

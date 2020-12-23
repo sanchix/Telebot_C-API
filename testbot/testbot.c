@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
 	
 	bot_info_t bot_info;
 	
-	//telebot_close();
+	telebot_close();
 	
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);

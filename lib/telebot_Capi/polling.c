@@ -195,29 +195,29 @@ void *parser(void *r_info){
 					}
 					printf("\tText: %s\n", message.text);
 				}
-
-				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
+				
 				// Se entra en la región compartida
+				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?				
 				sem_wait(mutex_updateNotifiers);
 
-				// Analizamos los eventos para llamar a la función correspondiente
+				//Vamos a comprobar si el usuario del bot ha escrito un comando con el iniciador de comando COMANDO, extraer el comando en cuestión, que debe ser una unica palabra sin espacios, comprobar si tenemos un comando que coincida, y obtener un handler.
 				found = 0;
-				for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
-					if(strcmp(resp_info->bot_info->notifiers[i].event,EVENT_UNASSIGNED)!=0){
+
+				if ( message.text[0] == COMANDO ){
+
+					event_t evento[MAX_COMMAND_TAM];
+					sscanf(message.text,"/%s ",evento);
+
+					printf("Evento: %s\n",evento);
+					if (findUpdateNotifier(evento, resp_info->bot_info->notifiers, &handle) == 0){
 						printf("> FOUND HANDLER\n");
-						handle = resp_info->bot_info->notifiers[i].handle;
 						// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-						if(handle != NULL){
-							// TODO: Cambiar NULL por puntero a la estructura message de respuesta
-							update.type = UPDATE_MESSAGE;
-							update.content = (void *)(&message);
-							update.http_info = &(resp_info->bot_info->http_info);
-							handle(&update);
-						}
-						else{
-							// TODO: Don't update queue
-							printf("> DONT UPDATE QUEUE\n");
-						}
+						update.type = UPDATE_MESSAGE;
+						update.content = (void *)(&message);
+						update.http_info = &(resp_info->bot_info->http_info);
+						handle(&update);
+					}else{
+						printf("> No found event\n");						
 					}
 				}
 				if(!found){

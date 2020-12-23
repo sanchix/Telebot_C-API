@@ -189,3 +189,29 @@ int removeUpdateNotifier(event_t event, bot_info_t *bot_info){
 	return found-1;
 	
 }
+
+/*
+**   Parámetros:  event_t event: nombre del evento que estamos buscando
+**				  bot_info_t *bot_info 	
+**				  updateHandle_t *handle: puntero a la direccion de memoria en la que hay que dejar el handler
+**                
+**     Devuelve:  int Devuelve 0 en caso de exit, -1 en caso de que no se haya podido encontrar. 
+**
+**  Descripción:  Comprobamos si existe un evento. 
+*/
+int findUpdateNotifier(event_t event, update_notifier_t *notifiers, updateHandle_t *handle){
+	
+	int found = 0;
+	
+	// se busca el evento en particular...
+	for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
+
+		if( strcmp(event,notifiers[i].event) == 0 ){
+			*handle = notifiers[i].handle;
+			found = 1;
+		}
+	}
+	
+	return found-1;
+	
+}

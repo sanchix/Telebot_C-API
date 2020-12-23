@@ -20,12 +20,38 @@
 
 
 // TODO: Comentar
-int ignoreUpdate(update_t *p){ return UPDATE_DROP; }
+int ignoreUpdate(update_t *p){ return POLL_DROP; }
 
 // TODO: Comentar
 // TODO: Hacer que polling aproveche el retorno de la función.
 // Se guardan las actualizaciones y no se borran. Será el handler por defecto para el evento por defecto.
-int holdUpdate(update_t *p){ return UPDATE_HOLD; }
+int holdUpdate(update_t *p){ return POLL_HOLD; }
+
+
+// TODO: Comentar
+// No poner en el telebot_Capi.h
+int compareEvents(event_t e1, event_t e2){
+	
+	int ret = 1;
+	
+	if(e1.update_type == e2.update_type && strcmp(e1.command, e2.command) == 0){
+		ret = 0;
+	}
+	
+	return ret;
+	
+}
+
+
+// TODO: Comentar
+// TODO: Poner valor de retorno (errores)
+// No poner en el telebot_Capi.h
+int copyEvent(event_t *to, event_t from){
+	
+	to->update_type = from.update_type;
+	strcpy(to->command, from.command);
+	
+}
 
 
 /*
@@ -41,10 +67,10 @@ void initUpdateNotifiers(update_notifier_t *notifiers){
 	
 	// TODO: Set first update handle to NULL (don't change offset on HTTP request), and others to "doNothing()"
 	notifiers[0].handle = holdUpdate;
-	notifiers[0].event = EVENT_DEFFAULT;
+	notifiers[0].event.update_type = UPDATE_ANY;
 	for(int i = 1; i < MAX_UPDATE_EVENTS; i++){
 		notifiers[i].handle = ignoreUpdate;
-		notifiers[i].event = EVENT_UNASSIGNED;
+		notifiers[i].event.update_type = UPDATE_NONE;
 	}
 	
 }
@@ -70,7 +96,7 @@ int addUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_info
 
 	// Si el evento es por defecto almacenamos el nuevo handle.
 	//TODO: Se podria implementar modify porque estamos haciendo una modificacion....
-	if( strcmp(event,EVENT_DEFFAULT) == 0 ){
+	if(event.update_type == UPDATE_ANY){
 		sem_wait(mutex_updateNotifiers);
 		bot_info->notifiers[0].handle = handle;
 		sem_post(mutex_updateNotifiers);
@@ -82,11 +108,11 @@ int addUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_info
 		// se busca un hueco (caracterizado por EVENT_UNASSIGNED)
 		for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 			// y cuando se encuentre se edita.
-			if( strcmp(bot_info->notifiers[i].event,EVENT_UNASSIGNED) == 0 ){
+			if(bot_info->notifiers[i].event.update_type == UPDATE_ANY){
 				sem_wait(mutex_updateNotifiers);
 				bot_info->notifiers[i].handle = handle;
 				// TODO: Si cambiamos event a una estructura o algo hay que cambiar esta asignación a una copia de memoria o a un puntero.
-				bot_info->notifiers[i].event = event;
+				copyEvent(&(bot_info->notifiers[i].event), event);
 				sem_post(mutex_updateNotifiers);
 				found = 1;
 			}
@@ -117,7 +143,7 @@ int modifyUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_i
 	mutex_updateNotifiers = bot_info->mutex_updateNotifiers;
 
 	// Si el evento es por defecto almacenamos el nuevo handle.
-	if( strcmp(event,EVENT_DEFFAULT) == 0 ){
+	if(event.update_type == UPDATE_ANY){
 		sem_wait(mutex_updateNotifiers);
 		bot_info->notifiers[0].handle = handle;
 		sem_post(mutex_updateNotifiers);
@@ -131,7 +157,7 @@ int modifyUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_i
 			// y cuando se encuentre se edita.
 			
 			// TODO: Hay que pensar si se van a poder tener varios handle para un mismo evento y como se va a hacer ¿se tendrán varios objetos update_event_t con el mismo event_t? ¿En los objetos update_event_t puede haber una lista de hanles para cada evento?
-			if( strcmp(event,bot_info->notifiers[i].event) == 0 ){
+			if(compareEvents(event, bot_info->notifiers[i].event) == 0){
 				sem_wait(mutex_updateNotifiers);
 				bot_info->notifiers[i].handle = handle;
 				sem_post(mutex_updateNotifiers);
@@ -162,7 +188,7 @@ int removeUpdateNotifier(event_t event, bot_info_t *bot_info){
 	mutex_updateNotifiers = bot_info->mutex_updateNotifiers;
 	
 	// Si el evento a borrar es el por defecto reestablecemos su handle inicial.
-	if( strcmp(event,EVENT_DEFFAULT) == 0 ){
+	if(event.update_type == UPDATE_ANY){
 		sem_wait(mutex_updateNotifiers);
 		bot_info->notifiers[0].handle = holdUpdate;
 		sem_post(mutex_updateNotifiers);
@@ -176,10 +202,10 @@ int removeUpdateNotifier(event_t event, bot_info_t *bot_info){
 			// y cuando se encuentre se borra.
 			// TODO: Cambiar este "found" a algo que diga si son iguales (¿por una comparación hash?, ¿elemento a elemento?)
 			// DONE: Se compara el evento que se quiere eliminar con la lista.
-			if( strcmp(event,bot_info->notifiers[i].event) == 0 ){
+			if(compareEvents(event, bot_info->notifiers[i].event) == 0){
 				sem_wait(mutex_updateNotifiers);
 				bot_info->notifiers[i].handle = holdUpdate;
-				bot_info->notifiers[i].event = EVENT_UNASSIGNED;
+				bot_info->notifiers[i].event.update_type = UPDATE_NONE;
 				sem_post(mutex_updateNotifiers);
 				found = 1;
 			}
@@ -199,19 +225,33 @@ int removeUpdateNotifier(event_t event, bot_info_t *bot_info){
 **
 **  Descripción:  Comprobamos si existe un evento. 
 */
-int findUpdateNotifier(event_t event, update_notifier_t *notifiers, updateHandle_t *handle){
+updateHandle_t findUpdateHandler(update_t update, update_notifier_t *notifiers){
 	
-	int found = 0;
+	updateHandle_t handle = NULL;
 	
 	// se busca el evento en particular...
-	for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
+	for(int i = 1; (i < MAX_UPDATE_EVENTS) && (handle == NULL); i++){
 
-		if( strcmp(event,notifiers[i].event) == 0 ){
-			*handle = notifiers[i].handle;
-			found = 1;
+		// si coindice el tipo..
+		if(notifiers[i].event.update_type == update.type){
+			
+			// y es mensaje...
+			if(update.type == UPDATE_MESSAGE){
+				// si el notifier tiene comando filtramos y asignamos.
+				// TODO: Cambiar notifiers[i].event.command != NULL por strcmp (no vale null, vale "")
+				if(notifiers[i].event.command != NULL && strcmp(notifiers[i].event.command, ((message_t *)update.content)->command) == 0){
+					handle = notifiers[i].handle;
+				}
+				// y si no tiene asignamos.
+				else{
+					handle = notifiers[i].handle;
+				}
+			}
+			// TODO: Poner else if para poll u otros tipos
 		}
+		
 	}
 	
-	return found-1;
+	return handle;
 	
 }

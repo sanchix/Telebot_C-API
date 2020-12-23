@@ -38,12 +38,8 @@
 #define MAX_URL_TAM 200
 #define MAX_USER_TAM 64 // Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
 #define MAX_UPDATE_EVENTS 20
-// TODO: Cambiar
-#define EVENT_UNASSIGNED "null"
-#define EVENT_DEFFAULT "deffault"
-#define UPDATE_MESSAGE 1
-#define UPDATE_DROP 0
-#define UPDATE_HOLD 1
+#define POLL_DROP 0
+#define POLL_HOLD 1
 #define COMANDO '/'
 #define MAX_COMMAND_TAM 30
 #define MAX_POLL_QUESTION_TAM 300
@@ -62,6 +58,14 @@ struct msgbuf{
 	char mtext[MAX_OFFSET_TAM];
 };
 
+// TODO: Comentar
+// TODO: ¿Crear otro para eventos con comando?
+typedef enum{
+	UPDATE_NONE = -1,
+	UPDATE_ANY = 0,
+	UPDATE_MESSAGE = 1,
+	UPDATE_POLL = 2,
+} updatetype_t;
 
 // TODO: Comentar
 // TODO: Pensar los tamaños máximos de language_code y type
@@ -89,6 +93,8 @@ typedef struct{
 	chat_t chat;
 	long date;
 	char *text;
+	char *command;
+	char **args;
 } message_t;
 
 
@@ -106,7 +112,7 @@ typedef struct{
 
 // TODO: Comentar
 typedef struct{
-	int type; // Defined in UPDATE_<type>
+	updatetype_t type; // Defined in UPDATE_<type>
 	void *content;
 	// TODO_ Pensar si esta es la mejor forma de que una función de evento pueda mandar mensajes o si hay otra.
 	http_info_t *http_info;
@@ -117,13 +123,17 @@ typedef struct{
 // TODO: Pensar valores de retorno y parámetros
 typedef int (*updateHandle_t)(update_t *);
 
-typedef char* event_t;
+// TODO: Comentar
+// TODO: Añadir más calificadores para los eventos
+typedef struct{
+	updatetype_t update_type;
+	char command[MAX_COMMAND_TAM];	//NULL for general messages
+} event_t;
 
 // TODO: Comentar
 typedef struct{
 	updateHandle_t handle;
-	// TODO: Add possible events
-	event_t event; // EVENT_UNASSIGNED = none
+	event_t event; // EVENT_UNASSIGNED = NULL
 } update_notifier_t;
 
 
@@ -272,7 +282,7 @@ int removeUpdateNotifier(event_t event, bot_info_t *bot_info);
 **
 **  Descripción:  Comprobamos si existe un evento. 
 */
-int findUpdateNotifier(event_t event, update_notifier_t *notifiers,updateHandle_t *handle);
+updateHandle_t findUpdateHandler(update_t update, update_notifier_t *notifiers);
 
 
 #endif

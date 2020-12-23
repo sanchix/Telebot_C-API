@@ -95,10 +95,22 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 				printf("Parse: malloc failed\n");
 		}
 		strcpy(message->text, json_string_value(aux));
+		
+		if(message->text[0] == '/'){
+			sscanf(message->text, "/%s ", message->command);
+			// TODO: Analizar los argumentos (scanf(tal, " %s", ...)
+		}
+		else{
+			// TODO: Inicializar todo a NULL y cambiar luego.
+			message->command = NULL;
+		}
+		
 	}
 	else{
 		// TODO: Reservar memo
 		message->text = NULL;
+		message->command = NULL;
+		message->args = NULL;
 	}
 	  
 	return ret;
@@ -123,7 +135,6 @@ void *parser(void *r_info){
 	// TODO: Dimensionar update_id
 	long long int update_id = 0;
 	struct msgbuf msq_buffer;
-	message_t *message;
 	int found;
 	updateHandle_t handle;
 	response_info_t *resp_info;
@@ -173,15 +184,16 @@ void *parser(void *r_info){
 			printf("\tok\n");
 		
 			// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
+			update.http_info = &(resp_info->bot_info->http_info);
 		
 			// Analizamos el resultado (lista de objetos update)
 			json_result = json_object_get(json_root, "result");
 			// TODO: Quitar este printf (debug)
 			//printf("JSON: %s", json_string_value(json_result));
-			
 			// Para cada objeto del array
-			for(size_t i = 0; i < json_array_size(json_result); i++){
 			
+			for(size_t i = 0; i < json_array_size(json_result); i++){
+				
 				// Se obtiene el objeto update para la iteración
 				json_update = json_array_get(json_result, i);
 				
@@ -192,66 +204,72 @@ void *parser(void *r_info){
 				printf("\tUpdate id: %lld\n", update_id);
 				
 				
-				// Procedemos a almacenar el evento
+				// Procedemos a procesar el update
 				
 				// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
 				// Si lo que se ha recibido es un mensaje...
 				if((json_aux = json_object_get(json_update, "message")) != NULL){
 					// Obtenemos el objeto message y lo desempaquetamos
 					// TODO: Hay que liberar
-					if((message = (message_t *)malloc(sizeof(message_t))) == NULL){
+					if((update.content = (message_t *)malloc(sizeof(message_t))) == NULL){
 						printf("Poll: malloc failed\n");
 					}
-					unpack_json_message(message, json_aux);
-			
-					if(message->from.id != 0){
-						printf("\tFrom: %s %s\n", message->from.first_name, message->from.last_name);
-					}
-					printf("\tText: %s\n", message->text);
+					unpack_json_message(update.content, json_aux);
+					update.type = UPDATE_MESSAGE;
+					
 				}
 				
 				// Si lo que se ha recibido es una actualización de encuesta
 				else if((json_aux = json_object_get(json_update, "poll")) != NULL){
 					// Obtenemos el resultado de la encuesta
 					// TODO: Hacer
+					update.type = UPDATE_POLL;
 					printf("Received poll update\n");
 				}
+				else{
+					update.type = UPDATE_NONE;
+					printf("Something received\n");
+				}
 				
-				
-				// Procedemos a analizar el evento
-				// Se entra en la región compartida
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?				
+				
+				
+				// Determinar el manejador para el evento
+				
+				// Se entra en la región compartida
 				sem_wait(mutex_updateNotifiers);
 
-				//Vamos a comprobar si el usuario del bot ha escrito un comando con el iniciador de comando COMANDO, extraer el comando en cuestión, que debe ser una unica palabra sin espacios, comprobar si tenemos un comando que coincida, y obtener un handler.
 				found = 0;
+				
+				// Se busca handle filtrando primero por tipo de update
+				switch(update.type){
+					
+					case UPDATE_MESSAGE:
+						// Si lo recibido es un comando...
+						if (((message_t *)update.content)->command == NULL){
+//Vamos a comprobar si el usuario del bot ha escrito un comando con el iniciador de comando COMANDO, extraer el comando en cuestión, que debe ser una unica palabra sin espacios, comprobar si tenemos un comando que coincida, y obtener un handler.
 
-				if ( message.text[0] == COMANDO ){
-
-					event_t evento[MAX_COMMAND_TAM];
-					sscanf(message.text,"/%s ",evento);
-
-					printf("Evento: %s\n",evento);
-					if (findUpdateNotifier(evento, resp_info->bot_info->notifiers, &handle) == 0){
-						printf("> FOUND HANDLER\n");
-						// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-						update.type = UPDATE_MESSAGE;
-						update.content = (void *)(&message);
-						update.http_info = &(resp_info->bot_info->http_info);
-						handle(&update);
-					}else{
-						printf("> No found event\n");						
-					}
+							if ((handle = findUpdateHandler(update, resp_info->bot_info->notifiers)) != NULL){
+								printf("> FOUND HANDLER\n");
+								// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
+								handle(&update);
+							}
+							else{
+								printf("> No found event\n");						
+							}
+						}
+						break;
+					// TODO: case UPDATE_POLL
+					// TODO: poner DEFAULT
 				}
+				
+				// If no handler was found, use default handle
 				if(!found){
 					printf("> USING DEFAULT HANDLER\n");
 					handle = resp_info->bot_info->notifiers[0].handle;
 					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
 					if(handle != NULL){
 						// TODO: Cambiar NULL por puntero a la estructura message de respuesta
-						update.type = UPDATE_MESSAGE;
-						update.content = (void *)(&message);
-						update.http_info = &(resp_info->bot_info->http_info);
 						handle(&update);
 					}
 					else{
@@ -264,11 +282,14 @@ void *parser(void *r_info){
 				sem_post(mutex_updateNotifiers);
 				
 				if(update.type == UPDATE_MESSAGE){
-					free(message)
+					free(update.content);
+					if(((message_t *)update.content)->text != NULL){
+						free(((message_t *)update.content)->text);
+					}
 				}
 			
 			}
-		
+			
 			// TODO: Quitar este sleep (es debug)
 			//sleep(1);
 			sprintf(msq_buffer.mtext, "%lld", (update_id != 0)?(update_id + 1):0);
@@ -278,9 +299,6 @@ void *parser(void *r_info){
 	}
 	
 	// TODO: ¿Cerrar la cola y liberar otros recursos?
-	if(message.text != NULL){
-		free(message.text);
-	}
 	free(r_info);
 	pthread_exit(NULL);
 	

@@ -23,7 +23,12 @@ int doEcho(update_t *update){
 		message = (message_t *)update->content;
 		
 		// Se imprime el mensaje
-		printf("Mensaje recibido de %s: %s\n", message->from.first_name, message->text);
+		if(message->from.id != 0){
+			printf("Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
+		}
+		else{
+			printf("Mensaje recibido de alguien: %s\n", message->text);
+		}
 		
 		// Se hace eco si se ha recibido texto
 		if(message->text != NULL){
@@ -40,7 +45,7 @@ int doEcho(update_t *update){
 	}
 	
 	// TODO: Pensar que poner en el retorno
-	return UPDATE_DROP;
+	return POLL_DROP;
 	
 }
 
@@ -48,6 +53,7 @@ int doEcho(update_t *update){
 int main(int argc, char* argv[]){
 	
 	bot_info_t bot_info;
+	event_t event;
 	
 	telebot_close();
 	
@@ -66,15 +72,17 @@ int main(int argc, char* argv[]){
 		printf("Initialized\n");
 		
 		char pregunta[]= "¿Funcionara?";
-		char opciones[12][]= ["SI","NO","OBERSERVAD",NULL];
+		char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
 	
-		telebot_sendPoll("166103691",pregunta,opciones, bot_info.http_info);
+		telebot_sendPoll("166103691",pregunta,opciones, &bot_info.http_info);
 
 
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto
 		// handle -> imprimeMensaje
-		addUpdateNotifier(doEcho, EVENT_DEFFAULT, &bot_info);
+		event.update_type = UPDATE_ANY;
+		strcpy(event.command, "");
+		addUpdateNotifier(doEcho, event, &bot_info);
 		
 		// TODO: Comprobar que funcionan los semáforos
 		

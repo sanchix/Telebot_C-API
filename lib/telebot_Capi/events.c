@@ -46,7 +46,7 @@ int compareEvents(event_t e1, event_t e2){
 // TODO: Comentar
 // TODO: Poner valor de retorno (errores)
 // No poner en el telebot_Capi.h
-int copyEvent(event_t *to, event_t from){
+void copyEvent(event_t *to, event_t from){
 	
 	to->update_type = from.update_type;
 	strcpy(to->command, from.command);

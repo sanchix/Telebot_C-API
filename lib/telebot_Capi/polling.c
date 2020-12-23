@@ -223,6 +223,7 @@ void *parser(void *r_info){
 				else if((json_aux = json_object_get(json_update, "poll")) != NULL){
 					// Obtenemos el resultado de la encuesta
 					// TODO: Hacer
+				  
 					update.type = UPDATE_POLL;
 					printf("Received poll update\n");
 				}

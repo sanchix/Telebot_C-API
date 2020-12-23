@@ -19,7 +19,7 @@
 **   Parámetros:  message_t * message: Estructura de tipo mensaje para guardar los parametros mas importantes del json recibido.
 **                json_t * message_obj: Objeto json completo a procesar.
 **                
-**     Devuelve:  int: -1 si ha habido error, 0 si el objeto se ha procesado correctamente.
+**     Devuelve:  int: 0 si éxito(el objeto se ha procesado correctamente), -1 en caso de error.
 **
 **  Descripción:  Función que a partir de un objeto json nos lo formatea en un objeto message_t con nuestros valores a recoger.
 */
@@ -198,7 +198,7 @@ void *parser(void *r_info){
 				// Analizamos los eventos para llamar a la función correspondiente
 				found = 0;
 				for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
-					if(resp_info->bot_info->notifiers[i].event != EVENT_UNASSIGNED){
+					if(strcmp(resp_info->bot_info->notifiers[i].event,EVENT_UNASSIGNED)==0){
 						printf("> FOUND HANDLER\n");
 						handle = resp_info->bot_info->notifiers[i].handle;
 						// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).

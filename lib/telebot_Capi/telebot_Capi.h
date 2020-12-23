@@ -38,8 +38,8 @@
 #define MAX_URL_TAM 200
 #define MAX_USER_TAM 64 // Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
 #define MAX_UPDATE_EVENTS 20
-#define EVENT_UNASSIGNED -1
-#define EVENT_DEFFAULT 0
+#define EVENT_UNASSIGNED "null"
+#define EVENT_DEFFAULT "deffault"
 #define UPDATE_MESSAGE 1
 #define UPDATE_DROP 0
 #define UPDATE_HOLD 1
@@ -112,7 +112,7 @@ typedef struct{
 // TODO: Pensar valores de retorno y parámetros
 typedef int (*updateHandle_t)(update_t *);
 
-typedef int event_t;
+typedef char* event_t;
 
 // TODO: Comentar
 typedef struct{
@@ -127,7 +127,7 @@ typedef struct{
 typedef struct{
 	http_info_t http_info;
 	update_notifier_t notifiers[MAX_UPDATE_EVENTS];
-	sem_t * mutex_updateNotifiers;
+	sem_t * mutex_updateNotifiers; //La referencia al semáforo realizada en telebot_init
 } bot_info_t;
 
 
@@ -143,7 +143,8 @@ typedef struct{
 
 /*
 **   Parámetros:  char tok[50]: Token para el acceso al bot.
-**                http_info_t *http_info: Puntero a una estructura http_info_t que almacena información del bot relativa a la comunicación con Telegram.
+**                http_info_t *http_info: Puntero a una estructura http_info_t que almacena información del bot relativa 
+**				  a la comunicación con Telegram.
 **                
 **     Devuelve:  int: 0 si se completa con éxito, -1 en caso de error.
 **
@@ -183,7 +184,8 @@ int telebot_getMe(char *response, int size, http_info_t *http_info);
 **                
 **     Devuelve:  0 si la petición finaliza correctamente, -1 en caso de error.
 **
-**  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo la respuesta en *response.
+**  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo 
+**				  la respuesta en *response.
 */
 int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info);
 

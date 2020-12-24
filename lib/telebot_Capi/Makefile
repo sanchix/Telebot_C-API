@@ -9,8 +9,10 @@
 LIB = ../
 LIB_HTTPS = $(LIB)https_lib/
 LIB_JANSSON = $(LIB)jansson/
+LIB_CURL = $(LIB)curl/
+LIB_SSL = $(LIB)ssl/
 
-INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_HTTPS)mbedtls/include/
+INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_HTTPS)mbedtls/include/ -I$(LIB_SSL)include/ -I$(LIB_CURL)include/curl/
 
 todo: telebot_Capi.o polling.o events.o
 

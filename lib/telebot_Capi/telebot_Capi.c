@@ -243,8 +243,9 @@ int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *
 	sprintf(data,"{\"chat_id\":%s,\"question\":\"%s\",\"options\":[%s]}",chat_id,question,parsedoptions);
 
 	// Realizamos la petición con POST
+	printf("Send encuesta\n");
 	status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
-	printf("Send message: %s\n", data);
+	printf("Encuesta send: %s\n", data);
 
 	if(status == 200){
 

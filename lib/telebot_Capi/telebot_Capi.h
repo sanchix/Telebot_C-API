@@ -24,8 +24,9 @@
 #include <errno.h>
 
 /* Includes de la aplicacion */
-#include "https_lib/https.h"
+//#include "https_lib/https.h"
 #include "jansson.h"
+#include "curl.h"
 
 
 /* Definición de constantes */ 

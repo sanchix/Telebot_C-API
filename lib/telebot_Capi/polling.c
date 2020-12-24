@@ -334,7 +334,6 @@ void *poll(void *info){
 	}
 	
 	// Siempre que no haya error iteramos
-	sleep(1);
 	while(isRunning(0)){
 		// Esperamos un tiempo para no sobrecargar la red
 		// TODO: Cambiar por esperar x segundos entre iteración, no siempre x segundos en esta linea
@@ -345,7 +344,9 @@ void *poll(void *info){
 		printf("\n Request to: %s\n", fullurl);
 		
 		// Realizamos la petición HTTP
+		printf("Send poll\n");
 		status = http_get(&(bot_info->http_info.hi), fullurl, response, MAX_RESP_TAM);
+		printf("Poll sent\n");
 		// Analizamos la respuesta
 		// TODO: ¿Poner que tras x intentos fallidos se cierre el servidor o se notifique al usuario?
 		if(status != 200){

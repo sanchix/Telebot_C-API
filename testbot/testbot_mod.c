@@ -1,46 +1,29 @@
+/*
+**     Fichero:  testbot/testbot.c
+**       Group:  Grupo 8
+**		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
+**       Fecha:  07/dec/2020
+**
+** Descripcion:  Implementación de un BOT para la aplicación Telegram(R) utilizando la librería "telebot_Capi" con el objetivo de probar la funcionalidad de esta última.
+*/
+
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
-#include <stdlib.h>
 #include "curl.h"
 
 
-struct memory {
-   char *response;
-   size_t size;
- };
- 
- static size_t cb(void *data, size_t size, size_t nmemb, void *userp)
- {
-   size_t realsize = size * nmemb;
-   struct memory *mem = (struct memory *)userp;
- 
-   char *ptr = realloc(mem->response, mem->size + realsize + 1);
-   if(ptr == NULL)
-     return 0;  /* out of memory! */
- 
-   mem->response = ptr;
-   memcpy(&(mem->response[mem->size]), data, realsize);
-   mem->size += realsize;
-   mem->response[mem->size] = 0;
- 
-   return realsize;
- }
-
 
 int main(){
-
-	CURL *easyhandle;
+	
+    CURL *easyhandle;
 	CURLcode res;
 	curl_version_info_data *data;
-	struct memory response;
+    char url[] = "https://api.telegram.org/bot1384948746:AAHpqgXKIH03JRVvQ-G0yKgxmkN7df2yQEc/getUpdates?offset=-1";
 	
-	
-	printf("Hello\n");
 	
 	// SOLO AL PRINCIPIO DEL PROGRAMA
 	curl_global_init(CURL_GLOBAL_ALL);
-
-	printf("Initialized\n");
 	
 	// Es recomendable checkearlo
 	data = curl_version_info(CURLVERSION_NOW);
@@ -61,19 +44,17 @@ int main(){
 		curl_easy_setopt(easyhandle, CURLOPT_NOSIGNAL, 1L);
 		
 		// La URL se almacena en la librería como una opción.
-		curl_easy_setopt(easyhandle, CURLOPT_URL, "https://api.telegram.org/bot1384948746:AAHpqgXKIH03JRVvQ-G0yKgxmkN7df2yQEc/getUpdates?offset=-1");
+		curl_easy_setopt(easyhandle, CURLOPT_URL, url);
 		
 		// Realizamos la transacción. Devuelve error si el handle no ha podido procesar todos los datos recibidos.
 		// Se puede usar CURLOPT_ERRORBUFFER para ver los errores.
-		response.response = NULL;
-		response.size = 0;
-		printf("pre\n");
+        printf("Antes del curl\n");
 		res = curl_easy_perform(easyhandle);
-		printf("post\n");
+        printf("Despues del curl\n");
 		if(res != CURLE_OK)
 			printf("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-		
-		printf("Response: %s\n", response.response);
+        else
+            printf("\n");
 		
 		curl_easy_cleanup(easyhandle);
 		
@@ -81,7 +62,7 @@ int main(){
 	
 	// SOLO AL FINAL DEL PROGRAMA
 	curl_global_cleanup();
-
-	return 0;
-
+	
+	return 0; 
+	
 }

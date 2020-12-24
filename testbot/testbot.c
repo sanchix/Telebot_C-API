@@ -14,6 +14,8 @@
 
 int doEcho(update_t *update){
 	
+	printf("Hola\n");
+	
 	message_t *message;
 	char cid[20];
 	// Solo vamos a hacer cosas con los mensajes
@@ -72,7 +74,8 @@ int main(int argc, char* argv[]){
 		char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
 		
 		//telebot_sendPoll("166103691",pregunta,opciones, &bot_info.http_info);
-		telebot_sendPoll("a",pregunta,opciones, &bot_info.http_info);
+		//telebot_sendPoll("150848014",pregunta,opciones, &bot_info.http_info);
+		telebot_sendMessage("150848014", "Hola", &bot_info.http_info);
 		
 
 		// Configuramos el handle imprime:

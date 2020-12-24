@@ -92,13 +92,13 @@ int addUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_info
 	sem_t * mutex_updateNotifiers;
 
 	// Preparamos el semáforo (solo se va a subir y bajar cuando se hagan modificaciones, pues el resto de funciones de la librería se limitan a leer).
-	mutex_updateNotifiers = bot_info->mutex_updateNotifiers;
+	mutex_updateNotifiers = bot_info->notifiers_info.mutex_updateNotifiers;
 
 	// Si el evento es por defecto almacenamos el nuevo handle.
 	//TODO: Se podria implementar modify porque estamos haciendo una modificacion....
 	if(event.update_type == UPDATE_ANY){
 		sem_wait(mutex_updateNotifiers);
-		bot_info->notifiers[0].handle = handle;
+		bot_info->notifiers_info.notifiers[0].handle = handle;
 		sem_post(mutex_updateNotifiers);
 		found = 1;
 	}
@@ -108,11 +108,11 @@ int addUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_info
 		// se busca un hueco (caracterizado por EVENT_UNASSIGNED)
 		for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 			// y cuando se encuentre se edita.
-			if(bot_info->notifiers[i].event.update_type == UPDATE_ANY){
+			if(bot_info->notifiers_info.notifiers[i].event.update_type == UPDATE_ANY){
 				sem_wait(mutex_updateNotifiers);
-				bot_info->notifiers[i].handle = handle;
+				bot_info->notifiers_info.notifiers[i].handle = handle;
 				// TODO: Si cambiamos event a una estructura o algo hay que cambiar esta asignación a una copia de memoria o a un puntero.
-				copyEvent(&(bot_info->notifiers[i].event), event);
+				copyEvent(&(bot_info->notifiers_info.notifiers[i].event), event);
 				sem_post(mutex_updateNotifiers);
 				found = 1;
 			}
@@ -140,12 +140,12 @@ int modifyUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_i
 	sem_t * mutex_updateNotifiers;
 
 	// Preparamos el semaforo (solo se va a subir y bajar cuando se hagan modificaciones, pues el resto de funciones de la librería se limitan a leer).
-	mutex_updateNotifiers = bot_info->mutex_updateNotifiers;
+	mutex_updateNotifiers = bot_info->notifiers_info.mutex_updateNotifiers;
 
 	// Si el evento es por defecto almacenamos el nuevo handle.
 	if(event.update_type == UPDATE_ANY){
 		sem_wait(mutex_updateNotifiers);
-		bot_info->notifiers[0].handle = handle;
+		bot_info->notifiers_info.notifiers[0].handle = handle;
 		sem_post(mutex_updateNotifiers);
 		found = 1;
 	}
@@ -157,9 +157,9 @@ int modifyUpdateNotifier(updateHandle_t handle, event_t event, bot_info_t *bot_i
 			// y cuando se encuentre se edita.
 			
 			// TODO: Hay que pensar si se van a poder tener varios handle para un mismo evento y como se va a hacer ¿se tendrán varios objetos update_event_t con el mismo event_t? ¿En los objetos update_event_t puede haber una lista de hanles para cada evento?
-			if(compareEvents(event, bot_info->notifiers[i].event) == 0){
+			if(compareEvents(event, bot_info->notifiers_info.notifiers[i].event) == 0){
 				sem_wait(mutex_updateNotifiers);
-				bot_info->notifiers[i].handle = handle;
+				bot_info->notifiers_info.notifiers[i].handle = handle;
 				sem_post(mutex_updateNotifiers);
 				found = 1;
 			}
@@ -185,12 +185,12 @@ int removeUpdateNotifier(event_t event, bot_info_t *bot_info){
 	sem_t * mutex_updateNotifiers;
 
 	// Preparamos el semáforo (solo se va a subir y bajar cuando se hagan modificaciones, pues el resto de funciones de la librería se limitan a leer y es más eficiente hacerlo así pues no bloqueamos a los lectores durante la búsqueda).
-	mutex_updateNotifiers = bot_info->mutex_updateNotifiers;
+	mutex_updateNotifiers = bot_info->notifiers_info.mutex_updateNotifiers;
 	
 	// Si el evento a borrar es el por defecto reestablecemos su handle inicial.
 	if(event.update_type == UPDATE_ANY){
 		sem_wait(mutex_updateNotifiers);
-		bot_info->notifiers[0].handle = holdUpdate;
+		bot_info->notifiers_info.notifiers[0].handle = holdUpdate;
 		sem_post(mutex_updateNotifiers);
 		found = 1;
 	}
@@ -202,10 +202,10 @@ int removeUpdateNotifier(event_t event, bot_info_t *bot_info){
 			// y cuando se encuentre se borra.
 			// TODO: Cambiar este "found" a algo que diga si son iguales (¿por una comparación hash?, ¿elemento a elemento?)
 			// DONE: Se compara el evento que se quiere eliminar con la lista.
-			if(compareEvents(event, bot_info->notifiers[i].event) == 0){
+			if(compareEvents(event, bot_info->notifiers_info.notifiers[i].event) == 0){
 				sem_wait(mutex_updateNotifiers);
-				bot_info->notifiers[i].handle = holdUpdate;
-				bot_info->notifiers[i].event.update_type = UPDATE_NONE;
+				bot_info->notifiers_info.notifiers[i].handle = holdUpdate;
+				bot_info->notifiers_info.notifiers[i].event.update_type = UPDATE_NONE;
 				sem_post(mutex_updateNotifiers);
 				found = 1;
 			}

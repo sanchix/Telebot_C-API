@@ -23,7 +23,7 @@ todo:
 	make testbot
 
 testbot: testbot.o $(LIB_TELEBOT_FILES) $(LIB_JSON_FILES)
-	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES) $(LIB_JANSSON_FILES) $(LIB_CURL_FILES) -lpthread
+	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES)  $(LIB_JANSSON_FILES) $(LIB_CURL_FILES) -lpthread
 	
 testbot.o: testbot.c
 	gcc -W -Wall $(INCLUDES) -c testbot.c

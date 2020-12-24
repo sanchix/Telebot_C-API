@@ -34,7 +34,6 @@ int main(){
 	curl_version_info_data *data;
 	struct memory response;
 	
-	
 	printf("Hello\n");
 	
 	// SOLO AL PRINCIPIO DEL PROGRAMA
@@ -62,6 +61,12 @@ int main(){
 		
 		// La URL se almacena en la librería como una opción.
 		curl_easy_setopt(easyhandle, CURLOPT_URL, "https://api.telegram.org/bot1384948746:AAHpqgXKIH03JRVvQ-G0yKgxmkN7df2yQEc/getUpdates?offset=-1");
+		
+		// El manejador se ajusta también con una opción
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEFUNCTION, cb);
+		
+		// Pasamos información al manejador
+		curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, (void *)&response);
 		
 		// Realizamos la transacción. Devuelve error si el handle no ha podido procesar todos los datos recibidos.
 		// Se puede usar CURLOPT_ERRORBUFFER para ver los errores.

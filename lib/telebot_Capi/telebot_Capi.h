@@ -24,7 +24,7 @@
 #include <errno.h>
 
 /* Includes de la aplicacion */
-#include "https_lib/https.h"
+//#include "https_lib/https.h"
 #include "jansson.h"
 #include "curl.h"
 
@@ -121,7 +121,7 @@ typedef struct{
 **	Descripción: Almacena los datos relativos a la comunicación HTTPS con los servidores de telegram.
  */
 typedef struct{
-	HTTP_INFO hi;
+	CURL *curlhandle;
 	char url[MAX_URL_TAM];
 } http_info_t;
 
@@ -153,20 +153,34 @@ typedef struct{
 } update_notifier_t;
 
 
-
+typedef struct{
+	update_notifier_t notifiers[MAX_UPDATE_EVENTS];
+	sem_t * mutex_updateNotifiers; //La referencia al semáforo realizada en telebot_init
+} notifiers_info_t;
 
 typedef struct{
 	http_info_t http_info;
-	update_notifier_t notifiers[MAX_UPDATE_EVENTS];
-	sem_t * mutex_updateNotifiers; //La referencia al semáforo realizada en telebot_init
+	notifiers_info_t notifiers_info;
 } bot_info_t;
 
+typedef struct{
+	http_info_t http_info;
+	notifiers_info_t *notifiers_info;
+} poll_info_t;
+	
+// TODO: Comentar
+typedef struct{
+	char *response;
+	size_t size;
+} http_response_t;
 
 // TODO: Comentar
 typedef struct{
-	char response[MAX_RESP_TAM];
-	bot_info_t *bot_info;
+	http_response_t http_response;
+	poll_info_t *poll_info;
 } response_info_t;
+
+
 
 
 
@@ -195,7 +209,7 @@ int telebot_init(char *token, bot_info_t *bot_info);
 **
 **  Descripción:  Cierra semáforos.
 */
-void telebot_close(void);
+void telebot_close(int a);
 
 
 /*
@@ -208,7 +222,7 @@ void telebot_close(void);
 **  Descripción:  Realiza una petición a la API de telegram con el método getMe, devolviendo la respuesta en *response.
 */
 //TODO: Comentar
-int telebot_getMe(char *response, int size, http_info_t *http_info);
+int telebot_getMe(http_response_t *http_response, http_info_t *http_info);
 
 
 /*
@@ -251,11 +265,11 @@ int unpack_json_message(message_t *message, json_t *message_obj);
 **  Descripción:  <Descripción>
 */
 // TODO: Comentar
-void *parser(void *resp_info);
+//void *parser(void *resp_info);
 
 
 // TODO: Comentar
-void *poll(void *info);
+//void *poll(void *info);
 	
 
 /*
@@ -265,7 +279,7 @@ void *poll(void *info);
 **
 **  Descripción:  Inicializa la función de polling.
 */
-int polling_init(bot_info_t *bot_info);
+int tbc_polling_init(bot_info_t *bot_info);
 
 
 

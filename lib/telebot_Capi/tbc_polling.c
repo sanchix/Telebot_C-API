@@ -169,7 +169,7 @@ int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
 **  Descripción:  Parsea la respuesta recibida del bot
 */
 // TODO: Comentar
-void *parser(void *r_info){
+void *tbc_parser(void *r_info){
 	
 	//char response[MAX_RESP_TAM];
 	key_t clave;
@@ -199,15 +199,14 @@ void *parser(void *r_info){
 	else{
 		// Preparamos resp_info para evitar usar el cast en el código
 		resp_info = (response_info_t *)r_info;
-		
 		// Preparamos los semáforos
-		mutex_updateNotifiers = resp_info->bot_info->mutex_updateNotifiers;
+		mutex_updateNotifiers = resp_info->poll_info->notifiers_info->mutex_updateNotifiers;
 		
 		// TODO: Quitar (es para depuración).
 		printf("\nUpdate:\n");
 		
 		// Realizamos el parse con la librería jansson
-		json_root = json_loads(resp_info->response, 0, &error);
+		json_root = json_loads(resp_info->http_response.response, 0, &error);
 		
 		// Obtenemos el valor de ok
 		// TODO: Hacer algo con esto, que notifique a alguien si no es ok o haga algo de provecho más que imprimirlo.
@@ -223,9 +222,10 @@ void *parser(void *r_info){
 		else{
 			// TODO: Quitar, es de debug
 			printf("\tok\n");
+			printf("\tContent: %s\n", resp_info->http_response.response);
 		
 			// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
-			update.http_info = &(resp_info->bot_info->http_info);
+			update.http_info = &(resp_info->poll_info->http_info);
 		
 			// Analizamos el resultado (lista de objetos update)
 			json_result = json_object_get(json_root, "result");
@@ -289,7 +289,7 @@ void *parser(void *r_info){
 				
 				// Se busca handle filtrando primero por tipo de update
 				
-				if ((handle = findUpdateHandler(update, resp_info->bot_info->notifiers)) != NULL){
+				if ((handle = findUpdateHandler(update, resp_info->poll_info->notifiers_info->notifiers)) != NULL){
 					printf("> FOUND HANDLER\n");
 					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
 					handle(&update);
@@ -298,7 +298,7 @@ void *parser(void *r_info){
 				// If no handle was found, use default handle
 				else{
 					printf("> USING DEFAULT HANDLER\n");
-					handle = resp_info->bot_info->notifiers[0].handle;
+					handle = resp_info->poll_info->notifiers_info->notifiers[0].handle;
 					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
 					if(handle != NULL){
 						// TODO: Cambiar NULL por puntero a la estructura message de respuesta
@@ -338,14 +338,13 @@ void *parser(void *r_info){
 
 
 // TODO: Comentar
-void *poll(void *info){
+void *tbc_poll(void *info){
 	
 	// TODO: Ordenar
-	int status;
+	CURLcode res;
 	char url[MAX_URL_TAM];
 	char fullurl[MAX_URL_TAM];
 	char *offset = "0";
-	char response[MAX_RESP_TAM];
 	useconds_t interval = 1000;
 	pthread_attr_t attr;
 	pthread_t thread;
@@ -353,11 +352,17 @@ void *poll(void *info){
 	int msgqueue_id;
 	struct msgbuf msq_buffer;
 	response_info_t *resp_info;
-	bot_info_t *bot_info;
+	poll_info_t poll_info;
+	
+	// Prepare poll_info object
+	strcpy(poll_info.http_info.url, ((bot_info_t *)info)->http_info.url);
+	poll_info.notifiers_info = &((bot_info_t *)info)->notifiers_info;
+	if((poll_info.http_info.curlhandle = curl_easy_duphandle(((bot_info_t *)info)->http_info.curlhandle)) == NULL){
+		printf("polling(): Failed to duplicate curl handle\n");
+	}
 	
 	// Prepare URL to get updates
-	bot_info = (bot_info_t *)info;
-	strcpy(url, bot_info->http_info.url); 
+	strcpy(url, poll_info.http_info.url); 
 	strcat(url, "/getUpdates?offset=");
 	// Prepare first url to get updates (offset=0)
 	strcpy(fullurl, url);
@@ -391,28 +396,33 @@ void *poll(void *info){
 		// TODO: Quitar esta impresión (es para debugging)
 		printf("\n Request to: %s\n", fullurl);
 		
+		// Se reserva memoria para la respuesta:
+		// TODO: Hacer que no se reserve siempre para el máximo, sino que sea variable (hay que reservar tamaño para la estructura y el string todo en el mismo malloc (para que sea más rápido) y luego organizar la memoria a nuestra bola (hay que hacer que el punero a char de la estructura apunte a la zona del malloc que hemos dejado para el string.
+		if((resp_info = (response_info_t *)malloc(sizeof(response_info_t))) == NULL){
+			printf("Poll: malloc failed\n");
+		}
+		//strcpy(resp_info->response, response);
+		resp_info->poll_info = &poll_info;
+		
 		// Realizamos la petición HTTP
-		printf("Send poll\n");
-		status = http_get(&(bot_info->http_info.hi), fullurl, response, MAX_RESP_TAM);
-		printf("Poll sent\n");
+		//res = http_get(&(bot_info->http_info.hi), fullurl, response, MAX_RESP_TAM);
+		curl_easy_setopt(poll_info.http_info.curlhandle, CURLOPT_URL, fullurl);
+		curl_easy_setopt(poll_info.http_info.curlhandle, CURLOPT_WRITEDATA, (void *)&resp_info->http_response);
+		resp_info->http_response.response = NULL;
+		resp_info->http_response.size = 0;
+		//res = curl_easy_perform(poll_info.http_info.curlhandle);
+		res = curl_easy_perform(poll_info.http_info.curlhandle);
 		// Analizamos la respuesta
 		// TODO: ¿Poner que tras x intentos fallidos se cierre el servidor o se notifique al usuario?
-		if(status != 200){
-			printf("Failed to update data: %i, %s\n", status, response);
+		if(res != CURLE_OK){
+			printf("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 		}
-		
 		// TODO: Hay que reservar memoria para resp_info
 		else{
 			
 			// Creamos el hilo que se encargará de parsear con los parámetros correspondientes
-			// TODO: Hacer que no se reserve siempre para el máximo, sino que sea variable (hay que reservar tamaño para la estructura y el string todo en el mismo malloc (para que sea más rápido) y luego organizar la memoria a nuestra bola (hay que hacer que el punero a char de la estructura apunte a la zona del malloc que hemos dejado para el string.
-			if((resp_info = (response_info_t *)malloc(sizeof(response_info_t))) == NULL){
-				printf("Poll: malloc failed\n");
-			}
-			strcpy(resp_info->response, response);
-			resp_info->bot_info = bot_info;
 			
-			if(pthread_create(&thread, &attr, parser, resp_info) != 0){
+			if(pthread_create(&thread, &attr, tbc_parser, resp_info) != 0){
 				printf("Failed to create parse thread\n");
 				isRunning(1);
 			}
@@ -436,7 +446,8 @@ void *poll(void *info){
 	}
 	
 	//TODO: Añadir que mande una señal al proceso principal para que se entere del fallo.
-	http_close(&(bot_info->http_info.hi));
+	//http_close(&(bot_info->http_info.hi));
+	curl_easy_cleanup(poll_info.http_info.curlhandle);
 	printf("Exiting pooling thread\n");
 	pthread_exit(NULL);
 	
@@ -450,7 +461,7 @@ void *poll(void *info){
 **
 **  Descripción:  Inicializa la función de polling.
 */
-int polling_init(bot_info_t *bot_info){
+int tbc_polling_init(bot_info_t *bot_info){
 	
 	int ret = 0;	// Valor de retorno
 	pthread_attr_t attr;
@@ -459,7 +470,7 @@ int polling_init(bot_info_t *bot_info){
 	// Se crea el hilo que se encargara del pooling
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	if(pthread_create(&thread, &attr, poll, bot_info) != 0){
+	if(pthread_create(&thread, &attr, tbc_poll, bot_info) != 0){
 		ret = -1;
 	}
 	pthread_attr_destroy(&attr);

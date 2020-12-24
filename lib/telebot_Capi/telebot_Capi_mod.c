@@ -20,6 +20,7 @@
 
 // TODO: Comentar
 static size_t curl_callback(void *data, size_t size, size_t nmemb, void *userp){
+	printf("Algo\n");
 	size_t realsize = size * nmemb;
 	http_response_t *response = (http_response_t *)userp;
  
@@ -85,7 +86,6 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	struct sigaction term;
 	sem_t * mutex_updateNotifiers;
 	curl_version_info_data *data;
-	struct curl_slist *headers = NULL;
 	int ret = -1;
 	
 	
@@ -123,11 +123,6 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	// El manejador se ajusta también con una opción
 	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_WRITEFUNCTION, curl_callback);
 	
-	// Se configuran las cabeceras para mandar json:
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-	// TODO: Cambiar el tamaño máximo (puede ser distinto en cada función)
-	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_HTTPHEADER, headers);
-	
 	// Se comprueba que tenemos SSL y se configuran opciones.
 	data = curl_version_info(CURLVERSION_NOW);
 	if(data->ssl_version != NULL){
@@ -146,12 +141,10 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	
 	
 	// Inicializamos la funcion de polling.
-	if(tbc_polling_init(bot_info) != 0){
-		printf("telebot_Capi: Error initializing polling thread\n");
-	}
-	else{
-		ret = 0;
-	}
+	//if(polling_init(bot_info) != 0){
+	//	printf("telebot_Capi: Error initializing polling thread\n");
+	//}
+    ret = 0;
 	
 	return ret;
 	
@@ -243,7 +236,7 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	
 	// Generamos la cadena JSON
 	// TODO: ¿Hacer una función para que haga esto?
-	sprintf(data,"{\"chat_id\":\"%s\",\"text\":\"%s\"}",chat_id,text);
+	sprintf(data,"{\"chat_id\":%s,\"text\":\"%s\"}",chat_id,text);
 
 	// Realizamos la petición con POST
 	//status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
@@ -253,7 +246,7 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	http_response.response = NULL;
 	http_response.size = 0;
 	res = curl_easy_perform(http_info->curlhandle);
-	printf("Send message: %s\n", http_response.response);
+	printf("Send message: %s\n", data);
 	if(res == CURLE_OK){
 
 		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
@@ -321,7 +314,7 @@ int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *
 	http_response.size = 0;
 	printf("Aqui\n");
 	res = curl_easy_perform(http_info->curlhandle);
-	printf("Encuesta send: %s\n", http_response.response);
+	printf("Encuesta send\n");
 
 	if(res == CURLE_OK){
 

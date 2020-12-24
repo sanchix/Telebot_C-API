@@ -24,7 +24,7 @@
 #include <errno.h>
 
 /* Includes de la aplicacion */
-//#include "https_lib/https.h"
+#include "https_lib/https.h"
 #include "jansson.h"
 #include "curl.h"
 
@@ -103,7 +103,7 @@ typedef struct{
 typedef struct{
 	char text [MAX_POLL_OPTION_TAM] ;
 	int opcion_votos;
-}option_t
+}option_t;
 
 typedef struct{
 	unsigned long long int poll_id;

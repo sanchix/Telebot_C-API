@@ -7,6 +7,9 @@ testbot/*
 # Unignore all dirs
 !testbot/*/
 
+# Unignore makefiles
+!testbot/Makefile
+
 # Ignore all tests folder
 **/tests
 

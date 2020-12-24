@@ -133,7 +133,8 @@ int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
 	
 	// DONE: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo vaya bien
 	int ret = 0;
-	json_t opciones;
+	json_t *json_opciones;
+	json_t *json_opcion;
 	
 	
 	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo) PD: NO TE RAYE
@@ -144,12 +145,12 @@ int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
 
 	//TODO: Poner ifs de correcta recogida y reflejar en ret.
 	poll->poll_id = json_integer_value(json_object_get(message_obj, "id"));
-	poll->question = json_string_value(json_object_get(message_obj, "question"));
-	opciones = json_object_get (message_obj,"options");
-	for(size_t i = 0; i < json_array_size(opciones); i++)
+	strcpy(poll->question,json_string_value(json_object_get(message_obj, "question")));
+	json_opciones = json_object_get (message_obj,"options");
+	for(size_t i = 0; i < json_array_size(json_opciones); i++)
 	  {
-	    json_t json_opcion = json_array_get(opciones, i);
-	    poll->options[i].text = json_string_value(json_object_get(json_opcion,"text"));
+	    json_opcion = json_array_get(json_opciones, i);
+	    strcpy(poll->options[i].text, json_string_value(json_object_get(json_opcion,"text")));
 	    poll->options[i].opcion_votos = json_integer_value(json_object_get(json_opcion,"voter_count"));
 	  }
 	

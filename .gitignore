@@ -1,3 +1,12 @@
+# Ignore all
+testbot/*
+
+# Unignore all with extensions
+!testbot/*.*
+
+# Unignore all dirs
+!testbot/*/
+
 # Ignore all tests folder
 **/tests
 
@@ -6,6 +15,3 @@
 
 # Ignore compiled objects
 *.o
-
-# json lib
-/lib/json_lib

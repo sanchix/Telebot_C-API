@@ -1,0 +1,2 @@
+gcc -W -Wall -c test.c -I/media/sf_Telebot_C-API/lib/curl/include/curl
+gcc -W -Wall test.o -L/media/sf_Telebot_C-API/lib/ssl/lib -lcurl

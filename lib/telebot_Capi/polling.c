@@ -117,6 +117,47 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 	
 }
 
+/************************************************************/
+/* Definiciones de funciones locales. */
+
+/*
+**   Parámetros:  poll_update_t *poll: Estructura de tipo poll para guardar los parametros mas importantes del json recibido.
+**                json_t * message_obj: Objeto json completo a procesar.
+**                
+**     Devuelve:  int: 0 si éxito(el objeto se ha procesado correctamente), -1 en caso de error.
+**
+**  Descripción:  Función que a partir de un objeto json nos lo formatea en un objeto message_t con nuestros valores a recoger.
+*/
+// DONE: pensar si es mejor reservar memoria y devolver el mensaje del tirón o que reserve memoria el llamante (esta última opción es como está ahora)
+int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
+	
+	// DONE: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo vaya bien
+	int ret = 0;
+	json_t opciones;
+	
+	
+	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo) PD: NO TE RAYE
+	
+	// TODO: Poner opcionales las cosas opcionales (rellenar con null). Hay que hacer que el resto de objetos que usen message_t se esperen que haya cosas NULL.
+	
+	// Desempaquetamos id
+
+	//TODO: Poner ifs de correcta recogida y reflejar en ret.
+	poll->poll_id = json_integer_value(json_object_get(message_obj, "id"));
+	poll->question = json_string_value(json_object_get(message_obj, "question"));
+	opciones = json_object_get (message_obj,"options");
+	for(size_t i = 0; i < json_array_size(opciones); i++)
+	  {
+	    json_t json_opcion = json_array_get(opciones, i);
+	    poll->options[i].text = json_string_value(json_object_get(json_opcion,"text"));
+	    poll->options[i].opcion_votos = json_integer_value(json_object_get(json_opcion,"voter_count"));
+	  }
+	
+	
+	  
+	return ret;
+	
+}
 
 /*
 **   Parámetros:  Por definición a las funciones pasadas a hilos => void * r_info Informacion de la respuesta dada por el bot 
@@ -213,6 +254,8 @@ void *parser(void *r_info){
 					if((update.content = (message_t *)malloc(sizeof(message_t))) == NULL){
 						printf("Poll: malloc failed\n");
 					}
+
+					//TODO: Si no se asigna correctamente la memoria rip
 					unpack_json_message(update.content, json_aux);
 					update.type = UPDATE_MESSAGE;
 					
@@ -220,8 +263,12 @@ void *parser(void *r_info){
 				
 				// Si lo que se ha recibido es una actualización de encuesta
 				else if((json_aux = json_object_get(json_update, "poll")) != NULL){
-					// Obtenemos el resultado de la encuesta
-					// TODO: Hacer
+			       		// Obtenemos el resultado de la encuesta
+				  	// TODO: Hacer
+
+				 	if((update.content = (poll_update_t *)malloc(sizeof(poll_update_t)))==NULL){
+						printf("Poll: poll update malloc failed\n");
+					}
 				  
 					update.type = UPDATE_POLL;
 					printf("Received poll update\n");

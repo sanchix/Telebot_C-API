@@ -45,6 +45,7 @@
 #define MAX_COMMAND_TAM 30
 #define MAX_POLL_QUESTION_TAM 300
 #define MAX_POLL_OPTION_TAM 100
+#define MAX_POLL_OPTIONS 10
 
 
 /* Tipos definidos por el usuario */
@@ -98,6 +99,19 @@ typedef struct{
 	char *command;
 	char **args;
 } message_t;
+
+typedef struct{
+	char text [MAX_POLL_OPTION_TAM] ;
+	int opcion_votos;
+}option_t
+
+typedef struct{
+	unsigned long long int poll_id;
+	char question [MAX_POLL_QUESTION_TAM];
+	option_t options [MAX_POLL_OPTIONS];
+	int total_votos;       
+} poll_update_t;
+
 
 
 /*

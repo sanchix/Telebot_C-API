@@ -18,8 +18,19 @@
 /************************************************************/
 /* Definición de funciones locales. */
 
-// TODO: Comentar
-static size_t curl_callback(void *data, size_t size, size_t nmemb, void *userp){
+// Función LOCAL (no declarada en telebot_Capi)
+/*
+**   Parámetros:  void *data: Chunk de datos recibidos para una cierta petición.
+**                size_t size: Tamaño en unidades del chunk.
+**				  size_t nmemb: Tamaño de unidad.
+**				  void *userp: Puntero a la estructura donde almacenar la información.
+**                
+**     Devuelve:  static size_t: 
+**
+**  Descripción:  Almacena la respuesta de la petición en la estructura http_response_t apuntada por userp.
+*/
+static size_t tbc_http_callback(void *data, size_t size, size_t nmemb, void *userp){
+	
 	size_t realsize = size * nmemb;
 	http_response_t *response = (http_response_t *)userp;
  
@@ -33,39 +44,67 @@ static size_t curl_callback(void *data, size_t size, size_t nmemb, void *userp){
 	response->response[response->size] = 0;
  
 	return realsize;
+	
 }
 
-// TODO: Comentar
-int isRunning(int stop){
-	static int running = 1;
-	if(stop){
-		running--;
+
+/*
+**   Parámetros:  int stop: Indica con un 1 que se debe parar la aplicación.
+**                
+**     Devuelve:  int: 0 si la aplicación debe parar, 1 e.o.c.
+**
+**  Descripción:  Indica al llamante si la aplicación debe parar o seguir con su ejecución. El parámetro permite modificar el estado.
+*/
+int isRunning(int stop, bot_info_t **bi){
+	static int running = 0;
+	static bot_info_t *bot_info = NULL;
+	if(stop == 1){
+		running = 1;
+	}else if(stop == 2){
+		running = 0;
 	}
+	// Si no esta establecido bot_info y *bi tiene algo se establece.
+	if(bot_info == NULL && *bi != NULL){
+		bot_info = *bi;
+	}
+	// SI bot_info está establecido y **bi no es null se devuelve
+	else if(bot_info != NULL && bi != NULL){
+		*bi = bot_info;
+	}
+	
 	return running;
 }
 
+
 /*
-**   Parámetros:  
-**				  
-**                
-**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
+**   Parámetros:  int sig: Se ignora.
 **
-**  Descripción:  Cierra semáforos.
+**  Descripción:  Manda la terminación de los hilos internos a la librería y recursos reservados en la inicialización de la misma (semáforo mutex_updateNotifiers, curl, ...). El resto de hilos deben librerar sus recursos antes de cerrase.
 */
-// TODO: hacer que cierre tambien la cola...
-void telebot_close(int a){
+void telebot_close(int sig){
 	
 	pid_t pid;
+	bot_info_t *bot_info;
 	
 	printf("Cerrando telebot_Capi\n");
+	
+	// Indicamos a todos los hilos que se paren
+	isRunning(2, &bot_info);
+	sleep(4);
+	
+	// 		Liberar recursos:
+	// Semáforo mutex_updateNotifiers
 	if ( sem_unlink("mutex_updateNotifiers")!=0 ){
 		printf("Ha habido un problema al cerrar el semaforo mutex_updateNotifiers");
 	}
-	isRunning(1);
+	// Cerrar librería curl (recursos del hilo principal)
+	curl_easy_cleanup(bot_info->http_info.curlhandle);
+	curl_global_cleanup();
+	sleep(1);
+	
 	printf("Bot cerrado correctamente\n");
 	
-	sleep(5);
-	curl_global_cleanup();
+	// TODO: Cambiar para que se ejecute el handle por defecto de SIGINT
 	pid = getpid();
 	kill(pid, SIGKILL);
 	
@@ -86,71 +125,75 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	sem_t * mutex_updateNotifiers;
 	curl_version_info_data *data;
 	struct curl_slist *headers = NULL;
-	int ret = -1;
+	// TODO: poner más if's de comprobación si aplica.
+	int ret = 0;
 	
 	
 	printf("Initializing telebot_Capi\n");
 	
+	/* --- Inicializar funciones generales --- */
 	// Se arma la señal para la terminación
 	term.sa_handler= telebot_close;
 	term.sa_flags = 0;
 	sigemptyset(&term.sa_mask);
 	sigaction(SIGINT, &term, NULL);
 	
-	//Inicializamos los semáforos
+	// Inicializar la librería curl
+	curl_global_init(CURL_GLOBAL_ALL);
+	
+	isRunning(1, &bot_info);
+	
+	
+	/* --- Inicializar notifiers --- */
+	// Crear semáforo mutex_updateNotifiers.
+	// TODO: Pensar si hay una forma de que al abrir el semáforo veamos si ya existe, y si es así borrarlo antes de usarlo (para que no haya bloqueos donde no debe).
     if((mutex_updateNotifiers = sem_open(
 	"mutex_updateNotifiers", O_CREAT,0600,1)) == SEM_FAILED){
 		printf("Telebot_init: Fallo al abrir el semáforo\n");
+		ret = -1;
 	}
 	bot_info->notifiers_info.mutex_updateNotifiers = mutex_updateNotifiers;
 
-	// Inicializamos la librería curl
-	curl_global_init(CURL_GLOBAL_ALL);
-	
-	// Se inicializa el handle para este hilo (principal - envíos)
-	bot_info->http_info.curlhandle = curl_easy_init();
-	if(bot_info->http_info.curlhandle == NULL){
+	// Inicializar los handlers
+	initUpdateNotifiers(bot_info->notifiers_info.notifiers);
+
+
+	/* --- Inicializar http_info --- */	
+	// Inicializar y configurar handle para este hilo (principal - envíos)
+	if((bot_info->http_info.curlhandle = curl_easy_init()) == NULL){
 		printf("telebot_Capi: Error initializing curl_easy\n");
+		ret = -1;
 	}
-	// Se configura:
 	// Estas opciones son recomendables
 	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_SSL_VERIFYPEER, 0L);
 	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_SSL_VERIFYHOST, 0L);
-	
 	// Opcion importante para multithread
 	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_NOSIGNAL, 1L);
-	
-	// El manejador se ajusta también con una opción
-	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_WRITEFUNCTION, curl_callback);
-	
-	// Se configuran las cabeceras para mandar json:
+	// Configurar manejador a tbc_http_callback
+	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_WRITEFUNCTION, tbc_http_callback);
+	// Configurar las cabeceras para enviar json
 	headers = curl_slist_append(headers, "Content-Type: application/json");
-	// TODO: Cambiar el tamaño máximo (puede ser distinto en cada función)
 	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_HTTPHEADER, headers);
-	
-	// Se comprueba que tenemos SSL y se configuran opciones.
+	// Se comprueba el SSL
 	data = curl_version_info(CURLVERSION_NOW);
 	if(data->ssl_version != NULL){
 		printf("Utilizando SSL version: %s\n", data->ssl_version);
 	}else{
 		printf("Telebot_init: Error, no se diposne de SSL\n");
+		ret = -1;
 	}
 	
-	// Se forma la URL de acceso a la API para el BOT y se almacena en http_info.
+	// Formar URL de acceso a la API para el BOT (en http_info)
 	// TODO: ¿comprobar si no desborda? ¿existe un parámetro en strcpy y strcat para verlo?
 	strcpy(bot_info->http_info.url,API_URL);
 	strcat(bot_info->http_info.url,token);
 	
-	// Inicializamos los handlers (para el "por defecto" -> dejar en la cola, los demás vacíos)
-	initUpdateNotifiers(bot_info->notifiers_info.notifiers);
 	
-	
-	// Inicializamos la funcion de polling.
+	/* --- Inicializar hilos internos --- */
+	// Inicializar la funcion de polling.
 	if(tbc_polling_init(bot_info) != 0){
 		printf("telebot_Capi: Error initializing polling thread\n");
-	}
-	else{
-		ret = 0;
+		ret = -1;
 	}
 	
 	return ret;
@@ -253,7 +296,7 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	http_response.response = NULL;
 	http_response.size = 0;
 	res = curl_easy_perform(http_info->curlhandle);
-	printf("Send message: %s\n", http_response.response);
+	//printf("Send message: %s\n", http_response.response);
 	if(res == CURLE_OK){
 
 		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 

@@ -4,7 +4,7 @@
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
 **       Fecha:  07/dec/2020
 **
-** Descripcion:  Parte de la libreria telebot_Capi encargada de obtener actualizaciones mediante el método de "long pooling".
+** Descripcion:  Parte de la libreria telebot_Capi encargada de obtener actualizaciones mediante el método de "long polling".
 */
 
 /* Includes de la aplicacion */
@@ -15,21 +15,23 @@
 /************************************************************/
 /* Definiciones de funciones locales. */
 
+// Función LOCAL (no declarada en telebot_Capi)
 /*
-**   Parámetros:  message_t * message: Estructura de tipo mensaje para guardar los parametros mas importantes del json recibido.
-**                json_t * message_obj: Objeto json completo a procesar.
+**   Parámetros:  message_t * message: Devuelve el mensaje recibido desempaquetado.
+**                json_t * message_obj: Objeto json (del mensaje) completo a procesar.
 **                
-**     Devuelve:  int: 0 si éxito(el objeto se ha procesado correctamente), -1 en caso de error.
+**     Devuelve:  int: 0 si éxito, -1 en caso de error.
 **
-**  Descripción:  Función que a partir de un objeto json nos lo formatea en un objeto message_t con nuestros valores a recoger.
+**  Descripción:  Extrae del objeto mensaje (json) ciertos campos y los guarda en la estructura apuntada por 'message'.
 */
-// DONE: pensar si es mejor reservar memoria y devolver el mensaje del tirón o que reserve memoria el llamante (esta última opción es como está ahora)
 int unpack_json_message(message_t *message, json_t *message_obj){
 	
-	// DONE: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo vaya bien
 	int ret = 0;
 	json_t *aux;
 	json_t *aux2;
+	char *st_aux;
+	char *st_aux2;
+	int tam;
 	
 	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo) PD: NO TE RAYE
 	
@@ -39,7 +41,7 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 	message->message_id = json_integer_value(json_object_get(message_obj, "message_id"));
 	
 	// Desempaquetamos from (si hay, pues es opcional)
-	if ((aux = json_object_get(message_obj, "from"))!=NULL){
+	if ((aux = json_object_get(message_obj, "from")) != NULL){
 		
 		message->from.id = json_integer_value(json_object_get(aux, "id"));
 		message->from.is_bot = json_boolean_value(json_object_get(aux, "is_bot"));
@@ -89,16 +91,31 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 	}
 	
 	// Desempaquetamos text (es opcional)
-	if((aux = json_object_get(message_obj, "text"))!=NULL){ //Comprobamos si no hay error en la recogida de text.
-		// TODO: Reservar memo para text
-		if((message->text = (char *)malloc(MAX_RESP_TAM)) == NULL){
-				printf("Parse: malloc failed\n");
+	if((aux = json_object_get(message_obj, "text")) != NULL){
+		
+		st_aux = json_string_value(aux);
+		if((message->text = (char *)malloc(strlen(st_aux))) == NULL){
+				printf("> Parse: text malloc failed\n");
 		}
 		strcpy(message->text, json_string_value(aux));
 		
+		// Si lo recibido es un comando lo almacenamos en command.
 		if(message->text[0] == '/'){
-			sscanf(message->text, "/%s ", message->command);
-			// TODO: Analizar los argumentos (scanf(tal, " %s", ...)
+			printf("Tiene comando\n");
+			st_aux2 = strchr(st_aux, ' ');
+			tam = strlen(st_aux) - 1;
+			if(st_aux2 != NULL){
+				tam = tam - ((&st_aux[tam] - st_aux2) + 1);
+			}
+			if(tam != 0){
+				if((message->command = (char *)malloc(tam)) == NULL){
+					printf("> Parse: command malloc failed\n");
+				}
+				sscanf(message->text, "/%s ", message->command);
+			}
+			else{
+				message->command = NULL;
+			}
 		}
 		else{
 			// TODO: Inicializar todo a NULL y cambiar luego.
@@ -107,18 +124,14 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 		
 	}
 	else{
-		// TODO: Reservar memo
 		message->text = NULL;
 		message->command = NULL;
-		message->args = NULL;
 	}
 	  
 	return ret;
 	
 }
 
-/************************************************************/
-/* Definiciones de funciones locales. */
 
 /*
 **   Parámetros:  poll_update_t *poll: Estructura de tipo poll para guardar los parametros mas importantes del json recibido.
@@ -161,17 +174,12 @@ int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
 }
 
 /*
-**   Parámetros:  Por definición a las funciones pasadas a hilos => void * r_info Informacion de la respuesta dada por el bot 
-**               
-**                ...
-**     Devuelve:  void* Por definición a las funciones pasadas a hilos
+**   Parámetros:  void *r_info: Puntero a estructura response_info_t con información de la respuesta http.
 **
-**  Descripción:  Parsea la respuesta recibida del bot
+**  Descripción:  Analiza la respuesta recibida por http.
 */
-// TODO: Comentar
-void *tbc_parser(void *r_info){
+void *tbc_parser(void *info){
 	
-	//char response[MAX_RESP_TAM];
 	key_t clave;
 	int msgqueue_id;
 	// TODO: Dimensionar update_id
@@ -197,15 +205,15 @@ void *tbc_parser(void *r_info){
 	}
 	
 	else{
-		// Preparamos resp_info para evitar usar el cast en el código
-		resp_info = (response_info_t *)r_info;
-		// Preparamos los semáforos
+		// Peparar resp_info (evita usar el cast, comididad)
+		resp_info = (response_info_t *)info;
+		// Preparar los semáforos
 		mutex_updateNotifiers = resp_info->poll_info->notifiers_info->mutex_updateNotifiers;
 		
 		// TODO: Quitar (es para depuración).
 		printf("\nUpdate:\n");
 		
-		// Realizamos el parse con la librería jansson
+		// Realizar el parse con la librería jansson
 		json_root = json_loads(resp_info->http_response.response, 0, &error);
 		
 		// Obtenemos el valor de ok
@@ -222,7 +230,6 @@ void *tbc_parser(void *r_info){
 		else{
 			// TODO: Quitar, es de debug
 			printf("\tok\n");
-			printf("\tContent: %s\n", resp_info->http_response.response);
 		
 			// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
 			update.http_info = &(resp_info->poll_info->http_info);
@@ -235,7 +242,7 @@ void *tbc_parser(void *r_info){
 			
 			for(size_t i = 0; i < json_array_size(json_result); i++){
 				
-				// Se obtiene el objeto update para la iteración
+				// Se obtiene el objeto update
 				json_update = json_array_get(json_result, i);
 				
 				// Obtenemos update_id
@@ -245,28 +252,26 @@ void *tbc_parser(void *r_info){
 				printf("\tUpdate id: %lld\n", update_id);
 				
 				
-				// Procedemos a procesar el update
-				
+				/* --- Procesar el update --- */
 				// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
 				// Si lo que se ha recibido es un mensaje...
 				if((json_aux = json_object_get(json_update, "message")) != NULL){
 					// Obtenemos el objeto message y lo desempaquetamos
+					update.type = UPDATE_MESSAGE;
 					// TODO: Hay que liberar
+					//TODO: Si no se asigna correctamente la memoria rip
 					if((update.content = (message_t *)malloc(sizeof(message_t))) == NULL){
 						printf("Poll: malloc failed\n");
 					}
-
-					//TODO: Si no se asigna correctamente la memoria rip
+					
 					unpack_json_message(update.content, json_aux);
-					update.type = UPDATE_MESSAGE;
 					
 				}
 				
-				// Si lo que se ha recibido es una actualización de encuesta
+				// Si lo que se ha recibido es una actualización de encuesta...
 				else if((json_aux = json_object_get(json_update, "poll")) != NULL){
-			       		// Obtenemos el resultado de la encuesta
+			       	// Obtenemos el resultado de la encuesta
 				  	// TODO: Hacer
-
 				 	if((update.content = (poll_update_t *)malloc(sizeof(poll_update_t)))==NULL){
 						printf("Poll: poll update malloc failed\n");
 					}
@@ -281,71 +286,57 @@ void *tbc_parser(void *r_info){
 				
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?				
 				
-				
-				// Determinar el manejador para el evento
-				
 				// Se entra en la región compartida
 				sem_wait(mutex_updateNotifiers);
 				
-				// Se busca handle filtrando primero por tipo de update
+				// Se obtiene el handle a utilizar
+				handle = findUpdateHandler(&update, resp_info->poll_info->notifiers_info->notifiers);
+				handle(&update);
 				
-				if ((handle = findUpdateHandler(update, resp_info->poll_info->notifiers_info->notifiers)) != NULL){
-					printf("> FOUND HANDLER\n");
-					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-					handle(&update);
-				}
-				
-				// If no handle was found, use default handle
-				else{
-					printf("> USING DEFAULT HANDLER\n");
-					handle = resp_info->poll_info->notifiers_info->notifiers[0].handle;
-					// TODO: Cambiar para que no sea puntero a NULL, sino que según lo que devuelva la función se actualize la cola de una manera o de otra (se tomen los mensajes como leidos o no, por ejemplo).
-					if(handle != NULL){
-						// TODO: Cambiar NULL por puntero a la estructura message de respuesta
-						handle(&update);
-					}
-					else{
-						// TODO: Don't update queue
-						printf("> DONT UPDATE QUEUE\n");
-					}
-				}
 				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
 				// Se sale de la región compartida
 				sem_post(mutex_updateNotifiers);
 				
+				// Se liberan recursos
+				// TODO: Liberar recursos en caso de encuesta y otros mensajes
 				if(update.type == UPDATE_MESSAGE){
-					free(update.content);
 					if(((message_t *)update.content)->text != NULL){
 						free(((message_t *)update.content)->text);
 					}
+					if(((message_t *)update.content)->command != NULL){
+						free(((message_t *)update.content)->command);
+					}
+					free(update.content);
 				}
 			
 			}
 			
-			// TODO: Quitar este sleep (es debug)
-			//sleep(1);
 			sprintf(msq_buffer.mtext, "%lld", (update_id != 0)?(update_id + 1):0);
 			msgsnd(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, 0);
 		
 		}
 	}
 	
-	// TODO: ¿Cerrar la cola y liberar otros recursos?
-	free(r_info);
+	// TODO: ¿Liberar otros recursos?
+	free(info);
 	pthread_exit(NULL);
 	
 }
 
 
-// TODO: Comentar
+/*
+**   Parámetros:  void *info: Puntero a bot_info_t con información de la librería.
+**
+**  Descripción:  Realiza la función de polling, llamando a tbc_parser() cuando hay nuevas actualizaciones.
+*/
 void *tbc_poll(void *info){
 	
+	// TODO: hacer que cierre tambien la cola...
 	// TODO: Ordenar
 	CURLcode res;
 	char url[MAX_URL_TAM];
 	char fullurl[MAX_URL_TAM];
 	char *offset = "0";
-	useconds_t interval = 1000;
 	pthread_attr_t attr;
 	pthread_t thread;
 	key_t clave;
@@ -354,9 +345,11 @@ void *tbc_poll(void *info){
 	response_info_t *resp_info;
 	poll_info_t poll_info;
 	
-	// Prepare poll_info object
+	/* --- Prepare HTTP info --- */
+	// Prepare poll_info object from bot_info object (in 'info')
 	strcpy(poll_info.http_info.url, ((bot_info_t *)info)->http_info.url);
 	poll_info.notifiers_info = &((bot_info_t *)info)->notifiers_info;
+	// TODO: Ponerle el else o algo de eso
 	if((poll_info.http_info.curlhandle = curl_easy_duphandle(((bot_info_t *)info)->http_info.curlhandle)) == NULL){
 		printf("polling(): Failed to duplicate curl handle\n");
 	}
@@ -368,6 +361,7 @@ void *tbc_poll(void *info){
 	strcpy(fullurl, url);
 	strcat(fullurl, offset);
 	
+	/* --- Prepare parser thread info --- */
 	// Prepare variables to create parser threads
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -375,62 +369,54 @@ void *tbc_poll(void *info){
 	// Prepare message queue to communicate with parser threads
 	clave = ftok(".",'p');
 	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token.
-	//printf("clave: %i\n", clave);
-	// TODO: Hay que hacer una función para cerrar los hilos y parar el pooling (cerrar también las colas)
+	//printf("clave de poll: %i\n", clave);
 	if((msgqueue_id = msgget(clave,IPC_CREAT|0660)) == -1){
 		printf("> Pooling thread: error al iniciar la cola de mensajes: %s\n", strerror(errno));
-		isRunning(1);
+		isRunning(1, NULL);
 	}
-	// Se vacía la cola.
+	// Se vacía la cola si ya tenía datos
 	else{
 		while(msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSQ_TYPE, IPC_NOWAIT) != -1){}
 	}
 	
 	// Siempre que no haya error iteramos
-	while(isRunning(0)){
-		// Esperamos un tiempo para no sobrecargar la red
-		// TODO: Cambiar por esperar x segundos entre iteración, no siempre x segundos en esta linea
-		// TODO: Variar la frecuencia de pooling dinámicamente
-		usleep(interval);
+	while(isRunning(0, NULL)){
 		
 		// TODO: Quitar esta impresión (es para debugging)
 		printf("\n Request to: %s\n", fullurl);
 		
-		// Se reserva memoria para la respuesta:
-		// TODO: Hacer que no se reserve siempre para el máximo, sino que sea variable (hay que reservar tamaño para la estructura y el string todo en el mismo malloc (para que sea más rápido) y luego organizar la memoria a nuestra bola (hay que hacer que el punero a char de la estructura apunte a la zona del malloc que hemos dejado para el string.
+		// Reservar memoria para el objeto de respuesta
 		if((resp_info = (response_info_t *)malloc(sizeof(response_info_t))) == NULL){
 			printf("Poll: malloc failed\n");
 		}
-		//strcpy(resp_info->response, response);
+		// Guardar poll_info
 		resp_info->poll_info = &poll_info;
 		
-		// Realizamos la petición HTTP
-		//res = http_get(&(bot_info->http_info.hi), fullurl, response, MAX_RESP_TAM);
+		// Realizar la petición HTTP
 		curl_easy_setopt(poll_info.http_info.curlhandle, CURLOPT_URL, fullurl);
 		curl_easy_setopt(poll_info.http_info.curlhandle, CURLOPT_WRITEDATA, (void *)&resp_info->http_response);
 		resp_info->http_response.response = NULL;
 		resp_info->http_response.size = 0;
-		//res = curl_easy_perform(poll_info.http_info.curlhandle);
 		res = curl_easy_perform(poll_info.http_info.curlhandle);
-		// Analizamos la respuesta
+		
+		// Analizar la respuesta
 		// TODO: ¿Poner que tras x intentos fallidos se cierre el servidor o se notifique al usuario?
 		if(res != CURLE_OK){
 			printf("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 		}
-		// TODO: Hay que reservar memoria para resp_info
 		else{
 			
-			// Creamos el hilo que se encargará de parsear con los parámetros correspondientes
-			
+			// Crear hilo para parsear con los parámetros correspondientes
 			if(pthread_create(&thread, &attr, tbc_parser, resp_info) != 0){
 				printf("Failed to create parse thread\n");
-				isRunning(1);
+				isRunning(1, NULL);
 			}
 			else{
 			
-				// Esperamos a que el parser nos indique el offset del último mensaje y lo almacenamos en la siguiente URL.
+				// Esperar a que parser indique el offset del último mensaje (se almacena en la siguiente URL).
 				// TODO: Hacer algo en la función de parse para que en caso de error devuelva el último offset leido o 0 (el offset 0 devuelve todos los updates si no recuerdo mal, pero habría que comprobarlo en la API de telegram). Podría devolver 0 en caso de que no haya updates y -1 en caso de error al parsear (puede haber varios reintentos).
 				msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSQ_TYPE, 0);
+				
 				// Si hay que actualizar lo hacemos
 				// TODO: Hacer que el intercambio de mensajes sea en formato int, no en caracteres
 				if(msq_buffer.mtext[0] != '0'){
@@ -446,7 +432,11 @@ void *tbc_poll(void *info){
 	}
 	
 	//TODO: Añadir que mande una señal al proceso principal para que se entere del fallo.
-	//http_close(&(bot_info->http_info.hi));
+	// Se borra la cola
+	if(msgctl(msgqueue_id, IPC_RMID, NULL) != 0){
+		printf("Error al cerrar la cola de mensajes\n");
+	}
+	// Se borra el manejador
 	curl_easy_cleanup(poll_info.http_info.curlhandle);
 	printf("Exiting pooling thread\n");
 	pthread_exit(NULL);
@@ -455,9 +445,9 @@ void *tbc_poll(void *info){
 
 
 /*
-**   Parámetros:  http_info_t *http_info: Puntero a una variable http_info_t con información HTTPS del bot.
+**   Parámetros:  bot_info_t *bot_info: Información de la librería
 **                
-**     Devuelve:  int: 0 si se completa con éxito, -1 en caso
+**     Devuelve:  int: 0 si se completa con éxito, -1 en caso de error
 **
 **  Descripción:  Inicializa la función de polling.
 */

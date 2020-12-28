@@ -8,16 +8,13 @@
 
 LIB = ../lib/
 LIB_TELEBOT = $(LIB)telebot_Capi/
-LIB_HTTPS = $(LIB)https_lib/
-LIB_MBEDTLS = $(LIB_HTTPS)mbedtls/library/
 LIB_JANSSON = $(LIB)jansson/
 LIB_CURL = $(LIB)curl/
 LIB_SSL = $(LIB)ssl/
 
-INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_HTTPS)mbedtls/include/ -I$(LIB_SSL)include/ -I$(LIB_CURL)include/curl/
+INCLUDES = -I$(LIB) -I$(LIB_JANSSON)include/ -I$(LIB_SSL)include/ -I$(LIB_CURL)include/curl/
 
-LIB_TELEBOT_FILES = $(LIB_TELEBOT)telebot_Capi.o $(LIB_TELEBOT)polling.o $(LIB_TELEBOT)events.o
-LIB_HTTPS_FILES = $(LIB_HTTPS)https.o $(LIB_MBEDTLS)libmbedx509.a $(LIB_MBEDTLS)libmbedtls.a $(LIB_MBEDTLS)libmbedcrypto.a
+LIB_TELEBOT_FILES = $(LIB_TELEBOT)telebot_Capi.o $(LIB_TELEBOT)tbc_polling.o $(LIB_TELEBOT)events.o
 LIB_JANSSON_FILES = -L$(LIB_JANSSON)lib/ -ljansson
 LIB_CURL_FILES = -L$(LIB_SSL)lib -L$(LIB_CURL)lib -lcurl
 
@@ -25,8 +22,8 @@ todo:
 	make -C $(LIB)
 	make testbot
 
-testbot: testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) $(LIB_JSON_FILES)
-	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES) $(LIB_HTTPS_FILES) $(LIB_JANSSON_FILES) -lpthread
+testbot: testbot.o $(LIB_TELEBOT_FILES) $(LIB_JSON_FILES)
+	gcc -W -Wall -o testbot testbot.o $(LIB_TELEBOT_FILES) $(LIB_JANSSON_FILES) $(LIB_CURL_FILES) -lpthread
 	
 testbot.o: testbot.c
 	gcc -W -Wall $(INCLUDES) -c testbot.c

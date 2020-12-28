@@ -18,36 +18,93 @@
 /************************************************************/
 /* Definición de funciones locales. */
 
-// TODO: Comentar
-int isRunning(int stop){
-	static int running = 1;
-	if(stop){
-		running--;
+// Función LOCAL (no declarada en telebot_Capi)
+/*
+**   Parámetros:  void *data: Chunk de datos recibidos para una cierta petición.
+**                size_t size: Tamaño en unidades del chunk.
+**				  size_t nmemb: Tamaño de unidad.
+**				  void *userp: Puntero a la estructura donde almacenar la información.
+**                
+**     Devuelve:  static size_t: 
+**
+**  Descripción:  Almacena la respuesta de la petición en la estructura http_response_t apuntada por userp.
+*/
+static size_t tbc_http_callback(void *data, size_t size, size_t nmemb, void *userp){
+	
+	size_t realsize = size * nmemb;
+	http_response_t *response = (http_response_t *)userp;
+ 
+	char *ptr = realloc(response->response, response->size + realsize + 1);
+	if(ptr == NULL)
+		return 0;  /* out of memory! */
+ 
+	response->response = ptr;
+	memcpy(&(response->response[response->size]), data, realsize);
+	response->size += realsize;
+	response->response[response->size] = 0;
+ 
+	return realsize;
+	
+}
+
+
+/*
+**   Parámetros:  int stop: Indica con un 1 que se debe parar la aplicación.
+**                
+**     Devuelve:  int: 0 si la aplicación debe parar, 1 e.o.c.
+**
+**  Descripción:  Indica al llamante si la aplicación debe parar o seguir con su ejecución. El parámetro permite modificar el estado.
+*/
+int isRunning(int stop, bot_info_t **bi){
+	static int running = 0;
+	static bot_info_t *bot_info = NULL;
+	if(stop == 1){
+		running = 1;
+	}else if(stop == 2){
+		running = 0;
 	}
+	// Si no esta establecido bot_info y *bi tiene algo se establece.
+	if(bot_info == NULL && *bi != NULL){
+		bot_info = *bi;
+	}
+	// SI bot_info está establecido y **bi no es null se devuelve
+	else if(bot_info != NULL && bi != NULL){
+		*bi = bot_info;
+	}
+	
 	return running;
 }
 
+
 /*
-**   Parámetros:  
-**				  
-**                
-**     Devuelve:  0 si la clausura se ha completado con éxito, -1 en caso de error.
+**   Parámetros:  int sig: Se ignora.
 **
-**  Descripción:  Cierra semáforos.
+**  Descripción:  Manda la terminación de los hilos internos a la librería y recursos reservados en la inicialización de la misma (semáforo mutex_updateNotifiers, curl, ...). El resto de hilos deben librerar sus recursos antes de cerrase.
 */
-// TODO: hacer que cierre tambien la cola...
-void telebot_close(void){
+void telebot_close(int sig){
 	
 	pid_t pid;
+	bot_info_t *bot_info;
 	
 	printf("Cerrando telebot_Capi\n");
+	
+	// Indicamos a todos los hilos que se paren
+	isRunning(2, &bot_info);
+	sleep(4);
+	
+	// 		Liberar recursos:
+	// Semáforo mutex_updateNotifiers
 	if ( sem_unlink("mutex_updateNotifiers")!=0 ){
 		printf("Ha habido un problema al cerrar el semaforo mutex_updateNotifiers");
 	}
-	isRunning(1);
+	// Cerrar librería curl (recursos del hilo principal)
+	curl_easy_cleanup(bot_info->http_info.curlhandle);
+	curl_global_cleanup();
+	sleep(1);
+	
 	printf("Bot cerrado correctamente\n");
 	
-	sleep(5);
+	// TODO: Cambiar para que se ejecute el handle por defecto de SIGINT
 	pid = getpid();
 	kill(pid, SIGKILL);
 	
@@ -66,41 +123,77 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	
 	struct sigaction term;
 	sem_t * mutex_updateNotifiers;
-	int ret = -1;
+	curl_version_info_data *data;
+	struct curl_slist *headers = NULL;
+	// TODO: poner más if's de comprobación si aplica.
+	int ret = 0;
+	
 	
 	printf("Initializing telebot_Capi\n");
 	
+	/* --- Inicializar funciones generales --- */
 	// Se arma la señal para la terminación
 	term.sa_handler= telebot_close;
 	term.sa_flags = 0;
 	sigemptyset(&term.sa_mask);
 	sigaction(SIGINT, &term, NULL);
 	
-	//Inicializamos los semáforos
+	// Inicializar la librería curl
+	curl_global_init(CURL_GLOBAL_ALL);
+	
+	isRunning(1, &bot_info);
+	
+	
+	/* --- Inicializar notifiers --- */
+	// Crear semáforo mutex_updateNotifiers.
+	// TODO: Pensar si hay una forma de que al abrir el semáforo veamos si ya existe, y si es así borrarlo antes de usarlo (para que no haya bloqueos donde no debe).
     if((mutex_updateNotifiers = sem_open(
 	"mutex_updateNotifiers", O_CREAT,0600,1)) == SEM_FAILED){
 		printf("Telebot_init: Fallo al abrir el semáforo\n");
+		ret = -1;
 	}
-	bot_info->mutex_updateNotifiers = mutex_updateNotifiers;
+	bot_info->notifiers_info.mutex_updateNotifiers = mutex_updateNotifiers;
 
-	// Inicializamos la librería https_lib
-	// TODO: Comprobar que la inicialización es correcta
-	http_init(&(bot_info->http_info.hi), TRUE);
+	// Inicializar los handlers
+	initUpdateNotifiers(bot_info->notifiers_info.notifiers);
+
+
+	/* --- Inicializar http_info --- */	
+	// Inicializar y configurar handle para este hilo (principal - envíos)
+	if((bot_info->http_info.curlhandle = curl_easy_init()) == NULL){
+		printf("telebot_Capi: Error initializing curl_easy\n");
+		ret = -1;
+	}
+	// Estas opciones son recomendables
+	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_SSL_VERIFYPEER, 0L);
+	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_SSL_VERIFYHOST, 0L);
+	// Opcion importante para multithread
+	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_NOSIGNAL, 1L);
+	// Configurar manejador a tbc_http_callback
+	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_WRITEFUNCTION, tbc_http_callback);
+	// Configurar las cabeceras para enviar json
+	headers = curl_slist_append(headers, "Content-Type: application/json");
+	curl_easy_setopt(bot_info->http_info.curlhandle, CURLOPT_HTTPHEADER, headers);
+	// Se comprueba el SSL
+	data = curl_version_info(CURLVERSION_NOW);
+	if(data->ssl_version != NULL){
+		printf("Utilizando SSL version: %s\n", data->ssl_version);
+	}else{
+		printf("Telebot_init: Error, no se diposne de SSL\n");
+		ret = -1;
+	}
 	
-	// Se forma la URL de acceso a la API para el BOT y se almacena en http_info.
+	// Formar URL de acceso a la API para el BOT (en http_info)
 	// TODO: ¿comprobar si no desborda? ¿existe un parámetro en strcpy y strcat para verlo?
 	strcpy(bot_info->http_info.url,API_URL);
 	strcat(bot_info->http_info.url,token);
 	
-	// Inicializamos los handlers (para el "por defecto" -> dejar en la cola, los demás vacíos)
-	initUpdateNotifiers(bot_info->notifiers);
 	
-	// Inicializamos la funcion de polling.
-	if(polling_init(bot_info) != 0){
+	/* --- Inicializar hilos internos --- */
+	// Inicializar la funcion de polling.
+	if(tbc_polling_init(bot_info) != 0){
 		printf("telebot_Capi: Error initializing polling thread\n");
-	}
-	else{
-		ret = 0;
+		ret = -1;
 	}
 	
 	return ret;
@@ -117,24 +210,32 @@ int telebot_init(char *token, bot_info_t *bot_info){
 **
 **  Descripción:  Realiza una petición a la API de telegram con el método getMe, devolviendo la respuesta en *response.
 */
-int telebot_getMe(char *response, int size, http_info_t *http_info){
+int telebot_getMe(http_response_t *http_response, http_info_t *http_info){
 	
 	// TODO: Cambiar char *response a la estructura de respuesta.
 	// TODO: Pensar si el espacio para la respuesta la debe reservar el que llama a la función o la función en sí (en cuyo caso devolvería la estructura en el return, o un puntero a ella.
 
 	int ret = -1;
-	int status = 0;
 	char url[MAX_URL_TAM];
 	char method[10] = "/getMe";
+	CURLcode res;
 	
 	// Formamos la url con el método correspondiente
 	strcpy(url, http_info->url);
 	strcat(url, method);
 	
 	// Realizamos la petición
-	status = http_get(&(http_info->hi), url, response, size);
-	if(status == 200){
+	//status = http_get(&(http_info->hi), url, response, size);
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_URL, url);
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_WRITEDATA, (void *)http_response);
+	http_response->response = NULL;
+	http_response->size = 0;
+	res = curl_easy_perform(http_info->curlhandle);
+	if(res == CURLE_OK){
 		ret = 0;
+	}
+	else{
+		printf("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 	}
 	
 	// TODO: Analizar la respuesta y guardarla en la estructura respuesta (previamente hay que crearla, ver los TODOs del principio de esta función)
@@ -172,9 +273,9 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	// TODO: Cambiar el parámetro chat_id y añadir los parámetros necesarios para mandar un mensaje (comprobar que es lo que se debe mandar en el método sendMessage en la API de Telegram). 
 	// ¿Hacer que se pasen los parámetros mediante una estructura (podría ser útil para reenvíar mensajes recibidos)? ¿Hacer dos funciones una con parámetros separados y otra con la estructura?
 	
-	char respuesta[MAX_RESP_TAM]; //Valor devuelto por el método de la API sendMessage.
+	http_response_t http_response; //Valor devuelto por el método de la API sendMessage.
 	int ret = -1;
-	int status = 0;
+	CURLcode res;
 	char url[MAX_URL_TAM];
 	char method[15] = "/sendMessage";
 	char data[MAX_POST_TAM];
@@ -185,13 +286,18 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	
 	// Generamos la cadena JSON
 	// TODO: ¿Hacer una función para que haga esto?
-	sprintf(data,"{\"chat_id\":%s,\"text\":\"%s\"}",chat_id,text);
+	sprintf(data,"{\"chat_id\":\"%s\",\"text\":\"%s\"}",chat_id,text);
 
 	// Realizamos la petición con POST
-	status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
-	printf("Send message: %s\n", data);
-
-	if(status == 200){
+	//status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_POSTFIELDS, data);
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_URL, url);
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_WRITEDATA, (void *)&http_response);
+	http_response.response = NULL;
+	http_response.size = 0;
+	res = curl_easy_perform(http_info->curlhandle);
+	//printf("Send message: %s\n", http_response.response);
+	if(res == CURLE_OK){
 
 		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
 		json_error_t error;	
@@ -200,7 +306,7 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 		json_t *result;
 		json_t *texto;
 
-		root = json_loads(respuesta, 0, &error);
+		root = json_loads(http_response.response, 0, &error);
 		// Obtenemos el valor de ok
 		ok = json_object_get(root, "ok");
 		if(json_is_true(ok)){
@@ -213,15 +319,21 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 		}
 
 	}
+	else{
+		printf("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+	}
+	
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_HTTPGET, 1L); 
+	
 	return ret;
 	
 }
 
 int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *http_info){
 	
-	char respuesta[MAX_RESP_TAM]; //Valor devuelto por el método de la API sendPoll.
+	http_response_t http_response; //Valor devuelto por el método de la API sendPoll.
 	int ret = -1;
-	int status = 0;
+	CURLcode res;
 	char url[MAX_URL_TAM];
 	char data[15*MAX_POLL_OPTION_TAM];
 	char method[15] = "/sendPoll";
@@ -244,11 +356,19 @@ int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *
 
 	// Realizamos la petición con POST
 	printf("Send encuesta\n");
-	status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
-	printf("Encuesta send: %s\n", data);
+	//status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_POSTFIELDS, data);
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_URL, url);
+	curl_easy_setopt(http_info->curlhandle, CURLOPT_WRITEDATA, (void *)&http_response);
+	http_response.response = NULL;
+	http_response.size = 0;
+	printf("Aqui\n");
+	res = curl_easy_perform(http_info->curlhandle);
+	printf("Encuesta send: %s\n", http_response.response);
 
-	if(status == 200){
+	if(res == CURLE_OK){
 
+		// TODO: Comprobar
 		/*
 		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
 		json_error_t error;	

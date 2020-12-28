@@ -95,7 +95,12 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 		
 		st_aux = json_string_value(aux);
 		if((message->text = (char *)malloc(strlen(st_aux))) == NULL){
-				printf("> Parse: text malloc failed\n");
+			printf("\033[1;31m");
+			printf("####################################################\n");
+			printf("Parse>unpack_json_message: text malloc failed\n");
+			printf("####################################################\n");
+			printf("\033[0m");
+				
 		}
 		strcpy(message->text, json_string_value(aux));
 		
@@ -109,7 +114,11 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 			}
 			if(tam != 0){
 				if((message->command = (char *)malloc(tam)) == NULL){
-					printf("> Parse: command malloc failed\n");
+					printf("\033[1;31m");
+					printf("####################################################\n");
+					printf("Parse>unpack_json_message: command malloc failed\n");
+					printf("####################################################\n");
+					printf("\033[0m");
 				}
 				sscanf(message->text, "/%s ", message->command);
 			}
@@ -201,7 +210,11 @@ void *tbc_parser(void *info){
 	clave = ftok(".", 'p');
 	msq_buffer.mtype = OFFSET_MSQ_TYPE;
 	if((msgqueue_id = msgget(clave, 0660)) == -1){
-		printf("> Parser thread: error al acceder a la cola de mensajes: %s\n", strerror(errno));
+		printf("\033[1;31m");
+		printf("####################################################\n");
+		printf("Parser thread>*tbc_parser: error al acceder a la cola de mensajes: %s\n", strerror(errno));
+		printf("####################################################\n");
+		printf("\033[0m");
 	}
 	
 	else{
@@ -222,7 +235,9 @@ void *tbc_parser(void *info){
 
 		//TODO: Probar si esto funciona bien
 		if(json_is_false(json_ok)){
-			printf("Message received not ok: %s (error code: %lld)\n",json_string_value(json_object_get(json_root,"description")),json_integer_value(json_object_get(json_root,"error_code")));
+			printf("\033[1;31m");
+			printf("*tbc_parser: Message received not ok: %s (error code: %lld)\n",json_string_value(json_object_get(json_root,"description")),json_integer_value(json_object_get(json_root,"error_code")));
+			printf("\033[0m");
 		 
 		}
 		
@@ -261,7 +276,12 @@ void *tbc_parser(void *info){
 					// TODO: Hay que liberar
 					//TODO: Si no se asigna correctamente la memoria rip
 					if((update.content = (message_t *)malloc(sizeof(message_t))) == NULL){
-						printf("Poll: malloc failed\n");
+						printf("\033[1;31m");
+						printf("####################################################\n");
+						printf("Poll>*tbc_parser: malloc failed\n");
+						printf("####################################################\n");
+						printf("\033[0m");
+						
 					}
 					
 					unpack_json_message(update.content, json_aux);
@@ -273,7 +293,11 @@ void *tbc_parser(void *info){
 			       	// Obtenemos el resultado de la encuesta
 				  	// TODO: Hacer
 				 	if((update.content = (poll_update_t *)malloc(sizeof(poll_update_t)))==NULL){
-						printf("Poll: poll update malloc failed\n");
+						printf("\033[1;31m");
+						printf("####################################################\n");
+						printf("Poll>*tbc_parser: poll update malloc failed\n");
+						printf("####################################################\n");
+						printf("\033[0m");
 					}
 				  
 					update.type = UPDATE_POLL;
@@ -351,7 +375,12 @@ void *tbc_poll(void *info){
 	poll_info.notifiers_info = &((bot_info_t *)info)->notifiers_info;
 	// TODO: Ponerle el else o algo de eso
 	if((poll_info.http_info.curlhandle = curl_easy_duphandle(((bot_info_t *)info)->http_info.curlhandle)) == NULL){
-		printf("polling(): Failed to duplicate curl handle\n");
+		printf("\033[1;31m");
+		printf("####################################################\n");
+		printf("polling()>*tbc_poll: Failed to duplicate curl handle\n");
+		printf("####################################################\n");
+		printf("\033[0m");	
+		
 	}
 	
 	// Prepare URL to get updates
@@ -371,7 +400,11 @@ void *tbc_poll(void *info){
 	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token.
 	//printf("clave de poll: %i\n", clave);
 	if((msgqueue_id = msgget(clave,IPC_CREAT|0660)) == -1){
-		printf("> Pooling thread: error al iniciar la cola de mensajes: %s\n", strerror(errno));
+		printf("\033[1;31m");
+		printf("####################################################\n");
+		printf("Pooling thread>*tbc_poll: error al iniciar la cola de mensajes: %s\n", strerror(errno));
+		printf("####################################################\n");
+		printf("\033[0m");	
 		isRunning(1, NULL);
 	}
 	// Se vacía la cola si ya tenía datos
@@ -387,7 +420,11 @@ void *tbc_poll(void *info){
 		
 		// Reservar memoria para el objeto de respuesta
 		if((resp_info = (response_info_t *)malloc(sizeof(response_info_t))) == NULL){
-			printf("Poll: malloc failed\n");
+			printf("\033[1;31m");
+			printf("####################################################\n");
+			printf("Poll>*tbc_poll: malloc failed\n");
+			printf("####################################################\n");
+			printf("\033[0m");
 		}
 		// Guardar poll_info
 		resp_info->poll_info = &poll_info;
@@ -402,13 +439,21 @@ void *tbc_poll(void *info){
 		// Analizar la respuesta
 		// TODO: ¿Poner que tras x intentos fallidos se cierre el servidor o se notifique al usuario?
 		if(res != CURLE_OK){
-			printf("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			printf("\033[1;31m");
+			printf("####################################################\n");
+			printf("*tbc_poll: curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			printf("####################################################\n");
+			printf("\033[0m");
 		}
 		else{
 			
 			// Crear hilo para parsear con los parámetros correspondientes
 			if(pthread_create(&thread, &attr, tbc_parser, resp_info) != 0){
-				printf("Failed to create parse thread\n");
+				printf("\033[1;31m");
+				printf("####################################################\n");
+				printf("*tbc_poll: Failed to create parse thread\n");
+				printf("####################################################\n");
+				printf("\033[0m");
 				isRunning(1, NULL);
 			}
 			else{
@@ -434,7 +479,11 @@ void *tbc_poll(void *info){
 	//TODO: Añadir que mande una señal al proceso principal para que se entere del fallo.
 	// Se borra la cola
 	if(msgctl(msgqueue_id, IPC_RMID, NULL) != 0){
-		printf("Error al cerrar la cola de mensajes\n");
+		printf("\033[1;31m");
+		printf("####################################################\n");
+		printf("*tbc_poll: Error al cerrar la cola de mensajes\n");
+		printf("####################################################\n");
+		printf("\033[0m");
 	}
 	// Se borra el manejador
 	curl_easy_cleanup(poll_info.http_info.curlhandle);

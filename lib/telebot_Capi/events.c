@@ -257,8 +257,10 @@ updateHandle_t findUpdateHandler(update_t *update, update_notifier_t *notifiers)
 				// si el evento tiene comando filtramos y asignamos.
 				// TODO: Cambiar notifiers[i].event.info != NULL por strcmp (no vale null, vale "")
 				if(notifiers[i].event.info[0] != '\0'){
+					printf("####################################################\n");
 					printf("Encontrado: %s\n", notifiers[i].event.info);
 					printf("Comando: %s\n", ((message_t *)update->content)->command);
+					printf("####################################################\n");
 					if(((message_t *)update->content)->command != NULL && strcmp(notifiers[i].event.info, ((message_t *)update->content)->command) == 0){
 						handle = notifiers[i].handle;
 					}

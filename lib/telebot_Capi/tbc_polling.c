@@ -144,10 +144,11 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 // DONE: pensar si es mejor reservar memoria y devolver el mensaje del tirón o que reserve memoria el llamante (esta última opción es como está ahora)
 int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
 	
-	// DONE: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo vaya bien
+	// TODO: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo vaya bien
 	int ret = 0;
 	json_t *json_opciones;
 	json_t *json_opcion;
+	int tam_preg;
 	
 	
 	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo) PD: NO TE RAYE
@@ -158,17 +159,38 @@ int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
 
 	//TODO: Poner ifs de correcta recogida y reflejar en ret.
 	poll->poll_id = json_integer_value(json_object_get(message_obj, "id"));
-	strcpy(poll->question,json_string_value(json_object_get(message_obj, "question")));
-	json_opciones = json_object_get (message_obj,"options");
-	for(size_t i = 0; i < json_array_size(json_opciones); i++)
-	  {
-	    json_opcion = json_array_get(json_opciones, i);
-	    strcpy(poll->options[i].text, json_string_value(json_object_get(json_opcion,"text")));
-	    poll->options[i].opcion_votos = json_integer_value(json_object_get(json_opcion,"voter_count"));
-	  }
+	tam_preg = strlen(json_string_value(json_object_get(message_obj, "question")));
+	if ((poll->question = (char *)malloc(tam_preg)) != NULL){
 	
-	
-	  
+		strcpy(poll->question,json_string_value(json_object_get(message_obj, "question")));
+		json_opciones = json_object_get (message_obj,"options");
+		
+		if ((poll->options=(option_t *)malloc(json_array_size(json_opciones) + 1))!=NULL){
+		  
+		  	for(size_t i = 0; i < json_array_size(json_opciones); i++)
+			  {
+			    
+				json_opcion = json_array_get(json_opciones, i);
+				int tam_text = strlen (json_string_value(json_object_get(json_opcion,"text")));
+				
+				if ((poll->options[i].text = (char *)malloc(tam_text))!=NULL){
+					strcpy(poll->options[i].text, json_string_value(json_object_get(json_opcion,"text")));
+					poll->options[i].opcion_votos = json_integer_value(json_object_get(json_opcion,"voter_count"));
+				}else{
+					printf("> Parse: options[%lu].text malloc failed\n",i);
+				}
+				
+			  }
+			poll->options[json_array_size(json_opciones)].text = NULL;
+		  
+		} else{
+		  	printf("> Parse: options malloc failed\n");	  				    	  
+		}
+
+	}
+	else{
+		printf("> Parse: question malloc failed\n");	
+	}
 	return ret;
 	
 }
@@ -275,7 +297,8 @@ void *tbc_parser(void *info){
 				 	if((update.content = (poll_update_t *)malloc(sizeof(poll_update_t)))==NULL){
 						printf("Poll: poll update malloc failed\n");
 					}
-				  
+
+					unpack_json_poll_update(update.content,json_aux);
 					update.type = UPDATE_POLL;
 					printf("Received poll update\n");
 				}
@@ -305,6 +328,19 @@ void *tbc_parser(void *info){
 					}
 					if(((message_t *)update.content)->command != NULL){
 						free(((message_t *)update.content)->command);
+					}
+					free(update.content);
+					
+				} else if (update.type == UPDATE_POLL) {
+				  	if(((poll_update_t *)update.content)->question != NULL){
+						free(((poll_update_t *)update.content)->question);
+					}
+					for (int i=0; ((poll_update_t *)update.content)->options[i].text != NULL; i++){
+						free(((poll_update_t *)update.content)->options[i].text);					  
+					}
+					
+					if(((poll_update_t *)update.content)->options != NULL){
+						free(((poll_update_t *)update.content)->options);
 					}
 					free(update.content);
 				}

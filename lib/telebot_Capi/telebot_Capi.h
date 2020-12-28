@@ -99,14 +99,14 @@ typedef struct{
 } message_t;
 
 typedef struct{
-	char text [MAX_POLL_OPTION_TAM] ;
+	char *text ;
 	int opcion_votos;
 }option_t;
 
 typedef struct{
 	unsigned long long int poll_id;
-	char question [MAX_POLL_QUESTION_TAM];
-	option_t options [MAX_POLL_OPTIONS];
+	char *question;
+	option_t * options;
 	int total_votos;       
 } poll_update_t;
 

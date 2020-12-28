@@ -104,12 +104,12 @@ int main(int argc, char* argv[]){
 		
 		printf("Initialized\n");
 		
-		//char pregunta[]= "¿Funcionara?";
-		//char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
+		char pregunta[]= "¿Funcionara?";
+		char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
 		
 		//telebot_sendPoll("166103691",pregunta,opciones, &bot_info.http_info);
-		//telebot_sendPoll("150848014",pregunta,opciones, &bot_info.http_info);
-		telebot_sendMessage("150848014", "Hola", &bot_info.http_info);
+		telebot_sendPoll("150848014",pregunta,opciones, &bot_info.http_info);
+		//telebot_sendMessage("150848014", "Hola", &bot_info.http_info);
 		
 
 		// Configuramos el handle imprime:

@@ -45,7 +45,6 @@
 #define MAX_POLL_OPTION_TAM 100
 #define MAX_POLL_OPTIONS 10
 
-
 /* Tipos definidos por el usuario */
 
 /*

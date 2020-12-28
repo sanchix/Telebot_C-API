@@ -11,10 +11,8 @@
 #	telebot_Capi
 
 LIB_TELEBOT = telebot_Capi/
-LIB_HTTPS = https_lib/
 
 todo:	
-	make -C $(LIB_HTTPS)
 	make -C $(LIB_TELEBOT)
 
 borra:

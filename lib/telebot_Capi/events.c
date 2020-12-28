@@ -247,9 +247,13 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 	update_notifier_t *notifiers = notifiers_info->notifiers;
 	updateHandle_t handle = NULL;
 	updateHandle_t handle_def = NULL; // Manejador por defecto para un cierto tipo (sin información)
+<<<<<<< HEAD
 	sem_t *mutex_updateNotifiers;
 	// Preparar los semáforos
 	mutex_updateNotifiers = notifiers_info->mutex_updateNotifiers;
+=======
+	char * aux = NULL;
+>>>>>>> 2e3b56d05833f490e5b2bbef650eb3e11e26e32c
 	
 	// Se entra en la región compartida
 	sem_wait(mutex_updateNotifiers);
@@ -275,6 +279,21 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 				else{
 					handle_def = notifiers[i].handle;
 				}
+			} else if (update->type == UPDATE_POLL) {
+			  	//Si el evento tiene algo dentro de info y es de tipo encuesta, lo de dentro será la id de la encuesta.
+				if(notifiers[i].event.info[0] != '\0'){
+				 	 
+				 	printf ("Respuesta de encuesta recibida cuyo id: %s",notifiers[i].event.info);
+					
+					sprintf (aux,"%llu",((poll_update_t*)update->content)->poll_id);
+					if (((poll_update_t*)update->content)->poll_id != 0 && strcmp(aux,notifiers[i].event.info) == 0 ){
+						handle = notifiers[i].handle;
+					}
+				}
+				else{
+					handle_def = notifiers[i].handle;
+				}
+				
 			}
 			// TODO: Poner else if para poll u otros tipos
 		}

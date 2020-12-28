@@ -219,7 +219,6 @@ void *tbc_parser(void *info){
 	updateHandle_t handle;
 	response_info_t *resp_info;
 	update_t update;
-	sem_t *mutex_updateNotifiers;
 
 	json_t *json_root;
 	json_error_t error;
@@ -242,8 +241,6 @@ void *tbc_parser(void *info){
 	else{
 		// Peparar resp_info (evita usar el cast, comididad)
 		resp_info = (response_info_t *)info;
-		// Preparar los semáforos
-		mutex_updateNotifiers = resp_info->poll_info->notifiers_info->mutex_updateNotifiers;
 		
 		// TODO: Quitar (es para depuración).
 		printf("\nUpdate:\n");
@@ -331,19 +328,10 @@ void *tbc_parser(void *info){
 					printf("Something received\n");
 				}
 				
-				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?				
-				
-				// Se entra en la región compartida
-				sem_wait(mutex_updateNotifiers);
-				
 				// Se obtiene el handle a utilizar
-				handle = findUpdateHandler(&update, resp_info->poll_info->notifiers_info->notifiers);
+				handle = findUpdateHandler(&update, resp_info->poll_info->notifiers_info);
 				handle(&update);
-				
-				//TODO: Que deberia de ocurrir en el caso de que se produjera un error?
-				// Se sale de la región compartida
-				sem_post(mutex_updateNotifiers);
-				
+								
 				// Se liberan recursos
 				// TODO: Liberar recursos en caso de encuesta y otros mensajes
 				if(update.type == UPDATE_MESSAGE){

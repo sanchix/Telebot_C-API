@@ -114,7 +114,6 @@ void telebot_close(int sig){
 	printf("Bot cerrado correctamente\n");
 	printf("\033[0m");
 	printf("\n");
-	// TODO: Cambiar para que se ejecute el handle por defecto de SIGINT
 	pid = getpid();
 	kill(pid, SIGKILL);
 	
@@ -165,7 +164,10 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	
 	/* --- Inicializar notifiers --- */
 	// Crear semáforo mutex_updateNotifiers.
-	// TODO: Pensar si hay una forma de que al abrir el semáforo veamos si ya existe, y si es así borrarlo antes de usarlo (para que no haya bloqueos donde no debe).
+	//Comprobamos que no esté creado el semáforo, y si lo está, lo eliminamos para crearlo de nuevo(para que no haya bloqueos donde no debe).
+	if (sem_open("mutex_updateNotifiers",0) != SEM_FAILED){
+		sem_unlink("mutex_updateNotifiers");
+	}
     if((mutex_updateNotifiers = sem_open(
 	"mutex_updateNotifiers", O_CREAT,0600,1)) == SEM_FAILED){
 		printf("\033[1;31m");
@@ -248,7 +250,6 @@ int telebot_init(char *token, bot_info_t *bot_info){
 */
 int telebot_getMe(http_response_t *http_response, http_info_t *http_info){
 	
-	// TODO: Cambiar char *response a la estructura de respuesta.
 	// TODO: Pensar si el espacio para la respuesta la debe reservar el que llama a la función o la función en sí (en cuyo caso devolvería la estructura en el return, o un puntero a ella.
 
 	int ret = -1;
@@ -289,7 +290,6 @@ int telebot_getMe(http_response_t *http_response, http_info_t *http_info){
 		**
 		**  Descripción:  Realiza una petición a la API de telegram con el método getMe, devolviendo la respuesta en *response.
 		*/
-		// TODO: comentar: devuelve 0 si bien, -1 si error
 		/*
 		int unpack_message(message_t *message, json_t *message_obj);
 		*/

@@ -181,7 +181,7 @@ typedef struct{
 
 
 
-/*********************   telebot_Capi.c   *********************/
+/********************   telebot_Capi.c   *********************/
 
 /*
 **   Parámetros:  int stop: Indica con un 1 que se debe parar la aplicación.

@@ -48,6 +48,7 @@ static size_t tbc_http_callback(void *data, size_t size, size_t nmemb, void *use
 }
 
 
+
 /*
 **   Parámetros:  int stop: Indica con un 1 que se debe parar la aplicación.
 **                
@@ -74,6 +75,7 @@ int isRunning(int stop, bot_info_t **bi){
 	
 	return running;
 }
+
 
 
 /*
@@ -109,6 +111,7 @@ void telebot_close(int sig){
 	kill(pid, SIGKILL);
 	
 }
+
 
 
 /*
@@ -199,6 +202,7 @@ int telebot_init(char *token, bot_info_t *bot_info){
 	return ret;
 	
 }
+
 
 
 /*

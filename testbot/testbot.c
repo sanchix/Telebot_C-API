@@ -11,7 +11,22 @@
 #include <unistd.h>
 #include "telebot_Capi/telebot_Capi.h"
 
+void doSurvey (update_t *update){
+  
+	poll_update_t *survey;
 
+	if (update->type == UPDATE_MESSAGE){
+		survey = (poll_update_t *)update->content;
+		if (survey->question != NULL && survey->options != NULL){
+			printf("Pregunta de la encuesta: %s\n\n",survey->question);
+			for (int i=0; survey->options[i].text !=NULL;i++){
+			  printf ("\tOpcion %d: %s, Votos: %d\n",i,survey->options[i].text,survey->options[i].opcion_votos);
+			}
+			printf ("Total de votos recogidos: %d\n\n",survey->total_votos);
+		}
+	}
+
+}
 void felicita(update_t *update){
 	
 	message_t *message;
@@ -104,12 +119,12 @@ int main(int argc, char* argv[]){
 		
 		printf("Initialized\n");
 		
-		//char pregunta[]= "¿Funcionara?";
-		//char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
+		char pregunta[]= "¿Funcionara?";
+		char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
 		
 		//telebot_sendPoll("166103691",pregunta,opciones, &bot_info.http_info);
-		//telebot_sendPoll("150848014",pregunta,opciones, &bot_info.http_info);
-		telebot_sendMessage("150848014", "Hola", &bot_info.http_info);
+		telebot_sendPoll("150848014",pregunta,opciones, &bot_info.http_info);
+		//telebot_sendMessage("150848014", "Hola", &bot_info.http_info);
 		
 
 		// Configuramos el handle imprime:
@@ -125,7 +140,11 @@ int main(int argc, char* argv[]){
 		if(addUpdateNotifier(felicita, &event, &bot_info) != 0){
 			printf("Fallo al añadir handler felicita\n");
 		}
-		
+
+		event.update_type = UPDATE_POLL;
+		if(addUpdateNotifier(doSurvey, &event, &bot_info) != 0){
+			printf("Fallo al añadir handler de la encuesta\n");
+		}
 		// TODO: Comprobar que funcionan los semáforos
 		
 		// Loop to keep alive main thread

@@ -24,62 +24,72 @@
 #include <errno.h>
 
 /* Includes de la aplicacion */
-//#include "https_lib/https.h"
 #include "jansson.h"
 #include "curl.h"
 
 
 /* Definición de constantes */ 
-// TODO: Ordenar por ficheros (esto y el resto de cosas)
 #define API_URL "https://api.telegram.org/bot"
 #define MAX_RESP_TAM 4096
 #define MAX_POST_TAM 4096
-#define MAX_OFFSET_TAM 20
-#define OFFSET_MSQ_TYPE 1
 #define MAX_URL_TAM 200
 #define MAX_USER_TAM 64 // Maximo tamaño para nombre y apellido https://tecnonucleous.com/2019/07/10/los-limites-de-telegram/
-#define MAX_UPDATE_EVENTS 20
-#define COMANDO '/'
 #define MAX_COMMAND_TAM 30
 #define MAX_POLL_QUESTION_TAM 300
 #define MAX_POLL_OPTION_TAM 100
 #define MAX_POLL_OPTIONS 10
-
+#define MAX_OFFSET_TAM 20
+#define OFFSET_MSQ_TYPE 1
+#define MAX_UPDATE_EVENTS 20
+#define COMANDO '/'
 
 /* Tipos definidos por el usuario */
 
+
 /*
-**		 Campos:  HTTP_INFO hi: Informacion del protocolo HTTPS para la librería de HTTPS.
-**				  char url[200]: URL con el token para acceder al bot.
+**		 Campos:  long mtype: tipo del mensaje de la cola.
+**				  char mtext[MAX_OFFSET_TAM]: Texto del mensaje.
 **
-**	Descripción: Almacena los datos relativos a la comunicación HTTPS con los servidores de telegram.
- */
+**	Descripción: Esta estructura representa un mensaje de la cola de mensajes y contiene todos los datos referentes a el.
+*/
 struct msgbuf{
 	long mtype;
 	char mtext[MAX_OFFSET_TAM];
 };
 
-// TODO: Comentar
+//Define los tipos de cada tipo de update.
 typedef enum{
 	UPDATE_NONE = -1,
 	UPDATE_ANY = 0,
 	UPDATE_MESSAGE = 1,
 	UPDATE_POLL = 2,
-	// TODO: ¿Crear otra entrada para eventos con comando?
 } updatetype_t;
 
-// TODO: Comentar
-// TODO: Pensar los tamaños máximos de language_code y type
-// TODO: Pensar si es mejor poner punteros en vez de cadenas y que otro reserve la memoria
+/*
+**		 Campos:	int id: identificador del usuario.
+**					int is_bot: Nos indica si el usuario es un bot o no.
+**					char first_name[MAX_USER_TAM]: nombre del usuario.
+**					char last_name[MAX_USER_TAM]: apellido del usuario (es opcional).
+**					char language_code[20]: codigo del idioma que emplea el usuario.
+**
+**	Descripción: Esta estructura representa a un usuario y contiene todos los datos referentes a el.
+*/
 typedef struct{
 	int id;	// if id = 0 don't use content (struct empty)
 	int is_bot;
 	char first_name[MAX_USER_TAM];
 	char last_name[MAX_USER_TAM]; // void if last_name[0] = '\0'
-	char language_code[10]; // void if language_code[0] = '\0'
+	char language_code[20]; // void if language_code[0] = '\0'
 } user_t;
 
-// TODO: Igual que el struct anterior
+/*
+**		 Campos:	int id: identificador del chat del usuario.
+**					char first_name[MAX_USER_TAM]: nombre del usuario.
+**					char last_name[MAX_USER_TAM]: apellido del usuario (es opcional).
+**					char type[20]: Indica el tipo del chat (que define sus propiedades).
+**
+**	Descripción: Esta estructura representa un chat entre usuario y bot y contiene todos los datos referentes al chat.
+*/
 typedef struct{
 	int id;
 	char first_name[MAX_USER_TAM]; // void if first_name[0] = '\0'
@@ -87,8 +97,16 @@ typedef struct{
 	char type[20];
 } chat_t;
 
-// TODO: Igual que el struct anterior
-// TODO: Poner un content type y un content (mensage...) o pensar como manejar cuando el mensaje tiene más campos que no sean text ¿una lista? ¿un array? ¿una lista enlazada?
+/*
+**		 Campos:	int message_id: identificador del mensaje.
+**					user_t from: estructura que indica el usuario al que pertenece el mensaje.
+**					chat_t chat: estructura que indica el chat al que pertenece el mensaje.
+**					long date: fecha y hora del mensaje ( en forma de UNIX ),
+**					char *text: texto del mensaje.
+**					char *command: comando identificado en el mensaje, si esque hay.
+**
+**	Descripción: Esta estructura representa un mensaje y contiene todos los datos referentes a un mensaje.
+*/
 typedef struct{
 	int message_id;
 	user_t from; // Si from.id = 0 no se debe utilizar.
@@ -98,23 +116,35 @@ typedef struct{
 	char *command; // void if command = NULL
 } message_t;
 
+/*
+**		 Campos:	char *text: Texto de la opcion de una encuesta.
+**					int opcion_votos: votos que tiene la opcion.
+**
+**	Descripción: Esta estructura representa una de las opciones de una encuesta.
+*/
 typedef struct{
-	char text [MAX_POLL_OPTION_TAM] ;
+	char *text ;
 	int opcion_votos;
 }option_t;
 
+/*
+**		 Campos:	unsigned long long int poll_id: identificador de la encuesta (un numero muy grande).
+**					char *question: Texto de la pregunta de la encuesta.
+**					option_t * options: Array de estructuras de opciones. 
+**					int total_votos: Numero total de votos recibidos de la encuesta.
+**
+**	Descripción: Esta estructura representa a una encuenta y contiene todos los datos referentes a ella.
+*/
 typedef struct{
 	unsigned long long int poll_id;
-	char question [MAX_POLL_QUESTION_TAM];
-	option_t options [MAX_POLL_OPTIONS];
+	char *question;
+	option_t * options;
 	int total_votos;       
 } poll_update_t;
 
-
-
 /*
-**		 Campos:  HTTP_INFO hi: Informacion del protocolo HTTPS para la librería de HTTPS.
-**				  char url[200]: URL con el token para acceder al bot.
+**		 Campos:  CURL *curlhandle: manejador de la libreria de https (CURL).
+**				  char url[MAX_URL_TAM]: La url de la peticion.
 **
 **	Descripción: Almacena los datos relativos a la comunicación HTTPS con los servidores de telegram.
  */
@@ -123,57 +153,95 @@ typedef struct{
 	char url[MAX_URL_TAM];
 } http_info_t;
 
-
-// TODO: Comentar
+/*
+**		 Campos:	updatetype_t type: Tipo de la actualización recibida, definido anteriormente.
+**					void *content: Contenido de la actualización.
+**					http_info_t *http_info: Estrucutura con la información de la comunicación https entre el bot y los servidores de Telegram.
+**
+**	Descripción: Esta estructura representa una actualización recibida por los servidores de telegram.
+*/
 typedef struct{
 	updatetype_t type; // Defined in UPDATE_<type>
 	void *content;
-	// TODO_ Pensar si esta es la mejor forma de que una función de evento pueda mandar mensajes o si hay otra.
 	http_info_t *http_info;
 } update_t;
 
 
-// TODO: Comentar
-// TODO: Pensar valores de retorno y parámetros
+//Esta definidicón es la forma que tiene un manejador de actualizaciones.
 typedef void (*updateHandle_t)(update_t *);
 
-// TODO: Comentar
-// TODO: Añadir más calificadores para los eventos
+/*
+**		 Campos:	updatetype_t update_type: Indica el tipo del evento.
+**					char info[MAX_COMMAND_TAM]: Información referente al evento.
+**
+**	Descripción: Esta estructura representa un evento y contiene los datos relacionados con el.
+*/
 typedef struct{
 	updatetype_t update_type;
 	char info[MAX_COMMAND_TAM];	//"" for general messages, disabled ig update_type = UPDATE_ANY or UPDATE_NONE
 } event_t;
 
-// TODO: Comentar
+/*
+**		 Campos:	updateHandle_t handle: El manejador del evento que se notifica.
+**					event_t event: Eestructura que representa el evento que se ha producido.
+**
+**	Descripción: Esta estructura asocia un evento con su manjador.
+*/
 typedef struct{
 	updateHandle_t handle;
 	event_t event; // EVENT_UNASSIGNED = NULL
 } update_notifier_t;
 
-
+/*
+**		 Campos:	sem_t * mutex_updateNotifiers: identificador del semaforo empleado para acceder a la memoria compartida que contiene los update_notifier_t.
+**					update_notifier_t notifiers[MAX_UPDATE_EVENTS]: Lista de estructuras de update_notifier_t (asociaciones de eventos con sus handlers).
+**
+**	Descripción: Esta estructura contiene la región crítica (lista de asociaciones de eventos y handlers) y su semáforo.
+*/
 typedef struct{
-	// TODO: Ver si usar el semáforo así es thread-safe.
 	sem_t * mutex_updateNotifiers; //La referencia al semáforo realizada en telebot_init
-	update_notifier_t notifiers[MAX_UPDATE_EVENTS];
+	update_notifier_t notifiers[MAX_UPDATE_EVENTS]; //Región critica. 
 } notifiers_info_t;
 
+/*
+**		 Campos:	http_info_t http_info: Estructura que contiene información de la comunicación https entre el bot y el servidor de Telegram.
+**					notifiers_info_t notifiers_info: Estructura que contiene la región crítica.
+**
+**	Descripción: Esta estructura reune las estructuras que contienen toda la información sobre el bot que puede necesitar cualquier función para funcionar. 
+*/
 typedef struct{
 	http_info_t http_info;
 	notifiers_info_t notifiers_info;
 } bot_info_t;
 
+/*
+**		 Campos:	http_info_t http_info: Estructura que contiene información de la comunicación https entre el bot y el servidor de Telegram.
+**					notifiers_info_t *notifiers_info:
+**
+**	Descripción: Esta estructura permite el acceso a los notifiers, para su modifiación. Polling necesita el puntero. 
+*/
 typedef struct{
 	http_info_t http_info;
 	notifiers_info_t *notifiers_info;
 } poll_info_t;
-	
-// TODO: Comentar
+
+/*
+**		 Campos:	char *response: Respuesta http sin procesar.
+**					size_t size: Tamaño de la respuesta.
+**
+**	Descripción: Esta estructura representa la respuesta http del servidor de telegram.
+*/
 typedef struct{
 	char *response;
 	size_t size;
 } http_response_t;
 
-// TODO: Comentar
+/*
+**		 Campos:	http_response_t http_response: Estructura que contiene la respuesta http.
+**					poll_info_t *poll_info: Puntero a la estrcutura que permite el acceso a notifiers.
+**
+**	Descripción: Esta estructura contienen la inforamción que necesita el hilo de parseo para funcionar. 
+*/
 typedef struct{
 	http_response_t http_response;
 	poll_info_t *poll_info;
@@ -185,6 +253,7 @@ typedef struct{
 
 /*
 **   Parámetros:  int stop: Indica con un 1 que se debe parar la aplicación.
+**				  bot_info_t **bi:
 **                
 **     Devuelve:  int: 0 si la aplicación debe parar, 1 e.o.c.
 **
@@ -194,7 +263,7 @@ int isRunning(int stop, bot_info_t **bi);
 
 
 /*
-**   Parámetros:  int sig: Se ignora.
+**   Parámetros:  int a: Se ignora.
 **
 **  Descripción:  Manda la terminación de los hilos internos a la librería y recursos reservados en la inicialización de la misma (semáforo mutex_updateNotifiers, curl, ...). El resto de hilos deben librerar sus recursos antes de cerrase.
 */
@@ -213,15 +282,13 @@ int telebot_init(char *token, bot_info_t *bot_info);
 
 
 /*
-**   Parámetros:  char *response: Valor devuelto por el método de la API getMe.
-**                int size: Tamaño de la respuesta.
+**   Parámetros:  http_response_t *http_response: Valor devuelto por el método de la API getMe.
 **				  http_info_t *http_info: Creado en telebot_init()
 **                
 **     Devuelve:  0 si la petición finaliza correctamente, -1 en caso de error.
 **
 **  Descripción:  Realiza una petición a la API de telegram con el método getMe, devolviendo la respuesta en *response.
 */
-//TODO: Comentar
 int telebot_getMe(http_response_t *http_response, http_info_t *http_info);
 
 
@@ -237,6 +304,17 @@ int telebot_getMe(http_response_t *http_response, http_info_t *http_info);
 */
 int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info);
 
+
+/*
+**   Parámetros:  char *chat_id: Id del chat al que mandar la petición.
+**				  char *question: Texto a enviar en el mensaje.
+**				  char **options: 
+**				  http_info_t *http_info: 
+**                
+**     Devuelve:  0 si la petición finaliza correctamente, -1 en caso de error.
+**
+**  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo
+*/
 int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *http_info);
 
 
@@ -314,16 +392,14 @@ int removeUpdateNotifier(event_t *event, bot_info_t *bot_info);
 
 
 /*
-**   Parámetros:  event_t event: nombre del evento que estamos buscando
-**				  bot_info_t *bot_info 	
-**				  updateHandle_t *handle: ṕuntero a la direccion de memoria en la que hay que dejar el handler
+**   Parámetros:  update_t *update: 
+**				  notifiers_info_t *notifiers_info
 **                
-**     Devuelve:  int Devuelve 0 en caso de exit, -1 en caso de que no se haya podido encontrar. 
+**     Devuelve:   
 **
-**  Descripción:  Comprobamos si existe un evento. 
+**  Descripción:   
 */
-updateHandle_t findUpdateHandler(update_t *update, update_notifier_t *notifiers);
-
+updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_info);
 
 #endif
 

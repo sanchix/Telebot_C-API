@@ -243,11 +243,21 @@ int removeUpdateNotifier(event_t *event, bot_info_t *bot_info){
 **
 **  Descripción:  Busca el evento de 'notifiers' que mejor coincida con 'update' y devuelve su manejador. En caso de no encontrarlo devuelve el handle del evento por defecto.
 */
-updateHandle_t findUpdateHandler(update_t *update, update_notifier_t *notifiers){
-	
+updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_info){
+	update_notifier_t *notifiers = notifiers_info->notifiers;
 	updateHandle_t handle = NULL;
 	updateHandle_t handle_def = NULL; // Manejador por defecto para un cierto tipo (sin información)
+<<<<<<< HEAD
+	sem_t *mutex_updateNotifiers;
+	// Preparar los semáforos
+	mutex_updateNotifiers = notifiers_info->mutex_updateNotifiers;
+=======
+	char * aux = NULL;
+>>>>>>> 2e3b56d05833f490e5b2bbef650eb3e11e26e32c
 	
+	// Se entra en la región compartida
+	sem_wait(mutex_updateNotifiers);
+
 	// se comienza buscando entre eventos asignados.
 	for(int i = 1; (i < MAX_UPDATE_EVENTS) && (handle == NULL); i++){
 		// Si coindice el tipo...
@@ -257,8 +267,10 @@ updateHandle_t findUpdateHandler(update_t *update, update_notifier_t *notifiers)
 				// si el evento tiene comando filtramos y asignamos.
 				// TODO: Cambiar notifiers[i].event.info != NULL por strcmp (no vale null, vale "")
 				if(notifiers[i].event.info[0] != '\0'){
+					printf("####################################################\n");
 					printf("Encontrado: %s\n", notifiers[i].event.info);
 					printf("Comando: %s\n", ((message_t *)update->content)->command);
+					printf("####################################################\n");
 					if(((message_t *)update->content)->command != NULL && strcmp(notifiers[i].event.info, ((message_t *)update->content)->command) == 0){
 						handle = notifiers[i].handle;
 					}
@@ -267,6 +279,21 @@ updateHandle_t findUpdateHandler(update_t *update, update_notifier_t *notifiers)
 				else{
 					handle_def = notifiers[i].handle;
 				}
+			} else if (update->type == UPDATE_POLL) {
+			  	//Si el evento tiene algo dentro de info y es de tipo encuesta, lo de dentro será la id de la encuesta.
+				if(notifiers[i].event.info[0] != '\0'){
+				 	 
+				 	printf ("Respuesta de encuesta recibida cuyo id: %s",notifiers[i].event.info);
+					
+					sprintf (aux,"%llu",((poll_update_t*)update->content)->poll_id);
+					if (((poll_update_t*)update->content)->poll_id != 0 && strcmp(aux,notifiers[i].event.info) == 0 ){
+						handle = notifiers[i].handle;
+					}
+				}
+				else{
+					handle_def = notifiers[i].handle;
+				}
+				
 			}
 			// TODO: Poner else if para poll u otros tipos
 		}
@@ -283,6 +310,9 @@ updateHandle_t findUpdateHandler(update_t *update, update_notifier_t *notifiers)
 		}
 	}
 	
+	// Se sale de la región compartida
+	sem_post(mutex_updateNotifiers);
+
 	return handle;
 	
 }

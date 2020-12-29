@@ -247,13 +247,11 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 	update_notifier_t *notifiers = notifiers_info->notifiers;
 	updateHandle_t handle = NULL;
 	updateHandle_t handle_def = NULL; // Manejador por defecto para un cierto tipo (sin información)
-<<<<<<< HEAD
+
 	sem_t *mutex_updateNotifiers;
 	// Preparar los semáforos
 	mutex_updateNotifiers = notifiers_info->mutex_updateNotifiers;
-=======
 	char * aux = NULL;
->>>>>>> 2e3b56d05833f490e5b2bbef650eb3e11e26e32c
 	
 	// Se entra en la región compartida
 	sem_wait(mutex_updateNotifiers);
@@ -268,8 +266,8 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 				// TODO: Cambiar notifiers[i].event.info != NULL por strcmp (no vale null, vale "")
 				if(notifiers[i].event.info[0] != '\0'){
 					printf("####################################################\n");
-					printf("Encontrado: %s\n", notifiers[i].event.info);
-					printf("Comando: %s\n", ((message_t *)update->content)->command);
+					printf("# Encontrado: %s\n", notifiers[i].event.info);
+					printf("# Comando: %s\n", ((message_t *)update->content)->command);
 					printf("####################################################\n");
 					if(((message_t *)update->content)->command != NULL && strcmp(notifiers[i].event.info, ((message_t *)update->content)->command) == 0){
 						handle = notifiers[i].handle;

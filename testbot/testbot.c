@@ -11,6 +11,46 @@
 #include <unistd.h>
 #include "telebot_Capi/telebot_Capi.h"
 
+void doEcho(update_t *update){
+	
+	message_t *message;
+	char cid[20];
+	// Solo vamos a hacer cosas con los mensajes
+	if(update->type == UPDATE_MESSAGE){
+		
+		message = (message_t *)update->content;
+		
+		// Se imprime el mensaje
+		if(message->from.id != 0){
+			printf("####################################################\n");
+			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
+		}
+		else{
+			printf("####################################################\n");
+			printf("#   Mensaje recibido de alguien: %s\n", message->text);
+		}
+		
+		// Se hace eco si se ha recibido texto
+		if(message->text != NULL){
+			printf("#   Haciendo eco...\n");
+			printf("####################################################\n");
+			sprintf(cid, "%i", message->chat.id);
+			telebot_sendMessage(cid, message->text, update->http_info);
+		}
+		
+	}
+	
+	// Si lo recibido no es un mensaje no hacemos nada
+	else{
+		printf("####################################################\n");
+		printf("#   Algo recibido: ...\n");
+		printf("####################################################\n");
+	}
+	
+	// TODO: Pensar que poner en el retorno
+	
+}
+
 void doSurvey (update_t *update){
   
 	poll_update_t *survey;
@@ -25,8 +65,8 @@ void doSurvey (update_t *update){
 			printf ("Total de votos recogidos: %d\n\n",survey->total_votos);
 		}
 	}
-
 }
+
 void felicita(update_t *update){
 	
 	message_t *message;
@@ -40,15 +80,18 @@ void felicita(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-			printf("Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
+			printf("####################################################\n");
+			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
 		}
 		else{
-			printf("Mensaje recibido de alguien: %s\n", message->text);
+			printf("####################################################\n");
+			printf("#   Mensaje recibido de alguien: %s\n", message->text);
 		}
 		
 		// Se hace eco si se ha recibido texto
 		if(message->text != NULL){
-			printf("Felicitando...\n");
+			printf("#   Felicitando...\n");
+			printf("####################################################\n");
 			sprintf(cid, "%i", message->chat.id);
 			strcat(text, message->from.first_name);
 			telebot_sendMessage(cid, text, update->http_info);
@@ -58,15 +101,22 @@ void felicita(update_t *update){
 	
 	// Si lo recibido no es un mensaje no hacemos nada
 	else{
-		printf("Algo recibido: ...\n");
+		printf("####################################################\n");
+		printf("#   Algo recibido: ...\n");
+		printf("####################################################\n");
 	}
-	
 }
 
-void doEcho(update_t *update){
+void doDefault(update_t *update){
 	
 	message_t *message;
-	char cid[20];
+	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
+
+	int M = 0;
+	int N = 5;
+	int Z = rand () % (N-M+1) + M;   // Este está entre M y N
+	char respuestas[][55] = {"Escribe un /comando","Escribe /help para obtener todos los comandos activos","No te entiendo","Gracias por hablarme","¿Que tal si haces una encuesta?"};
+
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		
@@ -74,36 +124,81 @@ void doEcho(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-			printf("Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
+			printf("####################################################\n");
+			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
 		}
 		else{
-			printf("Mensaje recibido de alguien: %s\n", message->text);
+			printf("####################################################\n");
+			printf("#   Mensaje recibido de alguien: %s\n", message->text);
 		}
-		
-		// Se hace eco si se ha recibido texto
+
+		// Se le responde si se ha recibido texto
 		if(message->text != NULL){
-			printf("Haciendo eco...\n");
+			printf("#   No ha indicado ningún comando...\n");
+			printf("####################################################\n");
 			sprintf(cid, "%i", message->chat.id);
-			telebot_sendMessage(cid, message->text, update->http_info);
+			telebot_sendMessage(cid, respuestas[Z], update->http_info);
 		}
-		
 	}
-	
 	// Si lo recibido no es un mensaje no hacemos nada
 	else{
-		printf("Algo recibido: ...\n");
+		printf("####################################################\n");
+		printf("#   Algo recibido: ...\n");
+		printf("####################################################\n");
 	}
-	
-	// TODO: Pensar que poner en el retorno
-	
 }
 
+void doHelp(update_t *update){
+	
+	message_t *message;
+	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
+	char ayuda[] = "/help\n/feliz\n/starteco\n/stopeco";
+	// Solo vamos a hacer cosas con los mensajes
+	if(update->type == UPDATE_MESSAGE){
+		
+		message = (message_t *)update->content;
+		
+		// Se imprime el mensaje
+		if(message->from.id != 0){
+			printf("####################################################\n");
+			printf("#   %s %s ha solicitado ayuda.\n", message->from.first_name, message->from.last_name);
+			printf("####################################################\n");
+		}
+		else{
+			printf("####################################################\n");
+			printf("#   Alguien ha solicitado ayuda\n");
+			printf("####################################################\n");
+		}
+		
+		// Se le responde si se ha recibido texto
+		if(message->text != NULL){		
+			sprintf(cid, "%i", message->chat.id);
+			telebot_sendMessage(cid, ayuda, update->http_info);
+		}
+	}
+	// Si lo recibido no es un mensaje no hacemos nada
+	else{
+		printf("####################################################\n");
+		printf("#   Algo recibido: ...\n");
+		printf("####################################################\n");
+	}
+}
+
+void imprimeError(char error[]){
+
+	printf("\033[1;31m");
+	printf("####################################################\n");
+	printf("#   %s \n",error);
+	printf("####################################################\n");
+	printf("\033[0m");
+
+}
 
 int main(int argc, char* argv[]){
 	
 	bot_info_t bot_info;
 	event_t event;
-	
+
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
 	}
@@ -111,39 +206,77 @@ int main(int argc, char* argv[]){
 	// TODO: Configurar los handle antes
 	// Iniciamos las funciones de librería en bot_info
 	else if(telebot_init(argv[1], &bot_info) != 0){
-			printf("Error al iniciar telebot_Capi\n");
+			imprimeError("TESTBOT: Error al iniciar telebot_Capi");
 	}
 	
 	// Si todo va correcto procedemos a realizar pruebas:
 	else{
 		
-		printf("Initialized\n");
+		printf("\033[1;33m");
+		printf("TESTBOT: Initialized\n");
+		printf("\033[0m");
 		
+		char Ros[] = "166103691";
+		char Juan[] = "150848014";
+
+		/*
 		char pregunta[]= "¿Funcionara?";
 		char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
-		
-		//telebot_sendPoll("166103691",pregunta,opciones, &bot_info.http_info);
-		telebot_sendPoll("150848014",pregunta,opciones, &bot_info.http_info);
-		//telebot_sendMessage("150848014", "Hola", &bot_info.http_info);
-		
+		telebot_sendPoll(Ros,pregunta,opciones, &bot_info.http_info);
+		*/
+
+		//telebot_sendMessage(Ros, "Haciendo una prueba", &bot_info.http_info);		
 
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto
 		// handle -> imprimeMensaje
 		event.update_type = UPDATE_ANY;
-		if(addUpdateNotifier(doEcho, &event, &bot_info) != 0){
-			printf("Fallo al añadir handler doEcho\n");
+		if(addUpdateNotifier(doDefault, &event, &bot_info) != 0){
+			imprimeError("TESTBOT: Fallo al añadir handler doDefault");
 		}
 		
 		event.update_type = UPDATE_MESSAGE;
-		strcpy(event.info, "start");
+		strcpy(event.info, "feliz");
 		if(addUpdateNotifier(felicita, &event, &bot_info) != 0){
-			printf("Fallo al añadir handler felicita\n");
+			imprimeError("TESTBOT: Fallo al añadir handler felicita");
+		}
+
+		event.update_type = UPDATE_MESSAGE;
+		strcpy(event.info, "help");
+		if(addUpdateNotifier(doHelp, &event, &bot_info) != 0){
+			imprimeError("TESTBOT: Fallo al añadir handler doHelp");
+		}
+
+		void starteco(){
+			event.update_type = UPDATE_ANY;
+			if(addUpdateNotifier(doEcho, &event, &bot_info) != 0){
+				imprimeError("TESTBOT: Fallo al añadir handler doEcho");
+			}
+		}
+
+		void stopeco(){
+
+			event.update_type = UPDATE_ANY;
+			if(addUpdateNotifier(doDefault, &event, &bot_info) != 0){
+				imprimeError("TESTBOT: Fallo al añadir handler doDefault");
+			}
+		}
+
+		event.update_type = UPDATE_MESSAGE;
+		strcpy(event.info, "starteco");
+		if(addUpdateNotifier(starteco, &event, &bot_info) != 0){
+			imprimeError("TESTBOT: Fallo al añadir handler starteco");
+		}
+
+		event.update_type = UPDATE_MESSAGE;
+		strcpy(event.info, "stopeco");
+		if(addUpdateNotifier(stopeco, &event, &bot_info) != 0){
+			imprimeError("TESTBOT: Fallo al añadir handler stopeco");
 		}
 
 		event.update_type = UPDATE_POLL;
 		if(addUpdateNotifier(doSurvey, &event, &bot_info) != 0){
-			printf("Fallo al añadir handler de la encuesta\n");
+			imprimeError("TESTBOT: Fallo al añadir handler de la encuesta");
 		}
 		// TODO: Comprobar que funcionan los semáforos
 		

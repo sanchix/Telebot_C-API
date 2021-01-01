@@ -58,11 +58,13 @@ void doSurvey (update_t *update){
 	if (update->type == UPDATE_MESSAGE){
 		survey = (poll_update_t *)update->content;
 		if (survey->question != NULL && survey->options != NULL){
-			printf("Pregunta de la encuesta: %s\n\n",survey->question);
+			printf("####################################################\n");
+			printf("#   Pregunta de la encuesta: %s\n\n",survey->question);
 			for (int i=0; survey->options[i].text !=NULL;i++){
-			  printf ("\tOpcion %d: %s, Votos: %d\n",i,survey->options[i].text,survey->options[i].opcion_votos);
+			  printf ("#\tOpcion %d: %s, Votos: %d\n",i,survey->options[i].text,survey->options[i].opcion_votos);
 			}
-			printf ("Total de votos recogidos: %d\n\n",survey->total_votos);
+			printf ("#   Total de votos recogidos: %d\n\n",survey->total_votos);
+			printf("####################################################\n");
 		}
 	}
 }
@@ -219,11 +221,11 @@ int main(int argc, char* argv[]){
 		char Ros[] = "166103691";
 		char Juan[] = "150848014";
 
-		/*
-		char pregunta[]= "¿Funcionara?";
-		char *opciones[20]= {"SI","NO","OBERSERVAD",NULL};
+		
+		char pregunta[] = "¿Funcionara?";
+		char *opciones[20] = {"SI","NO","OBERSERVAD",NULL};
 		telebot_sendPoll(Ros,pregunta,opciones, &bot_info.http_info);
-		*/
+		
 
 		//telebot_sendMessage(Ros, "Haciendo una prueba", &bot_info.http_info);		
 

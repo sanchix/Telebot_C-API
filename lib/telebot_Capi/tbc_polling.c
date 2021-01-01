@@ -243,7 +243,8 @@ void *tbc_parser(void *info){
 		resp_info = (response_info_t *)info;
 		
 		// TODO: Quitar (es para depuración).
-		printf("\nUpdate:\n");
+		printf("\n####################################################\n");
+		printf("#   Update:\n");
 		
 		// Realizar el parse con la librería jansson
 		json_root = json_loads(resp_info->http_response.response, 0, &error);
@@ -263,7 +264,7 @@ void *tbc_parser(void *info){
 		// Si todo va bien
 		else{
 			// TODO: Quitar, es de debug
-			printf("\tok\n");
+			printf("#\tok\n");
 		
 			// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
 			update.http_info = &(resp_info->poll_info->http_info);
@@ -283,7 +284,7 @@ void *tbc_parser(void *info){
 				json_aux = json_object_get(json_update, "update_id");
 				update_id = json_integer_value(json_aux);
 				//TODO: quitar esta impresión (es debug)
-				printf("\tUpdate id: %lld\n", update_id);
+				printf("#\tUpdate id: %lld\n", update_id);
 				
 				
 				/* --- Procesar el update --- */
@@ -321,17 +322,19 @@ void *tbc_parser(void *info){
 
 					unpack_json_poll_update(update.content,json_aux);
 					update.type = UPDATE_POLL;
-					printf("Received poll update\n");
+					printf("#   Received poll update\n");
+					printf("####################################################\n");
 				}
 				else{
 					update.type = UPDATE_NONE;
-					printf("Something received\n");
+					printf("#   Something received\n");
+					printf("####################################################\n");
 				}
-				
+				printf("1");
 				// Se obtiene el handle a utilizar
 				handle = findUpdateHandler(&update, resp_info->poll_info->notifiers_info);
 				handle(&update);
-								
+				printf("2");								
 				// Se liberan recursos
 				// TODO: Liberar recursos en caso de encuesta y otros mensajes
 				if(update.type == UPDATE_MESSAGE){
@@ -344,6 +347,7 @@ void *tbc_parser(void *info){
 					free(update.content);
 					
 				} else if (update.type == UPDATE_POLL) {
+					printf("3");
 				  	if(((poll_update_t *)update.content)->question != NULL){
 						free(((poll_update_t *)update.content)->question);
 					}

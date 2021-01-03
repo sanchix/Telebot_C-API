@@ -405,16 +405,8 @@ int telebot_sendPoll(char *chat_id, char *question, char **options, http_info_t 
 
 	// Generamos la cadena JSON
 
-	//Las dos lineas comentadas a continuacio, printf, impiden que se añadan caracteres desconocidos delante de la primera opcion a parsed options: X��6� Dependiendo de cual de las dos se pomga salen unos u otros.
-
 	sprintf(opcion,"\"%s\"",options[0]);
-<<<<<<< HEAD
 	strcpy(parsedoptions,opcion);
-=======
-	//printf("#   Opciones send: %s\n", opcion);//
-	strcpy(parsedoptions,opcion);
-	//printf("#   Opciones send: %s\n", parsedoptions);//
->>>>>>> e7f136ba5637af135044b09a076e466eb6e562f6
 	for (int i = 1 ; options[i] != NULL ; i++){
 		sprintf(opcion,",\"%s\"",options[i]);
 		strcat(parsedoptions,opcion);
@@ -426,12 +418,6 @@ int telebot_sendPoll(char *chat_id, char *question, char **options, http_info_t 
 	printf("##########################-telebot_sendPoll-##########################\n");
 	printf("#   Enviando encuesta\n");
 	printf("#   Encuesta send: %s\n", data);
-	printf("#   Opciones parseadas send: %s\n", parsedoptions);
-	printf("#   Opciones send: %s\n", options[0]);
-	printf("#   Opciones send: %s\n", options[1]);
-	printf("#   Opciones send: %s\n", options[2]);
-	printf("#   Opciones send: %s\n", options[3]);
-	//status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
 	curl_easy_setopt(http_info->curlhandle, CURLOPT_POSTFIELDS, data);
 	curl_easy_setopt(http_info->curlhandle, CURLOPT_URL, url);
 	curl_easy_setopt(http_info->curlhandle, CURLOPT_WRITEDATA, (void *)&http_response);

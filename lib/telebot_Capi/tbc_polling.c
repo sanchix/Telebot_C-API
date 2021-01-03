@@ -331,12 +331,12 @@ void *tbc_parser(void *info){
 					printf("#   Something received\n");
 					printf("####################################################\n");
 				}
-				printf("1\n");
+
 				// Se obtiene el handle a utilizar
 				handle = findUpdateHandler(&update, resp_info->poll_info->notifiers_info);
-				printf("2\n");								
+							
 				handle(&update);
-				printf("2.5\n");
+
 				// Se liberan recursos
 				// TODO: Liberar recursos en caso de encuesta y otros mensajes
 				if(update.type == UPDATE_MESSAGE){
@@ -349,7 +349,7 @@ void *tbc_parser(void *info){
 					free(update.content);
 					
 				} else if (update.type == UPDATE_POLL) {
-					printf("3");
+
 				  	if(((poll_update_t *)update.content)->question != NULL){
 						free(((poll_update_t *)update.content)->question);
 					}

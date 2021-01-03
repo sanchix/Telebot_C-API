@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/stat.h> /* struct stat y fstat */
+#include <sys/mman.h> /* mmap */
 #include "telebot_Capi/telebot_Capi.h"
 
 void imprimeError(char error[]){
@@ -199,16 +201,18 @@ void doHelp(update_t *update){
 }
 
 
-int findSubscripcion(int chat_id){
+int findSubscripcion(char *chat_id){
 	char cid[20];
 	FILE *fichero;
 	fichero = fopen("subscripciones.txt","r"); //abre el fichero y se posiciona al principio
 	int i = 0;
 	int x = -1;
+
 	while (fscanf(fichero,"%s\n",cid)!= EOF){
-		if (strcmp(cid,chat_id)==0){
+		if (strcmp(cid,chat_id) == 0){
 		x = i;
 		}
+		i++;
 		//printf("chat_id:%s\n",cid);
 	}
 	fclose(fichero);
@@ -218,14 +222,17 @@ int findSubscripcion(int chat_id){
 
 void doJoin(update_t *update){
 	
+	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
 	message_t *message;
 	char subscripcion[3*64];
 	FILE *fichero;
+
 
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		
 		message = (message_t *)update->content;
+		sprintf(cid,"%d",message->from.id);
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
@@ -233,8 +240,8 @@ void doJoin(update_t *update){
 			printf("#   %s %s ha solicitado subscribirse a las encuestas.\n", message->from.first_name, message->from.last_name);
 
 
-			if (findSubscripcion(message->from.id)>0){
-				printf("#   Ya está subscrito.\n", message->from.first_name, message->from.last_name);
+			if (findSubscripcion(cid) != -1){
+				printf("#   Ya está subscrito.\n");
 				printf("####################################################\n");
 			}else{
 				printf("####################################################\n");
@@ -270,11 +277,15 @@ void doDelete(update_t *update){
 	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
 	int fichero;
 	char *datos;
+	struct stat bstat;
+
+	
 
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		
 		message = (message_t *)update->content;
+		sprintf(cid,"%d",message->from.id);
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
@@ -282,12 +293,13 @@ void doDelete(update_t *update){
 			printf("#   %s %s ha solicitado borrar su subscripción a las encuestas.\n", message->from.first_name, message->from.last_name);
 			printf("####################################################\n");
 			
-			if (findSubscripcion(message->from.id)>0){
-				printf("#   No está subscrito.\n", message->from.first_name, message->from.last_name);
+			if (findSubscripcion(cid) == -1){
+				printf("#   No está suscrito.\n");
 				printf("####################################################\n");
 			}else{
+
 				//Se almacenan los datos en el fichero:			
-				if(fichero=open("subscripciones.txt",O_RDWR)<0){
+				if( (fichero=open("subscripciones.txt",O_RDWR)) < 0 ){
 					imprimeError("TESTBOT: No se ha podido abrir el fichero orgien.");
 				}else{
 
@@ -295,31 +307,43 @@ void doDelete(update_t *update){
          			if(fstat(fichero, &bstat)<0){
             			perror("Error en fstat en el fichero");
          			}else{
+
 			            if ((datos=(char *)mmap((caddr_t) 0, bstat.st_size, PROT_READ, MAP_SHARED, fichero, 0)) == MAP_FAILED){
             			   perror("Error en la proyeccion del fichero origen");
             			}else{
 
 			                /* Bucle de búsqueda */
-				            int j = 0;
-				            int i = 0;
-				            for (i=0; i<bstat.st_size; i++){
-				                if (datos[i] == argv[1][0])
-				                    j++;
-				            }
-				            printf("El caracter %s se repite %d veces en el fichero %s\n",argv[1],j,argv[2]);
-			                
-			                /* Se eliminan la proyeccion */
-			                if (munmap(datos, bstat.st_size)){
-			                	perror("Error al eliminar la proyeccion");
-			                }
+							    int len;
+							    int offset = 0;
+							    char aux[100];
+							    char* found = NULL;
+							    int iteracion = 0;
+							    
+							    len = strlen(datos);
 
+							    while(offset < len && !found){
+
+							        sscanf(datos+offset, "%s\n", aux);
+							        
+							        if(strcmp(aux, cid) == 0){
+							            //printf("Encontrado en posición %i\n", iteracion+1);
+							            found = datos + offset;
+							            //printf("Dato: %s\n", found);
+							        }
+							        
+							        offset += strlen(aux) + 1;
+							        iteracion++;
+
+							    }
+							    printf("antes\n");
+							    printf("cosas:%s\n",found+strlen(aux)+1);
+							    printf("found:%s\n",found );
+							    strcpy(found, found+strlen(aux)+1);							    
+							    printf("despues\n");
             			}
          			}
          			close(fichero);
 				}				
-				while (fscanf(fichero,"chat_id:%s\n",cid)!= EOF){
-					printf("chat_id:%s\n",cid);
-				}
 			}
 		}
 		else{
@@ -368,26 +392,13 @@ int main(int argc, char* argv[]){
 		printf("TESTBOT: Initialized\n");
 		printf("\033[0m");
 		
-<<<<<<< HEAD
-<<<<<<< HEAD
-		char ros[] = "166103691";
-		char juan[] = "150848014";
-
-		
-		char pregunta[] = "¿Funcionara?";
-		char *opciones[20] = {"SI","NO","OBERSERVAD",NULL};
-		
 		telebot_sendMessage(ros, "Haciendo una prueba", &bot_info.http_info);		
 		telebot_sendPoll(ros,pregunta,opciones, &bot_info.http_info);
-		
-=======
+		/*
 		telebot_sendMessage(jcube, "Haciendo una prueba", &bot_info.http_info);		
 		telebot_sendPoll(jcube,pregunta,opciones, &bot_info.http_info);
->>>>>>> e7f136ba5637af135044b09a076e466eb6e562f6
-=======
-		telebot_sendMessage(jcube, "Haciendo una prueba", &bot_info.http_info);		
-		telebot_sendPoll(jcube,pregunta,opciones, &bot_info.http_info);
->>>>>>> e7f136ba5637af135044b09a076e466eb6e562f6
+		*/
+
 
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto

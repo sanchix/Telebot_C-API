@@ -94,7 +94,7 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 	if((aux = json_object_get(message_obj, "text")) != NULL){
 		
 		st_aux = json_string_value(aux);
-		if((message->text = (char *)malloc(strlen(st_aux))) == NULL){
+		if((message->text = (char *)malloc(sizeof(char)*strlen(st_aux))) == NULL){
 			printf("\033[1;31m");
 			printf("####################################################\n");
 			printf("Parse>unpack_json_message: text malloc failed\n");
@@ -113,7 +113,7 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 				tam = tam - ((&st_aux[tam] - st_aux2) + 1);
 			}
 			if(tam != 0){
-				if((message->command = (char *)malloc(tam)) == NULL){
+				if((message->command = (char *)malloc(tam*sizeof(char))) == NULL){
 					printf("\033[1;31m");
 					printf("####################################################\n");
 					printf("Parse>unpack_json_message: command malloc failed\n");
@@ -169,32 +169,33 @@ int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
 	//TODO: Poner ifs de correcta recogida y reflejar en ret.
 	poll->poll_id = json_integer_value(json_object_get(message_obj, "id"));
 	tam_preg = strlen(json_string_value(json_object_get(message_obj, "question")));
-	if ((poll->question = (char *)malloc(tam_preg)) != NULL){
+	if ((poll->question = (char *)malloc(tam_preg*sizeof(char))) != NULL){
 	
 		strcpy(poll->question,json_string_value(json_object_get(message_obj, "question")));
 		json_opciones = json_object_get (message_obj,"options");
 		
-		if ((poll->options=(option_t *)malloc(json_array_size(json_opciones) + 1))!=NULL){
+		if ((poll->options = (option_t *)malloc(sizeof(option_t)*(json_array_size(json_opciones) + 1))) != NULL){
 		  
-		  	for(size_t i = 0; i < json_array_size(json_opciones); i++)
-			  {
+		  	for(size_t i = 0; i < json_array_size(json_opciones); i++){
 			    
 				json_opcion = json_array_get(json_opciones, i);
 				int tam_text = strlen (json_string_value(json_object_get(json_opcion,"text")));
 				
-				if ((poll->options[i].text = (char *)malloc(tam_text))!=NULL){
+				if ((poll->options[i].text = (char *)malloc(sizeof(char)*tam_text))!=NULL){
 					strcpy(poll->options[i].text, json_string_value(json_object_get(json_opcion,"text")));
 					poll->options[i].opcion_votos = json_integer_value(json_object_get(json_opcion,"voter_count"));
 				}else{
 					printf("> Parse: options[%lu].text malloc failed\n",i);
 				}
 				
-			  }
+			}
 			poll->options[json_array_size(json_opciones)].text = NULL;
 		  
 		} else{
 		  	printf("> Parse: options malloc failed\n");	  				    	  
 		}
+		
+		poll->total_votos = json_integer_value(json_object_get(message_obj, "total_voter_count"));
 
 	}
 	else{
@@ -326,15 +327,16 @@ void *tbc_parser(void *info){
 					printf("####################################################\n");
 				}
 				else{
-					update.type = UPDATE_NONE;
+					update.type = UPDATE_UNKNOWN;
 					printf("#   Something received\n");
 					printf("####################################################\n");
 				}
-				printf("1");
+				printf("1\n");
 				// Se obtiene el handle a utilizar
 				handle = findUpdateHandler(&update, resp_info->poll_info->notifiers_info);
+				printf("2\n");								
 				handle(&update);
-				printf("2");								
+				printf("2.5\n");
 				// Se liberan recursos
 				// TODO: Liberar recursos en caso de encuesta y otros mensajes
 				if(update.type == UPDATE_MESSAGE){

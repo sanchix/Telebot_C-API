@@ -369,6 +369,7 @@ int main(int argc, char* argv[]){
 		printf("\033[0m");
 		
 <<<<<<< HEAD
+<<<<<<< HEAD
 		char ros[] = "166103691";
 		char juan[] = "150848014";
 
@@ -379,6 +380,10 @@ int main(int argc, char* argv[]){
 		telebot_sendMessage(ros, "Haciendo una prueba", &bot_info.http_info);		
 		telebot_sendPoll(ros,pregunta,opciones, &bot_info.http_info);
 		
+=======
+		telebot_sendMessage(jcube, "Haciendo una prueba", &bot_info.http_info);		
+		telebot_sendPoll(jcube,pregunta,opciones, &bot_info.http_info);
+>>>>>>> e7f136ba5637af135044b09a076e466eb6e562f6
 =======
 		telebot_sendMessage(jcube, "Haciendo una prueba", &bot_info.http_info);		
 		telebot_sendPoll(jcube,pregunta,opciones, &bot_info.http_info);

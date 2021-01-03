@@ -85,6 +85,10 @@ void doEncuesta (update_t *update){
 	
 	message_t *message;
 	char cid[20];
+	int w = 1;
+	char aux[MAX_POLL_OPTIONS+1][MAX_POLL_QUESTION_TAM];
+	char pregunta[MAX_POLL_QUESTION_TAM];
+
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		
@@ -94,8 +98,28 @@ void doEncuesta (update_t *update){
 		if(message->text != NULL){
 			
 			printf("#   Mensaje: %s\n",message->text);
-			sscanf(message->text,"/encuesta %s %s");
-			
+
+			char options[MAX_POLL_OPTIONS][MAX_POLL_OPTION_TAM];
+
+			int offset = strlen("/encuesta ");
+			sscanf(message->text + offset, "%s:", pregunta);
+			printf("#   pregunta: %s\n",pregunta);			  
+			for(int i = 1; (w != 0) && i < MAX_POLL_OPTIONS; i++){
+			  w = sscanf(message->text + offset, ",%s,", aux[i]);
+				printf("#   cosas: %s\n",aux[i]);			  
+			  offset += strlen(aux[i]) + 1;
+			  if (i>0) {
+			  	strcpy(options[i-1],aux[i]);
+			  }
+			}
+
+			FILE *fichero;
+			fichero = fopen("suscripciones.txt","r"); //abre el fichero y se posiciona al principio
+
+			while (fscanf(fichero,"%s\n",cid)!= EOF){
+				telebot_sendPoll(cid,pregunta, options, update->http_info);
+			}
+			fclose(fichero);
 		}
 	}
 }

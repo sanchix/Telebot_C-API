@@ -22,11 +22,11 @@ void doEcho(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-				printf("##########################-doEcho-##########################\n");
+			printf("##########################-doEcho-##########################\n");
 			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
 		}
 		else{
-				printf("##########################-doEcho-##########################\n");
+			printf("##########################-doEcho-##########################\n");
 			printf("#   Mensaje recibido de alguien: %s\n", message->text);
 		}
 		
@@ -42,7 +42,7 @@ void doEcho(update_t *update){
 	
 	// Si lo recibido no es un mensaje no hacemos nada
 	else{
-		printf("####################################################\n");
+		printf("##########################-doEcho-##########################\n");
 		printf("#   Algo recibido: ...\n");
 		printf("####################################################\n");
 	}
@@ -58,7 +58,7 @@ void doSurvey (update_t *update){
 	if (update->type == UPDATE_MESSAGE){
 		survey = (poll_update_t *)update->content;
 		if (survey->question != NULL && survey->options != NULL){
-				printf("##########################-doSurvey-##########################\n");
+			printf("##########################-doSurvey-##########################\n");
 			printf("#   Pregunta de la encuesta: %s\n\n",survey->question);
 			for (int i=0; survey->options[i].text !=NULL;i++){
 			  printf ("#\tOpcion %d: %s, Votos: %d\n",i,survey->options[i].text,survey->options[i].opcion_votos);
@@ -82,11 +82,11 @@ void felicita(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-				printf("##########################-felicita-##########################\n");
+			printf("##########################-felicita-##########################\n");
 			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
 		}
 		else{
-				printf("##########################-felicita-##########################\n");
+			printf("##########################-felicita-##########################\n");
 			printf("#   Mensaje recibido de alguien: %s\n", message->text);
 		}
 		
@@ -103,7 +103,7 @@ void felicita(update_t *update){
 	
 	// Si lo recibido no es un mensaje no hacemos nada
 	else{
-		printf("####################################################\n");
+		printf("##########################-felicita-##########################\n");
 		printf("#   Algo recibido: ...\n");
 		printf("####################################################\n");
 	}
@@ -144,7 +144,7 @@ void doDefault(update_t *update){
 	}
 	// Si lo recibido no es un mensaje no hacemos nada
 	else{
-		printf("####################################################\n");
+		printf("##########################-doDefault-##########################\n");
 		printf("#   Algo recibido: ...\n");
 		printf("####################################################\n");
 	}
@@ -180,7 +180,43 @@ void doHelp(update_t *update){
 	}
 	// Si lo recibido no es un mensaje no hacemos nada
 	else{
+		printf("##########################-doHelp-##########################\n");
+		printf("#   Algo recibido: ...\n");
 		printf("####################################################\n");
+	}
+}
+
+void doJoin(update_t *update){
+	
+	message_t *message;
+	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
+
+	// Solo vamos a hacer cosas con los mensajes
+	if(update->type == UPDATE_MESSAGE){
+		
+		message = (message_t *)update->content;
+		
+		// Se imprime el mensaje
+		if(message->from.id != 0){
+			printf("##########################-doJoin-##########################\n");
+			printf("#   %s %s ha solicitado ayuda.\n", message->from.first_name, message->from.last_name);
+			printf("####################################################\n");
+		}
+		else{
+			printf("##########################-doHelp-##########################\n");
+			printf("#   Alguien ha solicitado subscribirse a las encuestas.\n");
+			printf("####################################################\n");
+		}
+		
+		// Se le responde si se ha recibido texto
+		if(message->text != NULL){		
+			sprintf(cid, "%i", message->chat.id);
+			telebot_sendMessage(cid, ayuda, update->http_info);
+		}
+	}
+	// Si lo recibido no es un mensaje no hacemos nada
+	else{
+		printf("##########################-doJoin-##########################\n");
 		printf("#   Algo recibido: ...\n");
 		printf("####################################################\n");
 	}

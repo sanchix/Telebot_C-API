@@ -185,11 +185,12 @@ void doHelp(update_t *update){
 		printf("####################################################\n");
 	}
 }
-
+/*
 void doJoin(update_t *update){
 	
 	message_t *message;
 	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
+	char subscripcion[3*64]
 
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
@@ -199,8 +200,12 @@ void doJoin(update_t *update){
 		// Se imprime el mensaje
 		if(message->from.id != 0){
 			printf("##########################-doJoin-##########################\n");
-			printf("#   %s %s ha solicitado ayuda.\n", message->from.first_name, message->from.last_name);
+			printf("#   %s %s ha solicitado subscribirse a las encuestas.\n", message->from.first_name, message->from.last_name);
 			printf("####################################################\n");
+
+			//Se almacenan los datos en el fichero:
+			sprintf(subscripcion,"{\"chat_id\":%s,\"first_name\":\"%s\",\"last_name\":[%s]}",chat_id,message->from.first_name, message->from.last_name);
+
 		}
 		else{
 			printf("##########################-doHelp-##########################\n");
@@ -221,7 +226,7 @@ void doJoin(update_t *update){
 		printf("####################################################\n");
 	}
 }
-
+*/
 void imprimeError(char error[]){
 
 	printf("\033[1;31m");

@@ -7,6 +7,7 @@
 ** Descripcion:  Declaraciones de las funciones, tipos y constantes que podrá utilizar el usuario de la librería, así como las declaraciones de las funciones, tipos y constantes necesarias para el código contenido en pooling.c
 */
 
+
 #ifndef TELEBOT_CAPI_H
 #define TELEBOT_CAPI_H
 

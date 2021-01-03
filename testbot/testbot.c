@@ -9,7 +9,18 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/stat.h> /* struct stat y fstat */
 #include "telebot_Capi/telebot_Capi.h"
+
+void imprimeError(char error[]){
+
+	printf("\033[1;31m");
+	printf("####################################################\n");
+	printf("#   %s \n",error);
+	printf("####################################################\n");
+	printf("\033[0m");
+
+}
 
 void doEcho(update_t *update){
 	
@@ -66,6 +77,25 @@ void doSurvey (update_t *update){
 			printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
 			printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
 			printf("####################################################\n");
+		}
+	}
+}
+
+void doEncuesta (update_t *update){
+	
+	message_t *message;
+	char cid[20];
+	// Solo vamos a hacer cosas con los mensajes
+	if(update->type == UPDATE_MESSAGE){
+		
+		message = (message_t *)update->content;
+		
+		// Se hace eco si se ha recibido texto
+		if(message->text != NULL){
+			
+			printf("#   Mensaje: %s\n",message->text);
+			sscanf(message->text,"/encuesta %s %s");
+			
 		}
 	}
 }
@@ -127,11 +157,11 @@ void doDefault(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-				printf("##########################-doDefault-##########################\n");
+			printf("##########################-doDefault-##########################\n");
 			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
 		}
 		else{
-				printf("##########################-doDefault-##########################\n");
+			printf("##########################-doDefault-##########################\n");
 			printf("#   Mensaje recibido de alguien: %s\n", message->text);
 		}
 
@@ -151,11 +181,12 @@ void doDefault(update_t *update){
 	}
 }
 
+
 void doHelp(update_t *update){
 	
 	message_t *message;
 	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
-	char ayuda[] = "/help\n/feliz\n/starteco\n/stopeco";
+	char ayuda[] = "/help\n/feliz\n/starteco\n/stopeco\n/join\n/delete";
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		
@@ -186,27 +217,59 @@ void doHelp(update_t *update){
 		printf("####################################################\n");
 	}
 }
-/*
+
+
+int findSubscripcion(char *chat_id){
+	char cid[20];
+	FILE *fichero;
+	fichero = fopen("suscripciones.txt","r"); //abre el fichero y se posiciona al principio
+	int i = 0;
+	int x = -1;
+
+	while (fscanf(fichero,"%s\n",cid)!= EOF){
+		if (strcmp(cid,chat_id) == 0){
+		x = i;
+		}
+		i++;
+		//printf("chat_id:%s\n",cid);
+	}
+	fclose(fichero);
+	return x;
+}
+
+
 void doJoin(update_t *update){
 	
-	message_t *message;
 	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
-	char subscripcion[3*64]
+	message_t *message;
+	char subscripcion[3*64];
+	FILE *fichero;
 
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		
 		message = (message_t *)update->content;
+		sprintf(cid,"%d",message->from.id);
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
 			printf("##########################-doJoin-##########################\n");
 			printf("#   %s %s ha solicitado subscribirse a las encuestas.\n", message->from.first_name, message->from.last_name);
-			printf("####################################################\n");
 
-			//Se almacenan los datos en el fichero:
-			sprintf(subscripcion,"{\"chat_id\":%s,\"first_name\":\"%s\",\"last_name\":[%s]}",chat_id,message->from.first_name, message->from.last_name);
 
+			if (findSubscripcion(cid) != -1){
+				printf("#   Ya está subscrito.\n");
+				printf("####################################################\n");
+			}else{
+				printf("####################################################\n");
+				//Se almacenan los datos en el fichero:
+				sprintf(subscripcion,"%d\n",message->from.id);
+				fichero = fopen("suscripciones.txt","a"); //abre el fichero y se posiciona al final
+				if (fputs(subscripcion,fichero)<0){
+					imprimeError("TESTBOT: Error al escribir una subscripción en el fichero.");
+				}
+				fclose(fichero);
+				}			
 		}
 		else{
 			printf("##########################-doHelp-##########################\n");
@@ -214,11 +277,6 @@ void doJoin(update_t *update){
 			printf("####################################################\n");
 		}
 		
-		// Se le responde si se ha recibido texto
-		if(message->text != NULL){		
-			sprintf(cid, "%i", message->chat.id);
-			telebot_sendMessage(cid, ayuda, update->http_info);
-		}
 	}
 	// Si lo recibido no es un mensaje no hacemos nada
 	else{
@@ -227,15 +285,102 @@ void doJoin(update_t *update){
 		printf("####################################################\n");
 	}
 }
-*/
-void imprimeError(char error[]){
 
-	printf("\033[1;31m");
-	printf("####################################################\n");
-	printf("#   %s \n",error);
-	printf("####################################################\n");
-	printf("\033[0m");
 
+
+void doDelete(update_t *update){
+	
+	message_t *message;
+	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
+	struct stat bstat;
+	char *datos;
+ 	int fichero;
+ 	FILE *fichero2;
+
+	// Solo vamos a hacer cosas con los mensajes
+	if(update->type == UPDATE_MESSAGE){
+		
+		message = (message_t *)update->content;
+		sprintf(cid,"%d",message->from.id);
+		
+		// Se imprime el mensaje
+		if(message->from.id != 0){
+			printf("##########################-doDelete-##########################\n");
+			printf("#   %s %s ha solicitado borrar su subscripción a las encuestas.\n", message->from.first_name, message->from.last_name);
+			printf("####################################################\n");
+			
+			if (findSubscripcion(cid) == -1){
+				printf("#   No está suscrito.\n");
+				printf("####################################################\n");
+			}else{
+
+			  	/* Abrir el fichero recibido como argumento */
+  				if ((fichero=open("suscripciones.txt", O_RDONLY))<0){
+    				imprimeError("No puede abrirse el fichero origen");
+    			}else if (fstat(fichero, &bstat)<0){
+                    imprimeError("Error en fstat en el fichero");
+                }else{
+					datos = (char *)malloc(sizeof(char)*bstat.st_size);
+					
+					read(fichero,datos,sizeof(char)*bstat.st_size);
+
+					close(fichero);
+	                
+	                /* Bucle de búsqueda */
+				    int len;
+				    int newlen;
+				    int offset = 0;
+				    char aux[100];
+				    char* found = NULL;
+				    int iteracion = 0;
+				    
+				    len = strlen(datos);
+					printf("Datos (%i):%s\n\n", len, datos);
+					
+					printf("Datos[len-1]: %i\n", datos[len-1]);
+					printf("Datos[len]: %i\n", datos[len]);
+					printf("Datos[len+1]: %i\n", datos[len+1]);
+
+				    while(offset < len && !found){
+
+				        sscanf(datos+offset, "%s\n", aux);
+				        
+				        if(strcmp(aux, cid) == 0){
+				            //printf("Encontrado en posición %i\n", iteracion+1);
+				            found = datos + offset;
+				            //printf("Dato: %s\n", found);
+				        }
+				        
+				        offset += strlen(aux) + 1;
+				        iteracion++;
+
+				    }
+					
+				    printf("found:%s\n",found );
+				    printf("after:%s\n",found+strlen(aux)+1);
+				    strcpy(found, found+strlen(aux)+1);
+				    printf("data: %s\n", datos);
+
+					newlen = len-strlen(aux)-1;
+					//datos[newlen] = EOF;
+					fichero2 = fopen("suscripciones.txt","w"); //abre el fichero y se posiciona al final
+					//fwrite(datos,sizeof(char),newlen,fichero2);
+					fputs(datos,fichero2);
+	     			fclose(fichero2);
+     			}
+			}
+		}else{
+			printf("##########################-doHelp-##########################\n");
+			printf("#   Alguien ha solicitado subscribirse a las encuestas.\n");
+			printf("####################################################\n");
+		}
+		
+	}else{
+	// Si lo recibido no es un mensaje no hacemos nada
+		printf("##########################-doJoin-##########################\n");
+		printf("#   Algo recibido: ...\n");
+		printf("####################################################\n");
+	}
 }
 
 int main(int argc, char* argv[]){
@@ -267,8 +412,13 @@ int main(int argc, char* argv[]){
 		printf("TESTBOT: Initialized\n");
 		printf("\033[0m");
 		
+		telebot_sendMessage(ros, "Haciendo una prueba", &bot_info.http_info);		
+		telebot_sendPoll(ros,pregunta,opciones, &bot_info.http_info);
+		/*
 		telebot_sendMessage(jcube, "Haciendo una prueba", &bot_info.http_info);		
 		telebot_sendPoll(jcube,pregunta,opciones, &bot_info.http_info);
+		*/
+
 
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto
@@ -288,6 +438,18 @@ int main(int argc, char* argv[]){
 		strcpy(event.info, "help");
 		if(addUpdateNotifier(doHelp, &event, &bot_info) != 0){
 			imprimeError("TESTBOT: Fallo al añadir handler doHelp");
+		}
+
+		event.update_type = UPDATE_MESSAGE;
+		strcpy(event.info, "join");
+		if(addUpdateNotifier(doJoin, &event, &bot_info) != 0){
+			imprimeError("TESTBOT: Fallo al añadir handler doJoin");
+		}
+
+		event.update_type = UPDATE_MESSAGE;
+		strcpy(event.info, "delete");
+		if(addUpdateNotifier(doDelete, &event, &bot_info) != 0){
+			imprimeError("TESTBOT: Fallo al añadir handler doDelete");
 		}
 
 		void starteco(){
@@ -317,6 +479,11 @@ int main(int argc, char* argv[]){
 			imprimeError("TESTBOT: Fallo al añadir handler stopeco");
 		}
 
+		event.update_type = UPDATE_MESSAGE;
+		strcpy(event.info, "encuesta");
+		if(addUpdateNotifier(doEncuesta, &event, &bot_info) != 0){
+			imprimeError("TESTBOT: Fallo al añadir handler doEncuesta");
+		}
 		event.update_type = UPDATE_POLL;
 		strcpy(event.info, "");
 		if(addUpdateNotifier(doSurvey, &event, &bot_info) != 0){

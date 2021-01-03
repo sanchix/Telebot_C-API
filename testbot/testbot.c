@@ -74,7 +74,7 @@ void doSurvey (update_t *update){
 			for (int i=0; survey->options[i].text !=NULL;i++){
 			  printf ("#\tOpcion %d: %s, Votos: %d\n",i,survey->options[i].text,survey->options[i].opcion_votos);
 			}
-			printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
+			//printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
 			printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
 			printf("####################################################\n");
 		}
@@ -85,9 +85,15 @@ void doEncuesta (update_t *update){
 	
 	message_t *message;
 	char cid[20];
-	int w = 1;
-	char aux[MAX_POLL_OPTIONS+1][MAX_POLL_QUESTION_TAM];
+	/*	char pregunta[MAX_POLL_QUESTION_TAM];
+		char options[MAX_POLL_OPTIONS][MAX_POLL_OPTION_TAM];*/
 	char pregunta[MAX_POLL_QUESTION_TAM];
+	char **options;
+	int offset = strlen("/encuesta ");
+	json_t *json_root;
+	json_t *json_options;
+	json_t *json_option;
+	json_error_t error;
 
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
@@ -97,30 +103,43 @@ void doEncuesta (update_t *update){
 		// Se hace eco si se ha recibido texto
 		if(message->text != NULL){
 			
-			printf("#   Mensaje: %s\n",message->text);
+			//printf("#   Mensaje: %s\n",message->text);
+			json_root = json_loads(message->text + offset, 0, &error);
+			//printf ("Ha hecho json root\n");
+			strcpy(pregunta , json_string_value (json_object_get(json_root,"pregunta")));
+			//printf ("Ha hecho strcpy\n");
+			json_options = json_object_get(json_root,"opciones");
+			//printf ("Ha hecho json options\n");
+			if ((options = (char **)malloc(sizeof(char*)*(int)(json_array_size(json_options)+1))) !=NULL){
+				for(size_t i = 0; i < json_array_size(json_options); i++){
+					json_option = json_array_get(json_options,i);
+					if ((options[(int)i] = (char *)malloc(sizeof(char)*strlen(json_string_value(json_option))))!=NULL){				
+						strcpy(options[(int)i],json_string_value(json_option));
+					}else
+						printf("Error en la reserva de la opcion %d\n",(int)i);
+				}
+			  
+				options [json_array_size(json_options)] = NULL;
+			  
+				// printf ("Ha hecho el for\n");
+			 
 
-			char options[MAX_POLL_OPTIONS][MAX_POLL_OPTION_TAM];
+				FILE *fichero;
+				fichero = fopen("suscripciones.txt","r"); //abre el fichero y se posiciona al principio
 
-			int offset = strlen("/encuesta ");
-			sscanf(message->text + offset, "%s:", pregunta);
-			printf("#   pregunta: %s\n",pregunta);			  
-			for(int i = 1; (w != 0) && i < MAX_POLL_OPTIONS; i++){
-			  w = sscanf(message->text + offset, ",%s,", aux[i]);
-				printf("#   cosas: %s\n",aux[i]);			  
-			  offset += strlen(aux[i]) + 1;
-			  if (i>0) {
-			  	strcpy(options[i-1],aux[i]);
-			  }
+				while (fscanf(fichero,"%s\n",cid)!= EOF){
+					telebot_sendPoll(cid,pregunta, options, update->http_info);
+				}
+				fclose(fichero);
+				
+				for(size_t i = 0; i < json_array_size(json_options); i++){
+					free(options[(int)i]);
+				}
+				free (options);
 			}
-
-			FILE *fichero;
-			fichero = fopen("suscripciones.txt","r"); //abre el fichero y se posiciona al principio
-
-			while (fscanf(fichero,"%s\n",cid)!= EOF){
-				telebot_sendPoll(cid,pregunta, options, update->http_info);
-			}
-			fclose(fichero);
-		}
+			else
+				printf("Error en la reserva de opciones\n");
+		}	
 	}
 }
 
@@ -436,8 +455,8 @@ int main(int argc, char* argv[]){
 		printf("TESTBOT: Initialized\n");
 		printf("\033[0m");
 		
-		telebot_sendMessage(ros, "Haciendo una prueba", &bot_info.http_info);		
-		telebot_sendPoll(ros,pregunta,opciones, &bot_info.http_info);
+		telebot_sendMessage(jcube, "Haciendo una prueba", &bot_info.http_info);		
+		//telebot_sendPoll(ros,pregunta,opciones, &bot_info.http_info);
 		/*
 		telebot_sendMessage(jcube, "Haciendo una prueba", &bot_info.http_info);		
 		telebot_sendPoll(jcube,pregunta,opciones, &bot_info.http_info);

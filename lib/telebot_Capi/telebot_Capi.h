@@ -59,6 +59,7 @@ struct msgbuf{
 
 //Define los tipos de cada tipo de update.
 typedef enum{
+	UPDATE_UNKNOWN = -2,
 	UPDATE_NONE = -1,
 	UPDATE_ANY = 0,
 	UPDATE_MESSAGE = 1,
@@ -139,7 +140,7 @@ typedef struct{
 	unsigned long long int poll_id;
 	char *question;
 	option_t * options;
-	int total_votos;       
+	long long int total_votos;       
 } poll_update_t;
 
 /*

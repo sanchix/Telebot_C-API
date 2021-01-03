@@ -388,7 +388,7 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 **
 **  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendPoll, devolviendo la respuesta en *response.
 */
-int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *http_info){
+int telebot_sendPoll(char *chat_id, char *question, char **options, http_info_t *http_info){
 	
 	http_response_t http_response; //Valor devuelto por el método de la API sendPoll.
 	int ret = -1;
@@ -409,7 +409,7 @@ int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *
 
 	sprintf(opcion,"\"%s\"",options[0]);
 	//printf("#   Opciones send: %s\n", opcion);//
-	strcat(parsedoptions,opcion);
+	strcpy(parsedoptions,opcion);
 	//printf("#   Opciones send: %s\n", parsedoptions);//
 	for (int i = 1 ; options[i] != NULL ; i++){
 		sprintf(opcion,",\"%s\"",options[i]);

@@ -262,6 +262,8 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 		if(notifiers[i].event.update_type == update->type){
 			// y es mensaje...
 			if(update->type == UPDATE_MESSAGE){
+				// TODO: Quitar este printf
+				printf("Encontrado handle mensaje\n");
 				// si el evento tiene comando filtramos y asignamos.
 				// TODO: Cambiar notifiers[i].event.info != NULL por strcmp (no vale null, vale "")
 				if(notifiers[i].event.info[0] != '\0'){
@@ -277,7 +279,10 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 				else{
 					handle_def = notifiers[i].handle;
 				}
-			} else if (update->type == UPDATE_POLL) {
+			}
+			else if (update->type == UPDATE_POLL) {
+				// TODO: Quitar este printf
+				printf("Encontrado handle poll\n");
 			  	//Si el evento tiene algo dentro de info y es de tipo encuesta, lo de dentro será la id de la encuesta.
 				if(notifiers[i].event.info[0] != '\0'){
 				 	 
@@ -304,6 +309,8 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 			handle = handle_def;
 		}
 		else{
+			// TODO: Quitar este printf
+			printf("Usando handle default\n");
 			handle = notifiers[0].handle;
 		}
 	}

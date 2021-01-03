@@ -408,9 +408,7 @@ int telebot_sendPoll( char *chat_id,char *question,char **options, http_info_t *
 	//Las dos lineas comentadas a continuacio, printf, impiden que se añadan caracteres desconocidos delante de la primera opcion a parsed options: X��6� Dependiendo de cual de las dos se pomga salen unos u otros.
 
 	sprintf(opcion,"\"%s\"",options[0]);
-	//printf("#   Opciones send: %s\n", opcion);//
-	strcat(parsedoptions,opcion);
-	//printf("#   Opciones send: %s\n", parsedoptions);//
+	strcpy(parsedoptions,opcion);
 	for (int i = 1 ; options[i] != NULL ; i++){
 		sprintf(opcion,",\"%s\"",options[i]);
 		strcat(parsedoptions,opcion);

@@ -204,7 +204,7 @@ void doHelp(update_t *update){
 int findSubscripcion(char *chat_id){
 	char cid[20];
 	FILE *fichero;
-	fichero = fopen("subscripciones.txt","r"); //abre el fichero y se posiciona al principio
+	fichero = fopen("suscripciones.txt","r"); //abre el fichero y se posiciona al principio
 	int i = 0;
 	int x = -1;
 
@@ -247,7 +247,7 @@ void doJoin(update_t *update){
 				printf("####################################################\n");
 				//Se almacenan los datos en el fichero:
 				sprintf(subscripcion,"%d\n",message->from.id);
-				fichero = fopen("subscripciones.txt","a"); //abre el fichero y se posiciona al final
+				fichero = fopen("suscripciones.txt","a"); //abre el fichero y se posiciona al final
 				if (fputs(subscripcion,fichero)<0){
 					imprimeError("TESTBOT: Error al escribir una subscripción en el fichero.");
 				}
@@ -289,7 +289,7 @@ void doDelete(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-			printf("##########################-doJoin-##########################\n");
+			printf("##########################-doDelete-##########################\n");
 			printf("#   %s %s ha solicitado borrar su subscripción a las encuestas.\n", message->from.first_name, message->from.last_name);
 			printf("####################################################\n");
 			
@@ -299,7 +299,7 @@ void doDelete(update_t *update){
 			}else{
 
 				//Se almacenan los datos en el fichero:			
-				if( (fichero=open("subscripciones.txt",O_RDWR)) < 0 ){
+				if( (fichero=open("suscripciones.txt",O_RDWR)) < 0 ){
 					imprimeError("TESTBOT: No se ha podido abrir el fichero orgien.");
 				}else{
 
@@ -308,7 +308,7 @@ void doDelete(update_t *update){
             			perror("Error en fstat en el fichero");
          			}else{
 
-			            if ((datos=(char *)mmap((caddr_t) 0, bstat.st_size, PROT_READ, MAP_SHARED, fichero, 0)) == MAP_FAILED){
+			            if ((datos = (char *)mmap((caddr_t) 0, bstat.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fichero, 0)) == MAP_FAILED){
             			   perror("Error en la proyeccion del fichero origen");
             			}else{
 
@@ -320,6 +320,11 @@ void doDelete(update_t *update){
 							    int iteracion = 0;
 							    
 							    len = strlen(datos);
+								printf("Datos (%i):%s\n\n", len, datos);
+								
+								printf("Datos[len-1]: %i\n", datos[len-1]);
+								printf("Datos[len]: %i\n", datos[len]);
+								printf("Datos[len+1]: %i\n", datos[len+1]);
 
 							    while(offset < len && !found){
 
@@ -335,11 +340,18 @@ void doDelete(update_t *update){
 							        iteracion++;
 
 							    }
-							    printf("antes\n");
-							    printf("cosas:%s\n",found+strlen(aux)+1);
+								
 							    printf("found:%s\n",found );
-							    strcpy(found, found+strlen(aux)+1);							    
-							    printf("despues\n");
+							    printf("after:%s\n",found+strlen(aux)+1);
+							    strcpy(found, found+strlen(aux)+1);
+							    printf("data: %s\n", datos);
+								
+								datos[len-strlen(aux)-1] = EOF;
+								
+								if(munmap(datos, bstat.st_size)){
+									printf("Error al desmapear\n");
+								}
+								
             			}
          			}
          			close(fichero);

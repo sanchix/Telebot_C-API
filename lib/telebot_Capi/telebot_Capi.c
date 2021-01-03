@@ -323,6 +323,11 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	char url[MAX_URL_TAM];
 	char method[15] = "/sendMessage";
 	char data[MAX_POST_TAM];
+	json_error_t error;	
+	json_t *root;
+	json_t *ok;
+	json_t *result;
+	json_t *texto;
 
 	// Generamos la url con el método correspondiente
 	strcpy(url, http_info->url);
@@ -344,12 +349,7 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	if(res == CURLE_OK){
 
 		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
-		json_error_t error;	
-		json_t *root;
-		json_t *ok;
-		json_t *result;
-		json_t *texto;
-
+	       
 		root = json_loads(http_response.response, 0, &error);
 		// Obtenemos el valor de ok
 		ok = json_object_get(root, "ok");

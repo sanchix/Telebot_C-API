@@ -65,7 +65,7 @@ void doSurvey (update_t *update){
   
 	poll_update_t *survey;
 
-	if (update->type == UPDATE_MESSAGE){
+	if (update->type == UPDATE_POLL){
 		survey = (poll_update_t *)update->content;
 		if (survey->question != NULL && survey->options != NULL){
 			printf("##########################-doSurvey-##########################\n");
@@ -73,7 +73,8 @@ void doSurvey (update_t *update){
 			for (int i=0; survey->options[i].text !=NULL;i++){
 			  printf ("#\tOpcion %d: %s, Votos: %d\n",i,survey->options[i].text,survey->options[i].opcion_votos);
 			}
-			printf ("#   Total de votos recogidos: %d\n\n",survey->total_votos);
+			printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
+			printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
 			printf("####################################################\n");
 		}
 	}
@@ -342,6 +343,13 @@ int main(int argc, char* argv[]){
 	
 	bot_info_t bot_info;
 	event_t event;
+	
+	char ros[] = "166103691";
+	char juan[] = "833182696";
+	char jcube[] = "-415881867";
+	
+	char pregunta[] = "¿Funcionara?";
+	char *opciones[20] = {"SI","NO","OBERSERVAD",NULL};
 
 	if(argc != 2){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
@@ -360,6 +368,7 @@ int main(int argc, char* argv[]){
 		printf("TESTBOT: Initialized\n");
 		printf("\033[0m");
 		
+<<<<<<< HEAD
 		char ros[] = "166103691";
 		char juan[] = "150848014";
 
@@ -370,6 +379,10 @@ int main(int argc, char* argv[]){
 		telebot_sendMessage(ros, "Haciendo una prueba", &bot_info.http_info);		
 		telebot_sendPoll(ros,pregunta,opciones, &bot_info.http_info);
 		
+=======
+		telebot_sendMessage(jcube, "Haciendo una prueba", &bot_info.http_info);		
+		telebot_sendPoll(jcube,pregunta,opciones, &bot_info.http_info);
+>>>>>>> e7f136ba5637af135044b09a076e466eb6e562f6
 
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto
@@ -431,6 +444,7 @@ int main(int argc, char* argv[]){
 		}
 
 		event.update_type = UPDATE_POLL;
+		strcpy(event.info, "");
 		if(addUpdateNotifier(doSurvey, &event, &bot_info) != 0){
 			imprimeError("TESTBOT: Fallo al añadir handler de la encuesta");
 		}

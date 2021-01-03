@@ -22,11 +22,11 @@ void doEcho(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-			printf("####################################################\n");
+				printf("##########################-doEcho-##########################\n");
 			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
 		}
 		else{
-			printf("####################################################\n");
+				printf("##########################-doEcho-##########################\n");
 			printf("#   Mensaje recibido de alguien: %s\n", message->text);
 		}
 		
@@ -58,7 +58,7 @@ void doSurvey (update_t *update){
 	if (update->type == UPDATE_MESSAGE){
 		survey = (poll_update_t *)update->content;
 		if (survey->question != NULL && survey->options != NULL){
-			printf("####################################################\n");
+				printf("##########################-doSurvey-##########################\n");
 			printf("#   Pregunta de la encuesta: %s\n\n",survey->question);
 			for (int i=0; survey->options[i].text !=NULL;i++){
 			  printf ("#\tOpcion %d: %s, Votos: %d\n",i,survey->options[i].text,survey->options[i].opcion_votos);
@@ -82,11 +82,11 @@ void felicita(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-			printf("####################################################\n");
+				printf("##########################-felicita-##########################\n");
 			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
 		}
 		else{
-			printf("####################################################\n");
+				printf("##########################-felicita-##########################\n");
 			printf("#   Mensaje recibido de alguien: %s\n", message->text);
 		}
 		
@@ -126,11 +126,11 @@ void doDefault(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-			printf("####################################################\n");
+				printf("##########################-doDefault-##########################\n");
 			printf("#   Mensaje recibido de %s %s: %s\n", message->from.first_name, message->from.last_name, message->text);
 		}
 		else{
-			printf("####################################################\n");
+				printf("##########################-doDefault-##########################\n");
 			printf("#   Mensaje recibido de alguien: %s\n", message->text);
 		}
 
@@ -162,12 +162,12 @@ void doHelp(update_t *update){
 		
 		// Se imprime el mensaje
 		if(message->from.id != 0){
-			printf("####################################################\n");
+			printf("##########################-doHelp-##########################\n");
 			printf("#   %s %s ha solicitado ayuda.\n", message->from.first_name, message->from.last_name);
 			printf("####################################################\n");
 		}
 		else{
-			printf("####################################################\n");
+			printf("##########################-doHelp-##########################\n");
 			printf("#   Alguien ha solicitado ayuda\n");
 			printf("####################################################\n");
 		}
@@ -224,10 +224,10 @@ int main(int argc, char* argv[]){
 		
 		char pregunta[] = "¿Funcionara?";
 		char *opciones[20] = {"SI","NO","OBERSERVAD",NULL};
+		
+		telebot_sendMessage(Ros, "Haciendo una prueba", &bot_info.http_info);		
 		telebot_sendPoll(Ros,pregunta,opciones, &bot_info.http_info);
 		
-
-		//telebot_sendMessage(Ros, "Haciendo una prueba", &bot_info.http_info);		
 
 		// Configuramos el handle imprime:
 		// evento -> EVENT_DEFFAULT = Comportamiento por defecto

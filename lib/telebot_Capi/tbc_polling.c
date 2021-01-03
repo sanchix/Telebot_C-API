@@ -243,7 +243,7 @@ void *tbc_parser(void *info){
 		resp_info = (response_info_t *)info;
 		
 		// TODO: Quitar (es para depuración).
-		printf("\n####################################################\n");
+		printf("##########################-tbc_parser-##########################\n");
 		printf("#   Update:\n");
 		
 		// Realizar el parse con la librería jansson
@@ -444,7 +444,8 @@ void *tbc_poll(void *info){
 	while(isRunning(0, NULL)){
 		
 		// TODO: Quitar esta impresión (es para debugging)
-		printf("\n Request to: %s\n", fullurl);
+		printf("##########################-tbc_poll-##########################\n");
+		printf("#   Request to: %s\n", fullurl);
 		
 		// Reservar memoria para el objeto de respuesta
 		if((resp_info = (response_info_t *)malloc(sizeof(response_info_t))) == NULL){

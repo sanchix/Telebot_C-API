@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h> /* struct stat y fstat */
-#include <sys/mman.h> /* mmap */
 #include "telebot_Capi/telebot_Capi.h"
 
 void imprimeError(char error[]){
@@ -78,6 +77,25 @@ void doSurvey (update_t *update){
 			printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
 			printf ("#   Total de votos recogidos: %lld\n\n",survey->total_votos);
 			printf("####################################################\n");
+		}
+	}
+}
+
+void doEncuesta (update_t *update){
+	
+	message_t *message;
+	char cid[20];
+	// Solo vamos a hacer cosas con los mensajes
+	if(update->type == UPDATE_MESSAGE){
+		
+		message = (message_t *)update->content;
+		
+		// Se hace eco si se ha recibido texto
+		if(message->text != NULL){
+			
+			printf("#   Mensaje: %s\n",message->text);
+			sscanf(message->text,"/encuesta %s %s");
+			
 		}
 	}
 }
@@ -227,7 +245,6 @@ void doJoin(update_t *update){
 	char subscripcion[3*64];
 	FILE *fichero;
 
-
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		
@@ -275,11 +292,10 @@ void doDelete(update_t *update){
 	
 	message_t *message;
 	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
-	int fichero;
-	char *datos;
 	struct stat bstat;
-
-	
+	char *datos;
+ 	int fichero;
+ 	FILE *fichero2;
 
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
@@ -298,82 +314,74 @@ void doDelete(update_t *update){
 				printf("####################################################\n");
 			}else{
 
-				//Se almacenan los datos en el fichero:			
-				if( (fichero=open("suscripciones.txt",O_RDWR)) < 0 ){
-					imprimeError("TESTBOT: No se ha podido abrir el fichero orgien.");
-				}else{
+			  	/* Abrir el fichero recibido como argumento */
+  				if ((fichero=open("suscripciones.txt", O_RDONLY))<0){
+    				imprimeError("No puede abrirse el fichero origen");
+    			}else if (fstat(fichero, &bstat)<0){
+                    imprimeError("Error en fstat en el fichero");
+                }else{
+					datos = (char *)malloc(sizeof(char)*bstat.st_size);
+					
+					read(fichero,datos,sizeof(char)*bstat.st_size);
 
-					/* Averigua la longitud del fichero origen */
-         			if(fstat(fichero, &bstat)<0){
-            			perror("Error en fstat en el fichero");
-         			}else{
+					close(fichero);
+	                
+	                /* Bucle de búsqueda */
+				    int len;
+				    int newlen;
+				    int offset = 0;
+				    char aux[100];
+				    char* found = NULL;
+				    int iteracion = 0;
+				    
+				    len = strlen(datos);
+					printf("Datos (%i):%s\n\n", len, datos);
+					
+					printf("Datos[len-1]: %i\n", datos[len-1]);
+					printf("Datos[len]: %i\n", datos[len]);
+					printf("Datos[len+1]: %i\n", datos[len+1]);
 
-			            if ((datos = (char *)mmap((caddr_t) 0, bstat.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fichero, 0)) == MAP_FAILED){
-            			   perror("Error en la proyeccion del fichero origen");
-            			}else{
+				    while(offset < len && !found){
 
-			                /* Bucle de búsqueda */
-							    int len;
-							    int offset = 0;
-							    char aux[100];
-							    char* found = NULL;
-							    int iteracion = 0;
-							    
-							    len = strlen(datos);
-								printf("Datos (%i):%s\n\n", len, datos);
-								
-								printf("Datos[len-1]: %i\n", datos[len-1]);
-								printf("Datos[len]: %i\n", datos[len]);
-								printf("Datos[len+1]: %i\n", datos[len+1]);
+				        sscanf(datos+offset, "%s\n", aux);
+				        
+				        if(strcmp(aux, cid) == 0){
+				            //printf("Encontrado en posición %i\n", iteracion+1);
+				            found = datos + offset;
+				            //printf("Dato: %s\n", found);
+				        }
+				        
+				        offset += strlen(aux) + 1;
+				        iteracion++;
 
-							    while(offset < len && !found){
+				    }
+					
+				    printf("found:%s\n",found );
+				    printf("after:%s\n",found+strlen(aux)+1);
+				    strcpy(found, found+strlen(aux)+1);
+				    printf("data: %s\n", datos);
 
-							        sscanf(datos+offset, "%s\n", aux);
-							        
-							        if(strcmp(aux, cid) == 0){
-							            //printf("Encontrado en posición %i\n", iteracion+1);
-							            found = datos + offset;
-							            //printf("Dato: %s\n", found);
-							        }
-							        
-							        offset += strlen(aux) + 1;
-							        iteracion++;
-
-							    }
-								
-							    printf("found:%s\n",found );
-							    printf("after:%s\n",found+strlen(aux)+1);
-							    strcpy(found, found+strlen(aux)+1);
-							    printf("data: %s\n", datos);
-								
-								datos[len-strlen(aux)-1] = EOF;
-								
-								if(munmap(datos, bstat.st_size)){
-									printf("Error al desmapear\n");
-								}
-								
-            			}
-         			}
-         			close(fichero);
-				}				
+					newlen = len-strlen(aux)-1;
+					//datos[newlen] = EOF;
+					fichero2 = fopen("suscripciones.txt","w"); //abre el fichero y se posiciona al final
+					//fwrite(datos,sizeof(char),newlen,fichero2);
+					fputs(datos,fichero2);
+	     			fclose(fichero2);
+     			}
 			}
-		}
-		else{
+		}else{
 			printf("##########################-doHelp-##########################\n");
 			printf("#   Alguien ha solicitado subscribirse a las encuestas.\n");
 			printf("####################################################\n");
 		}
 		
-	}
+	}else{
 	// Si lo recibido no es un mensaje no hacemos nada
-	else{
 		printf("##########################-doJoin-##########################\n");
 		printf("#   Algo recibido: ...\n");
 		printf("####################################################\n");
 	}
 }
-
-
 
 int main(int argc, char* argv[]){
 	
@@ -471,6 +479,11 @@ int main(int argc, char* argv[]){
 			imprimeError("TESTBOT: Fallo al añadir handler stopeco");
 		}
 
+		event.update_type = UPDATE_MESSAGE;
+		strcpy(event.info, "encuesta");
+		if(addUpdateNotifier(doEncuesta, &event, &bot_info) != 0){
+			imprimeError("TESTBOT: Fallo al añadir handler doEncuesta");
+		}
 		event.update_type = UPDATE_POLL;
 		strcpy(event.info, "");
 		if(addUpdateNotifier(doSurvey, &event, &bot_info) != 0){

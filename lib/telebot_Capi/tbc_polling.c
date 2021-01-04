@@ -2,7 +2,7 @@
 **     Fichero:  telebot_Capi/pooling.c
 **       Group:  Grupo 8
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
-**       Fecha:  07/dec/2020
+**       Fecha:  04/enero/2021
 **
 ** Descripcion:  Parte de la libreria telebot_Capi encargada de obtener actualizaciones mediante el método de "long polling".
 */
@@ -32,10 +32,6 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 	char *st_aux;
 	char *st_aux2;
 	int tam;
-	
-	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo) PD: NO TE RAYE
-	
-	// TODO: Poner opcionales las cosas opcionales (rellenar con null). Hay que hacer que el resto de objetos que usen message_t se esperen que haya cosas NULL.
 	
 	// Desempaquetamos message_id
 	message->message_id = json_integer_value(json_object_get(message_obj, "message_id"));
@@ -127,7 +123,6 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 			}
 		}
 		else{
-			// TODO: Inicializar todo a NULL y cambiar luego.
 			message->command = NULL;
 		}
 		
@@ -150,23 +145,14 @@ int unpack_json_message(message_t *message, json_t *message_obj){
 **
 **  Descripción:  Función que a partir de un objeto json nos lo formatea en un objeto message_t con nuestros valores a recoger.
 */
-// DONE: pensar si es mejor reservar memoria y devolver el mensaje del tirón o que reserve memoria el llamante (esta última opción es como está ahora)
 int unpack_json_poll_update(poll_update_t *poll, json_t *message_obj){
 	
-	// TODO: Inicializar ret a -1 (suponer error) y cambiar a 0 en caso de que todo vaya bien
 	int ret = 0;
 	json_t *json_opciones;
 	json_t *json_opcion;
 	int tam_preg;
 	
-	
-	// TODO: Ver si hay alguna forma de detectar errores o evitar copiar cadenas más grandes del tamaño reservado (a ver si en strcpy y strcat hay algún parámetro "size" o tamaño máximo) PD: NO TE RAYE
-	
-	// TODO: Poner opcionales las cosas opcionales (rellenar con null). Hay que hacer que el resto de objetos que usen message_t se esperen que haya cosas NULL.
-	
 	// Desempaquetamos id
-
-	//TODO: Poner ifs de correcta recogida y reflejar en ret.
 	poll->poll_id = json_integer_value(json_object_get(message_obj, "id"));
 	tam_preg = strlen(json_string_value(json_object_get(message_obj, "question")));
 	if ((poll->question = (char *)malloc(tam_preg*sizeof(char))) != NULL){
@@ -214,7 +200,6 @@ void *tbc_parser(void *info){
 	
 	key_t clave;
 	int msgqueue_id;
-	// TODO: Dimensionar update_id
 	long long int update_id = 0;
 	struct msgbuf msq_buffer;
 	updateHandle_t handle;
@@ -243,7 +228,6 @@ void *tbc_parser(void *info){
 		// Peparar resp_info (evita usar el cast, comididad)
 		resp_info = (response_info_t *)info;
 		
-		// TODO: Quitar (es para depuración).
 		printf("##########################-tbc_parser-##########################\n");
 		printf("#   Update:\n");
 		
@@ -251,10 +235,8 @@ void *tbc_parser(void *info){
 		json_root = json_loads(resp_info->http_response.response, 0, &error);
 		
 		// Obtenemos el valor de ok
-		// TODO: Hacer algo con esto, que notifique a alguien si no es ok o haga algo de provecho más que imprimirlo.
 		json_ok = json_object_get(json_root, "ok");
 
-		//TODO: Probar si esto funciona bien
 		if(json_is_false(json_ok)){
 			printf("\033[1;31m");
 			printf("*tbc_parser: Message received not ok: %s (error code: %lld)\n",json_string_value(json_object_get(json_root,"description")),json_integer_value(json_object_get(json_root,"error_code")));
@@ -264,18 +246,14 @@ void *tbc_parser(void *info){
 		
 		// Si todo va bien
 		else{
-			// TODO: Quitar, es de debug
 			printf("#\tok\n");
 		
-			// TODO: Implementar la búsqueda rápida del último update_id para comunicárselo a pool. Hacer mediciones de tiempo para ver si realmente merece la pena.
 			update.http_info = &(resp_info->poll_info->http_info);
 		
 			// Analizamos el resultado (lista de objetos update)
 			json_result = json_object_get(json_root, "result");
-			// TODO: Quitar este printf (debug)
-			//printf("JSON: %s", json_string_value(json_result));
+
 			// Para cada objeto del array
-			
 			for(size_t i = 0; i < json_array_size(json_result); i++){
 				
 				// Se obtiene el objeto update
@@ -284,18 +262,13 @@ void *tbc_parser(void *info){
 				// Obtenemos update_id
 				json_aux = json_object_get(json_update, "update_id");
 				update_id = json_integer_value(json_aux);
-				//TODO: quitar esta impresión (es debug)
 				printf("#\tUpdate id: %lld\n", update_id);
 				
-				
 				/* --- Procesar el update --- */
-				// TODO: Poner en los if los distintos objetos de respuesta que se pueden recibir.
 				// Si lo que se ha recibido es un mensaje...
 				if((json_aux = json_object_get(json_update, "message")) != NULL){
 					// Obtenemos el objeto message y lo desempaquetamos
 					update.type = UPDATE_MESSAGE;
-					// TODO: Hay que liberar
-					//TODO: Si no se asigna correctamente la memoria rip
 					if((update.content = (message_t *)malloc(sizeof(message_t))) == NULL){
 						printf("\033[1;31m");
 						printf("####################################################\n");
@@ -312,7 +285,6 @@ void *tbc_parser(void *info){
 				// Si lo que se ha recibido es una actualización de encuesta...
 				else if((json_aux = json_object_get(json_update, "poll")) != NULL){
 			       	// Obtenemos el resultado de la encuesta
-				  	// TODO: Hacer
 				 	if((update.content = (poll_update_t *)malloc(sizeof(poll_update_t)))==NULL){
 						printf("\033[1;31m");
 						printf("####################################################\n");
@@ -338,7 +310,6 @@ void *tbc_parser(void *info){
 				handle(&update);
 
 				// Se liberan recursos
-				// TODO: Liberar recursos en caso de encuesta y otros mensajes
 				if(update.type == UPDATE_MESSAGE){
 					if(((message_t *)update.content)->text != NULL){
 						free(((message_t *)update.content)->text);
@@ -371,7 +342,6 @@ void *tbc_parser(void *info){
 		}
 	}
 	
-	// TODO: ¿Liberar otros recursos?
 	free(info);
 	pthread_exit(NULL);
 	
@@ -385,8 +355,6 @@ void *tbc_parser(void *info){
 */
 void *tbc_poll(void *info){
 	
-	// TODO: hacer que cierre tambien la cola...
-	// TODO: Ordenar
 	CURLcode res;
 	char url[MAX_URL_TAM];
 	char fullurl[MAX_URL_TAM];
@@ -403,7 +371,7 @@ void *tbc_poll(void *info){
 	// Prepare poll_info object from bot_info object (in 'info')
 	strcpy(poll_info.http_info.url, ((bot_info_t *)info)->http_info.url);
 	poll_info.notifiers_info = &((bot_info_t *)info)->notifiers_info;
-	// TODO: Ponerle el else o algo de eso
+
 	if((poll_info.http_info.curlhandle = curl_easy_duphandle(((bot_info_t *)info)->http_info.curlhandle)) == NULL){
 		printf("\033[1;31m");
 		printf("####################################################\n");
@@ -427,8 +395,6 @@ void *tbc_poll(void *info){
 	
 	// Prepare message queue to communicate with parser threads
 	clave = ftok(".",'p');
-	// TODO: Poner este printf en un IFDEF o algo, es util para el usuario final. Tambien se podría crear una función para obtener el token.
-	//printf("clave de poll: %i\n", clave);
 	if((msgqueue_id = msgget(clave,IPC_CREAT|0660)) == -1){
 		printf("\033[1;31m");
 		printf("####################################################\n");
@@ -445,7 +411,6 @@ void *tbc_poll(void *info){
 	// Siempre que no haya error iteramos
 	while(isRunning(0, NULL)){
 		
-		// TODO: Quitar esta impresión (es para debugging)
 		printf("##########################-tbc_poll-##########################\n");
 		printf("#   Request to: %s\n", fullurl);
 		
@@ -468,7 +433,6 @@ void *tbc_poll(void *info){
 		res = curl_easy_perform(poll_info.http_info.curlhandle);
 		
 		// Analizar la respuesta
-		// TODO: ¿Poner que tras x intentos fallidos se cierre el servidor o se notifique al usuario?
 		if(res != CURLE_OK){
 			printf("\033[1;31m");
 			printf("####################################################\n");
@@ -490,11 +454,9 @@ void *tbc_poll(void *info){
 			else{
 			
 				// Esperar a que parser indique el offset del último mensaje (se almacena en la siguiente URL).
-				// TODO: Hacer algo en la función de parse para que en caso de error devuelva el último offset leido o 0 (el offset 0 devuelve todos los updates si no recuerdo mal, pero habría que comprobarlo en la API de telegram). Podría devolver 0 en caso de que no haya updates y -1 en caso de error al parsear (puede haber varios reintentos).
 				msgrcv(msgqueue_id, &msq_buffer, MAX_OFFSET_TAM, OFFSET_MSQ_TYPE, 0);
 				
 				// Si hay que actualizar lo hacemos
-				// TODO: Hacer que el intercambio de mensajes sea en formato int, no en caracteres
 				if(msq_buffer.mtext[0] != '0'){
 					offset = msq_buffer.mtext;
 					strcpy(fullurl, url);
@@ -507,7 +469,6 @@ void *tbc_poll(void *info){
 		
 	}
 	
-	//TODO: Añadir que mande una señal al proceso principal para que se entere del fallo.
 	// Se borra la cola
 	if(msgctl(msgqueue_id, IPC_RMID, NULL) != 0){
 		printf("\033[1;31m");

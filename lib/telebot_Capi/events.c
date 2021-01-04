@@ -2,7 +2,7 @@
 **     Fichero:  telebot_Capi/events.c
 **       Group:  Grupo 8
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
-**       Fecha:  07/dec/2020
+**       Fecha:  04/enero/2021
 **
 ** Descripcion:  Definición de funciones relativas a eventos necesarias para la comunicación de actualizaciones al usuario de la librería.
 */
@@ -59,7 +59,6 @@ int compareEvents(event_t *e1, event_t *e2){
 **
 **  Descripción:  Copia los datos del evento org en dst
 */
-// TODO: Poner valor de retorno (errores)
 void copyEvent(event_t *dst, event_t *org){
 	
 	dst->update_type = org->update_type;
@@ -111,7 +110,6 @@ int addUpdateNotifier(updateHandle_t handle, event_t *event, bot_info_t *bot_inf
 	if(handle != NULL){
 		
 		// Si el evento es por defecto almacenamos el nuevo handle.
-		// TODO: Se podria implementar modify porque estamos haciendo una modificacion...
 		if(event->update_type == UPDATE_ANY){
 			sem_wait(mutex_updateNotifiers);
 			bot_info->notifiers_info.notifiers[0].handle = handle;
@@ -175,7 +173,6 @@ int modifyUpdateNotifier(updateHandle_t handle, event_t *event, bot_info_t *bot_
 			// se busca el evento
 			for(int i = 1; i < MAX_UPDATE_EVENTS && !found; i++){
 				// y cuando se encuentre se edita.
-				// TODO: Pensar si se van a poder tener varios handle para un mismo evento y como se va a hacer ¿se tendrán varios objetos update_event_t con el mismo event_t? ¿En los objetos update_event_t puede haber una lista de hanles para cada evento?
 				if(compareEvents(event, &(bot_info->notifiers_info.notifiers[i].event)) == 0){
 					sem_wait(mutex_updateNotifiers);
 					bot_info->notifiers_info.notifiers[i].handle = handle;
@@ -262,10 +259,8 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 		if(notifiers[i].event.update_type == update->type){
 			// y es mensaje...
 			if(update->type == UPDATE_MESSAGE){
-				// TODO: Quitar este printf
 				printf("Encontrado handle mensaje\n");
 				// si el evento tiene comando filtramos y asignamos.
-				// TODO: Cambiar notifiers[i].event.info != NULL por strcmp (no vale null, vale "")
 				if(notifiers[i].event.info[0] != '\0'){
 					printf("##########################-findUpdateHandler-##########################\n");
 					printf("# Encontrado: %s\n", notifiers[i].event.info);
@@ -281,7 +276,6 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 				}
 			}
 			else if (update->type == UPDATE_POLL) {
-				// TODO: Quitar este printf
 				printf("Encontrado handle poll\n");
 			  	//Si el evento tiene algo dentro de info y es de tipo encuesta, lo de dentro será la id de la encuesta.
 				if(notifiers[i].event.info[0] != '\0'){
@@ -298,7 +292,6 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 				}
 				
 			}
-			// TODO: Poner else if para poll u otros tipos
 		}
 		
 	}
@@ -309,7 +302,6 @@ updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_in
 			handle = handle_def;
 		}
 		else{
-			// TODO: Quitar este printf
 			printf("Usando handle default\n");
 			handle = notifiers[0].handle;
 		}

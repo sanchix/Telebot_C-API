@@ -2,7 +2,7 @@
 **     Fichero:  lib/telebot_Capi/telebot_Capi.h
 **       Group:  Grupo 8
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
-**       Fecha:  07/dec/2020
+**       Fecha:  04/enero/2021
 **
 ** Descripcion:  Declaraciones de las funciones, tipos y constantes que podrá utilizar el usuario de la librería, así como las declaraciones de las funciones, tipos y constantes necesarias para el código contenido en pooling.c
 */
@@ -21,7 +21,6 @@
 #include <fcntl.h> 
 #include <sys/msg.h>
 #include <sys/ipc.h>
-// TODO: Poner este siguiente include para debug (ifdef debug)
 #include <errno.h>
 
 /* Includes de la aplicacion */
@@ -404,7 +403,3 @@ int removeUpdateNotifier(event_t *event, bot_info_t *bot_info);
 updateHandle_t findUpdateHandler(update_t *update,notifiers_info_t *notifiers_info);
 
 #endif
-
-
-
-

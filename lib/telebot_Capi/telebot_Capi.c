@@ -2,7 +2,7 @@
 **     Fichero:  lib/telebot_Capi/telebot_Capi.c
 **       Group:  Grupo 8
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
-**       Fecha:  07/dec/2020
+**       Fecha:  04/enero/2021
 **
 ** Descripcion:  Código principal de la librería "telebot_Capi". Contiene las definiciones de las funciones que podrá utilizar el usuario de la librería.
 */
@@ -253,8 +253,6 @@ int telebot_init(char *token, bot_info_t *bot_info){
 **  Descripción:  Realiza una petición a la API de telegram con el método getMe, devolviendo la respuesta en *response.
 */
 int telebot_getMe(http_response_t *http_response, http_info_t *http_info){
-	
-	// TODO: Pensar si el espacio para la respuesta la debe reservar el que llama a la función o la función en sí (en cuyo caso devolvería la estructura en el return, o un puntero a ella.
 
 	int ret = -1;
 	char url[MAX_URL_TAM];
@@ -266,7 +264,6 @@ int telebot_getMe(http_response_t *http_response, http_info_t *http_info){
 	strcat(url, method);
 	
 	// Realizamos la petición
-	//status = http_get(&(http_info->hi), url, response, size);
 	curl_easy_setopt(http_info->curlhandle, CURLOPT_URL, url);
 	curl_easy_setopt(http_info->curlhandle, CURLOPT_WRITEDATA, (void *)http_response);
 	http_response->response = NULL;
@@ -283,8 +280,6 @@ int telebot_getMe(http_response_t *http_response, http_info_t *http_info){
 		printf("\033[0m");
 	}
 	
-	// TODO: Analizar la respuesta y guardarla en la estructura respuesta (previamente hay que crearla, ver los TODOs del principio de esta función)
-	// TODO: En telebot_Capi.h estaba esto:
 		/*
 		**   Parámetros:  char *response: Valor devuelto por el método de la API getMe.
 		**                int size: Tamaño de la respuesta.
@@ -313,9 +308,6 @@ int telebot_getMe(http_response_t *http_response, http_info_t *http_info){
 **  Descripción:  Realiza una petición de enviar un mensaje a la API de telegram con el método sendMessage, devolviendo la respuesta en *response.
 */
 int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
-
-	// TODO: Cambiar el parámetro chat_id y añadir los parámetros necesarios para mandar un mensaje (comprobar que es lo que se debe mandar en el método sendMessage en la API de Telegram). 
-	// ¿Hacer que se pasen los parámetros mediante una estructura (podría ser útil para reenvíar mensajes recibidos)? ¿Hacer dos funciones una con parámetros separados y otra con la estructura?
 	
 	http_response_t http_response; //Valor devuelto por el método de la API sendMessage.
 	int ret = -1;
@@ -334,18 +326,17 @@ int telebot_sendMessage( char *chat_id,char *text, http_info_t *http_info){
 	strcat(url, method);
 	
 	// Generamos la cadena JSON
-	// TODO: ¿Hacer una función para que haga esto?
 	sprintf(data,"{\"chat_id\":\"%s\",\"text\":\"%s\"}",chat_id,text);
 
 	// Realizamos la petición con POST
-	//status = http_post(&(http_info->hi), url, data, respuesta, MAX_RESP_TAM);
+
 	curl_easy_setopt(http_info->curlhandle, CURLOPT_POSTFIELDS, data);
 	curl_easy_setopt(http_info->curlhandle, CURLOPT_URL, url);
 	curl_easy_setopt(http_info->curlhandle, CURLOPT_WRITEDATA, (void *)&http_response);
 	http_response.response = NULL;
 	http_response.size = 0;
 	res = curl_easy_perform(http_info->curlhandle);
-	//printf("Send message: %s\n", http_response.response);
+
 	if(res == CURLE_OK){
 
 		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
@@ -427,28 +418,6 @@ int telebot_sendPoll(char *chat_id, char *question, char **options, http_info_t 
 	printf("Encuesta send: %s\n", http_response.response);
 	printf("####################################################\n");
 	if(res == CURLE_OK){
-
-		// TODO: Comprobar
-		/*
-		// Realizamos el parse con la librería jansson para extraer el texto que se ha enviado y comprobar 
-		json_error_t error;	
-		json_t *root;
-		json_t *ok;
-		json_t *result;
-		json_t *texto;
-
-		root = json_loads(respuesta, 0, &error);
-		// Obtenemos el valor de ok
-		ok = json_object_get(root, "ok");
-		if(json_is_true(ok)){
-			result = json_object_get(root, "result");		
-			// Se obtiene el objeto from
-			texto = json_object_get(result, "text");
-			if (strcmp(json_string_value(texto),text)==0){
-				ret = 0;
-			}
-		}
-		*/
 		ret = 0;
 	}
 	return ret;

@@ -2,7 +2,7 @@
 **     Fichero:  testbot/testbot.c
 **       Group:  Grupo 8
 **		Author:  Juan Parada Claro, Javier Ros Raposo y Javier Sanchidrián Boza
-**       Fecha:  07/dec/2020
+**       Fecha:  04/enero/2021
 **
 ** Descripcion:  Implementación de un BOT para la aplicación Telegram(R) utilizando la librería "telebot_Capi" con el objetivo de probar la funcionalidad de esta última.
 */
@@ -58,8 +58,6 @@ void doEcho(update_t *update){
 		printf("####################################################\n");
 	}
 	
-	// TODO: Pensar que poner en el retorno
-	
 }
 
 void doSurvey (update_t *update){
@@ -85,8 +83,6 @@ void doEncuesta (update_t *update){
 	
 	message_t *message;
 	char cid[20];
-	/*	char pregunta[MAX_POLL_QUESTION_TAM];
-		char options[MAX_POLL_OPTIONS][MAX_POLL_OPTION_TAM];*/
 	char pregunta[MAX_POLL_QUESTION_TAM];
 	char **options;
 	int offset = strlen("/encuesta ");
@@ -103,13 +99,9 @@ void doEncuesta (update_t *update){
 		// Se hace eco si se ha recibido texto
 		if(message->text != NULL){
 			
-			//printf("#   Mensaje: %s\n",message->text);
 			json_root = json_loads(message->text + offset, 0, &error);
-			//printf ("Ha hecho json root\n");
 			strcpy(pregunta , json_string_value (json_object_get(json_root,"pregunta")));
-			//printf ("Ha hecho strcpy\n");
 			json_options = json_object_get(json_root,"opciones");
-			//printf ("Ha hecho json options\n");
 			if ((options = (char **)malloc(sizeof(char*)*(int)(json_array_size(json_options)+1))) !=NULL){
 				for(size_t i = 0; i < json_array_size(json_options); i++){
 					json_option = json_array_get(json_options,i);
@@ -120,9 +112,6 @@ void doEncuesta (update_t *update){
 				}
 			  
 				options [json_array_size(json_options)] = NULL;
-			  
-				// printf ("Ha hecho el for\n");
-			 
 
 				FILE *fichero;
 				fichero = fopen("suscripciones.txt","r"); //abre el fichero y se posiciona al principio
@@ -274,7 +263,6 @@ int findSubscripcion(char *chat_id){
 		x = i;
 		}
 		i++;
-		//printf("chat_id:%s\n",cid);
 	}
 	fclose(fichero);
 	return x;
@@ -334,7 +322,7 @@ void doJoin(update_t *update){
 void doDelete(update_t *update){
 	
 	message_t *message;
-	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
+	char cid[20]; 
 	struct stat bstat;
 	char *datos;
  	int fichero;
@@ -389,9 +377,7 @@ void doDelete(update_t *update){
 				        sscanf(datos+offset, "%s\n", aux);
 				        
 				        if(strcmp(aux, cid) == 0){
-				            //printf("Encontrado en posición %i\n", iteracion+1);
 				            found = datos + offset;
-				            //printf("Dato: %s\n", found);
 				        }
 				        
 				        offset += strlen(aux) + 1;
@@ -405,9 +391,7 @@ void doDelete(update_t *update){
 				    printf("data: %s\n", datos);
 
 					newlen = len-strlen(aux)-1;
-					//datos[newlen] = EOF;
 					fichero2 = fopen("suscripciones.txt","w"); //abre el fichero y se posiciona al final
-					//fwrite(datos,sizeof(char),newlen,fichero2);
 					fputs(datos,fichero2);
 	     			fclose(fichero2);
      			}
@@ -442,7 +426,6 @@ int main(int argc, char* argv[]){
 		printf("Wrong number of arguments, usage: %s [token]\n", argv[0]);
 	}
 	
-	// TODO: Configurar los handle antes
 	// Iniciamos las funciones de librería en bot_info
 	else if(telebot_init(argv[1], &bot_info) != 0){
 			imprimeError("TESTBOT: Error al iniciar telebot_Capi");
@@ -532,7 +515,6 @@ int main(int argc, char* argv[]){
 		if(addUpdateNotifier(doSurvey, &event, &bot_info) != 0){
 			imprimeError("TESTBOT: Fallo al añadir handler de la encuesta");
 		}
-		// TODO: Comprobar que funcionan los semáforos
 		
 		// Loop to keep alive main thread
 		while(1){

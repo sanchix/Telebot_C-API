@@ -218,7 +218,7 @@ void doHelp(update_t *update){
 	
 	message_t *message;
 	char cid[20]; //Aqui copiaremos el chat_id del usuario que ha enviado un mensaje.
-	char ayuda[] = "/help\n/feliz\n/starteco\n/stopeco\n/join\n/delete";
+	char ayuda[] = "/help\n/feliz\n/starteco\n/stopeco\n/join\n/delete\n/encuesta";
 	// Solo vamos a hacer cosas con los mensajes
 	if(update->type == UPDATE_MESSAGE){
 		
